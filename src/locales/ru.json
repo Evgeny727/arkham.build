@@ -169,6 +169,12 @@
       "icon_few": "символа навыков",
       "icon_many": "символов навыков",
       "icon_one": "символ навыков",
+      "level": {
+        "base": "Уровень 0 / Нет",
+        "none": "Без уровня",
+        "upgrades": "Улучшения",
+        "value": "Уровень {{level}}"
+      },
       "none": "Нет",
       "nonexceptional": "Не исключительный",
       "ok": "OK",
@@ -764,6 +770,8 @@
       "actions": {
         "add_to_notes": "Добавить в заметки",
         "cycle_decks": "Cycle deck lists",
+        "draft_random_basic_weakness": "Драфтить случайную базовую слабость",
+        "draft_random_basic_weakness_success": "Слабость <strong>«{{name}}»</strong> добавлена в вашу колоду.",
         "draw_random_basic_weakness": "Взять случайную базовую слабость",
         "draw_random_basic_weakness_success": "Ваша случайная базовая слабость — <strong>{{name}}</strong>.",
         "edit_annotation": "Редактировать аннотацию",
@@ -811,6 +819,15 @@
       },
       "discard": "Отменить изменения",
       "discard_confirm": "Вы уверены, что хотите отменить изменения?",
+      "draft_weakness_modal": {
+        "cancel_button": "Отменить",
+        "choice_title": "Выберите одну слабость для отмены",
+        "confirm_button": "Подтвердить",
+        "explanation_body": "Это хоумрул, который дает игроку больше контроля над базовыми слабостями по сравнению с полной случайностью. Три базовых слабости выбираются случайным образом, игрок может отменить одну из них, а затем одна из двух оставшихся слабостей добавляется в колоду случайным образом.",
+        "explanation_title": "Объяснение",
+        "title": "Драфт базовой слабости",
+        "too_few_rbw": "Доступно недостаточно базовых слабостей для драфта."
+      },
       "notes": {
         "banner_url": "URL баннера",
         "banner_url_help": "Баннер для колоды. Будет отображаться на экране колоды и в превью социальных сетей. Соотношение сторон 4:1, оптимальная ширина 1440px.",
@@ -938,6 +955,35 @@
         "success": "Колода успешно улучшена.",
         "title": "Улучшить колоду с опытом",
         "xp_gained": "Опыта получено"
+      }
+    },
+    "decklists": {
+      "browse": {
+        "loading": "Загрузка руководств для колод…",
+        "no_results": "Нет результатов",
+        "results_count": "{{count}} результатов",
+        "title": "Руковдоства для колод"
+      },
+      "filters": {
+        "author": "Автор",
+        "author_placeholder": "Введите имя автора (к примеру Valentin1331)…",
+        "description_length": "Минимальная длина руководства",
+        "description_length_long": "Длинное",
+        "description_length_medium": "Среднее",
+        "description_length_short": "Короткое",
+        "excluded_cards": "Исключённые карты",
+        "investigator_factions": "Классы сыщиков",
+        "name": "Название руководства",
+        "name_placeholder": "Введите название…",
+        "required_cards": "Необходимые карты",
+        "submit": "Применить",
+        "title": "Критерии фильтрации"
+      },
+      "sorting": {
+        "date": "Недавние",
+        "likes": "С наибольшим количество лайков",
+        "popularity": "Наиболее популярные",
+        "user_reputation": "Наивысшая репутация"
       }
     },
     "draw_simulator": {
