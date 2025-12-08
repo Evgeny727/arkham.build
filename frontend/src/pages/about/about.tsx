@@ -67,8 +67,8 @@ function About() {
           </li>
           <li>
             <strong>@TartanLlama</strong>, <strong>@MickeyTheQ</strong>,{" "}
-            <strong>@blu</strong>, <strong>@5argon</strong>:{" "}
-            {t("about.hall_of_fame.code")}
+            <strong>@blu</strong>, <strong>@5argon</strong>,{" "}
+            <strong>@Marymatician</strong>: {t("about.hall_of_fame.code")}
           </li>
           <li>
             <strong>@kamalisk / ArkhamDB: </strong>{" "}
