@@ -266,7 +266,6 @@ export const ApiCardSchema = JsonDataCardSchema.omit({
   deck_requirements: ApiDeckRequirementsSchema.nullish(),
   duplicate_of_code: z.string().nullish(),
   id: z.string(), // {code} or {code}-{taboo_set_id}
-  linked: z.boolean().nullish(),
   locale: z.string().nullish(),
   preview: z.boolean().nullish(),
   real_back_flavor: z.string().nullish(),

@@ -62,7 +62,7 @@ export function filterMythosCards(card: Card) {
 }
 
 export function filterBacksides(card: Card) {
-  return !card.linked;
+  return !card.hidden;
 }
 
 export function filterPreviews(card: Card) {

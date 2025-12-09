@@ -215,7 +215,6 @@ function query(config: Config) {
         id # used for taboos
         illustrator
         is_unique
-        linked
         myriad
         official
         pack_code

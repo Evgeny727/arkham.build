@@ -105,7 +105,6 @@ function CardSetNav(props: { currentCard: CardWithRelations }) {
         .filter(
           and([
             filterBacksides,
-            (card) => !card.hidden,
             (card) => {
               if (targetPack.reprint && targetPack.reprint?.type !== "rcore") {
                 const cardPack = metadata.packs[card.pack_code];
