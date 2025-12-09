@@ -221,7 +221,6 @@ function query(config: Config) {
         pack_position
         permanent
         position
-        preview
         quantity
         real_back_flavor
         real_back_name
