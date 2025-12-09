@@ -566,7 +566,7 @@
     "code": "12073",
     "cost": 2,
     "deck_limit": 2,
-    "duplicate_of": "08073",
+    "reprint_of": "08073",
     "faction_code": "survivor",
     "illustrator": "Duallbrush",
     "name": "Bandages",
