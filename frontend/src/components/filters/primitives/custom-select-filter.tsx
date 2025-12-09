@@ -12,15 +12,17 @@ type Props = {
   renderOption: (option: Item | undefined) => React.ReactNode;
   title: string;
   value: string;
-};
+} & Omit<React.ComponentProps<"div">, "id">;
 
 export function CustomSelectFilter(props: Props) {
-  const { changes, id, options, renderOption, open, title, value } = props;
+  const { changes, id, options, renderOption, open, title, value, ...rest } =
+    props;
 
   const { onReset, onOpenChange, onChange } = useFilterCallbacks<string>(id);
 
   return (
     <FilterContainer
+      {...rest}
       changes={changes}
       onOpenChange={onOpenChange}
       onReset={onReset}

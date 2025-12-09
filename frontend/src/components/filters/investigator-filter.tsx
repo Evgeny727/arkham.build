@@ -86,6 +86,7 @@ export function InvestigatorFilter({
   return (
     <CustomSelectFilter
       changes={changes}
+      data-testid="investigator-filter"
       id={id}
       open={filter.open}
       options={options}

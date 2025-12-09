@@ -120,6 +120,7 @@ export function CustomSelect(props: Props) {
       <button
         {...getReferenceProps()}
         className={css["control"]}
+        data-testid="custom-select-control"
         ref={refs.setReference}
         type="button"
       >
@@ -154,6 +155,7 @@ export function CustomSelect(props: Props) {
                           },
                         })}
                         activeIndex={activeIndex}
+                        data-testid={`custom-select-option-${item.value}`}
                         key={item.value}
                         item={item}
                         itemToString={itemToString}
