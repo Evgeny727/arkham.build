@@ -56,7 +56,7 @@ export function cardToApiFormat(
 
   return mode === "patch"
     ? (Object.fromEntries(
-        Object.entries(fullCard).filter(([_, value]) => value != null),
+        Object.entries(fullCard).filter(([_, value]) => value !== undefined),
       ) as ApiCard)
     : fullCard;
 }
