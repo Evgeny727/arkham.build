@@ -12,7 +12,6 @@ import {
 } from "@floating-ui/react";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import { assert } from "@/utils/assert";
 import { FLOATING_PORTAL_ID } from "@/utils/constants";
 import { cx } from "@/utils/cx";
 import css from "./custom-select.module.css";
@@ -21,7 +20,7 @@ import { Scroller } from "./scroller";
 
 type Value = string;
 
-type Item = {
+export type Item = {
   label: string;
   value: Value;
 };
@@ -32,10 +31,11 @@ type Props = {
   items: Item[];
   itemToString?: (item: Item) => string;
   initialOpen?: boolean;
+  menuClassName?: string;
   onOpenChange?: (open: boolean) => void;
   onValueChange: (value: Value) => void;
-  renderItem?: (item: Item) => React.ReactNode;
-  renderControl?: (item: Item) => React.ReactNode;
+  renderItem?: (item: Item | undefined) => React.ReactNode;
+  renderControl?: (item: Item | undefined) => React.ReactNode;
   value: Value;
   variant?: "compact";
 };
@@ -47,6 +47,7 @@ export function CustomSelect(props: Props) {
     initialOpen,
     items,
     itemToString = defaultItemToString,
+    menuClassName,
     onValueChange,
     renderControl,
     renderItem = defaultRenderItem,
@@ -59,11 +60,6 @@ export function CustomSelect(props: Props) {
 
   const selectedIndex = items.findIndex((item) => item.value === value);
   const selectedItem = items[selectedIndex];
-
-  assert(
-    selectedItem,
-    `[Select] item for selected value "${value}" does not exist`,
-  );
 
   const { refs, floatingStyles, context } = usePopover({
     placement: "bottom",
@@ -138,7 +134,7 @@ export function CustomSelect(props: Props) {
               style={floatingStyles}
               {...getFloatingProps()}
             >
-              <div className={css["menu"]}>
+              <div className={cx(css["menu"], menuClassName)}>
                 <Scroller>
                   <FloatingList elementsRef={elementsRef} labelsRef={labelsRef}>
                     {items.map((item, index) => (

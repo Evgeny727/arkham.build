@@ -1211,7 +1211,7 @@
         "title": "Illustrator"
       },
       "investigator": {
-        "placeholder": "Select investigators...",
+        "placeholder": "Any investigator",
         "title": "Investigator"
       },
       "investigator_card_access": {
