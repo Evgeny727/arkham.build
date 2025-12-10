@@ -167,7 +167,7 @@
     .image
     :where([data-component="card-scan"], [data-component="card-thumbnail"]) {
     max-width: 100%;
-    width: min(16rem, 100%);
+    width: 100%;
     height: auto;
   }
 
@@ -176,7 +176,7 @@
     .image
     :where([data-component="card-scan"], [data-component="card-thumbnail"]) {
     max-width: 100%;
-    width: min(20rem, 100%);
+    width: 100%;
     height: auto;
   }
 
