@@ -160,6 +160,7 @@ const JsonDataCardSchema = z.object({
   back_name: z.string().nullish(),
   back_subname: z.string().nullish(),
   back_text: z.string().nullish(),
+  back_type: z.string().nullish(),
   back_traits: z.string().nullish(),
   bonded_count: z.number().nullish(),
   bonded_to: z.string().nullish(),
