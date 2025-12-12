@@ -101,6 +101,7 @@ export type CustomizationOption = z.infer<typeof CustomizationOptionSchema>;
 const AtLeastSchema = z.object({
   factions: z.number().nullish(),
   min: z.number(),
+  traits: z.number().nullish(),
   types: z.number().nullish(),
 });
 
