@@ -215,7 +215,7 @@
     "code": "12024",
     "cost": 2,
     "deck_limit": 2,
-    "duplicate_of": "04103",
+    "reprint_of": "04103",
     "faction_code": "guardian",
     "illustrator": "Andreia Ugrai",
     "name": "Scene of the Crime",
