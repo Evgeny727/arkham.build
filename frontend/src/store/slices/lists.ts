@@ -3,6 +3,7 @@ import { assert } from "@/utils/assert";
 import { DEFAULT_LIST_SORT_ID, SPECIAL_CARD_CODES } from "@/utils/constants";
 import type { Filter } from "@/utils/fp";
 import { and, not } from "@/utils/fp";
+import { parse as parseBuildQl } from "../lib/buildql/parser";
 import {
   filterBacksides,
   filterEncounterCards,
@@ -10,6 +11,7 @@ import {
   filterType,
 } from "../lib/filtering";
 import type { Card } from "../schemas/card.schema";
+import { selectBuildQlInterpreter } from "../selectors/shared";
 import type { StoreState } from ".";
 import {
   isAssetFilter,
@@ -68,6 +70,7 @@ function getInitialList() {
 
 export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
   set,
+  get,
 ) => ({
   activeList: getInitialList(),
   lists: {},
@@ -365,25 +368,57 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
   },
 
   setSearchFlag(flag, value) {
-    set((state) => {
-      assert(state.activeList, "no active list is defined.");
+    let state = get();
 
-      const list = state.lists[state.activeList];
-      assert(list, `list ${state.activeList} not defined.`);
+    assert(state.activeList, "no active list is defined.");
+    const activeList = state.activeList;
 
-      return {
-        lists: {
-          ...state.lists,
-          [state.activeList]: {
-            ...list,
-            search: {
-              ...list.search,
-              [flag]: value,
-            },
+    let list = state.lists[state.activeList];
+    assert(list, `list ${state.activeList} not defined.`);
+
+    set((state) => ({
+      lists: {
+        ...state.lists,
+        [activeList]: {
+          ...list,
+          search: {
+            ...list.search,
+            [flag]: value,
           },
         },
-      };
-    });
+      },
+    }));
+
+    if (list.search.mode === "buildql") {
+      state = get();
+
+      list = state.lists[activeList];
+      assert(list, `list ${activeList} not defined.`);
+
+      const interpreter = selectBuildQlInterpreter(state);
+
+      let buildQlSearch: Filter | undefined;
+      try {
+        const filter = interpreter.evaluate(parseBuildQl(list.search.value));
+        filter({} as Card);
+        buildQlSearch = filter;
+      } catch {}
+
+      if (buildQlSearch) {
+        set((state) => ({
+          lists: {
+            ...state.lists,
+            [activeList]: {
+              ...list,
+              search: {
+                ...list.search,
+                buildQlSearch,
+              },
+            },
+          },
+        }));
+      }
+    }
   },
 
   setSearchValue(value) {
@@ -393,6 +428,20 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       const list = state.lists[state.activeList];
       assert(list, `list ${state.activeList} not defined.`);
 
+      const interpreter = selectBuildQlInterpreter(state);
+
+      let buildQlSearch: Filter | undefined;
+      try {
+        const filter = interpreter.evaluate(parseBuildQl(value));
+        filter({} as Card);
+        buildQlSearch = filter;
+      } catch {}
+
+      const isBuildQl =
+        value && (list.search.mode === "buildql" || !!buildQlSearch);
+
+      const mode = isBuildQl ? "buildql" : "simple";
+
       return {
         lists: {
           ...state.lists,
@@ -400,6 +449,11 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
             ...list,
             search: {
               ...list.search,
+              mode,
+              buildQlSearch:
+                isBuildQl && !buildQlSearch
+                  ? list.search.buildQlSearch
+                  : buildQlSearch,
               value,
             },
           },
@@ -514,6 +568,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
         systemFilter: and([...SYSTEM_FILTERS]),
         search: {
           value: opts.search ?? "",
+          mode: "simple",
           includeBacks: false,
           includeFlavor: false,
           includeGameText: false,
@@ -537,6 +592,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
 function makeSearch(): Search {
   return {
     value: "",
+    mode: "simple",
     includeBacks: false,
     includeFlavor: false,
     includeGameText: false,

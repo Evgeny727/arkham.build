@@ -683,7 +683,6 @@ const selectBaseListCards = createSelector(
 export const selectListCards = createSelector(
   selectMetadata,
   selectLookupTables,
-  (state: StoreState) => state.settings,
   selectActiveList,
   selectBaseListCards,
   selectLocaleSortingCollator,
@@ -697,7 +696,6 @@ export const selectListCards = createSelector(
   (
     metadata,
     lookupTables,
-    settings,
     activeList,
     _filteredCards,
     sortingCollator,
@@ -724,13 +722,18 @@ export const selectListCards = createSelector(
     }
 
     // apply search after initial filtering to cut down on search operations.
-    if (activeList.search.value) {
-      filteredCards = applySearch(
-        activeList.search,
-        filteredCards,
-        metadata,
-        settings.locale,
-      );
+    const search = activeList.search;
+
+    if (search.value) {
+      if (search.mode === "buildql") {
+        if (search.buildQlSearch) {
+          try {
+            filteredCards = filteredCards.filter(search.buildQlSearch);
+          } catch {}
+        }
+      } else {
+        filteredCards = applySearch(activeList.search, filteredCards, metadata);
+      }
     }
 
     // this is the count of cards that a search would have matched before user filters are taken into account.
