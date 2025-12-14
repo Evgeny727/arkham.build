@@ -129,9 +129,9 @@ export async function search(db: Database, search: DecklistSearchRequest) {
         "arkhamdb_user.reputation as user_reputation",
         "investigator.faction_code as investigator_faction_code",
         sql<number>`
+          CASE WHEN arkhamdb_decklist.like_count >= 10 THEN 1 ELSE 0 END +
           (LN(arkhamdb_decklist.like_count + 1) / LN(arkhamdb_ranking_cache.max_like_count + 1)) * 0.6 +
-          EXP(-0.01 * EXTRACT(EPOCH FROM (CURRENT_DATE - arkhamdb_decklist.date_creation)) / 86400) * 0.2 +
-          (LN(arkhamdb_user.reputation + 1) / LN(arkhamdb_ranking_cache.max_reputation + 1)) * 0.2
+          EXP(-0.004 * GREATEST(0, EXTRACT(EPOCH FROM (CURRENT_DATE - arkhamdb_decklist.date_creation)) / 86400 - 30)) * 0.4
         `.as("ranking_score"),
       ])
       .orderBy(

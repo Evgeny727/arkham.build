@@ -16,7 +16,7 @@
     "generate:database-types": "kysely-codegen --out-file src/db/schema.types.ts",
     "ingest": "npm run ingest:metadata && npm run ingest:arkhamdb-decklists",
     "ingest:metadata": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=../.env src/scripts/ingest-metadata.ts",
-    "ingest:arkhamdb-decklists": "node --experimental-strip-types --env-file-if-exists=../.env src/scripts/ingest-arkhamdb-decklists.ts",
+    "ingest:arkhamdb-decklists": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=../.env src/scripts/ingest-arkhamdb-decklists.ts",
     "lint": "biome check",
     "start": "node --experimental-strip-types src/main.ts",
     "test": "vitest"
