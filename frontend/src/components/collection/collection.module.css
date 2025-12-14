@@ -1,5 +1,9 @@
 .collection-label {
   font-size: var(--text-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .container {

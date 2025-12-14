@@ -1,10 +1,9 @@
 import {
-  BarChart3Icon,
   BookOpenTextIcon,
   CircleHelpIcon,
   InfoIcon,
   KeyboardIcon,
-  ScrollTextIcon,
+  NewspaperIcon,
 } from "lucide-react";
 import { Fragment, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -257,6 +256,20 @@ export function HelpMenu() {
         </PopoverTrigger>
         <PopoverContent>
           <DropdownMenu>
+            <Link asChild href="~/rules">
+              <DropdownButton as="a" data-testid="masthead-rules">
+                <BookOpenTextIcon /> {t("rules.title")}
+              </DropdownButton>
+            </Link>
+            <hr />
+            <DropdownButton
+              className={css["action-shortcuts"]}
+              hotkey="?"
+              onClick={toggleKeyboardShortcuts}
+            >
+              <KeyboardIcon /> {t("help.shortcuts.title")}
+            </DropdownButton>
+            <hr />
             <Link asChild href="~/about">
               <DropdownButton
                 as="a"
@@ -272,25 +285,9 @@ export function HelpMenu() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <ScrollTextIcon /> {t("help.changelog")}
+              <NewspaperIcon /> {t("help.changelog")}
             </DropdownButton>
-            <Link asChild href="~/collection-stats">
-              <DropdownButton as="a" variant="bare" size="full">
-                <BarChart3Icon /> {t("help.collection_stats")}
-              </DropdownButton>
-            </Link>
-            <DropdownButton
-              className={css["action-shortcuts"]}
-              hotkey="?"
-              onClick={toggleKeyboardShortcuts}
-            >
-              <KeyboardIcon /> {t("help.shortcuts.title")}
-            </DropdownButton>
-            <Link asChild href="~/rules">
-              <DropdownButton as="a" data-testid="masthead-rules">
-                <BookOpenTextIcon /> {t("rules.title")}
-              </DropdownButton>
-            </Link>
+            <hr />
             <Socials className={css["socials"]} />
           </DropdownMenu>
         </PopoverContent>

@@ -22,7 +22,7 @@ function CollectionStats() {
             <Trans
               i18nKey="collection_stats.description"
               t={t}
-              components={{ a: <Link href="/settings" /> }}
+              components={{ a: <Link href="/settings?tab=collection" /> }}
             />
           </p>
           <blockquote>

@@ -88,7 +88,7 @@
     "collection_stats": {
       "counts": "You own <strong>{{player_count}}</strong> player and <strong>{{encounter_count}}</strong> encounter cards.",
       "description": "This page displays your collection and card counts based on your collection settings. To update your collection settings, visit the <a>Settings</a> page.",
-      "title": "Collection stats",
+      "title": "Collection card counts",
       "tooltip_count_encounter": "Total number of encounter cards in {{type}}",
       "tooltip_count_player": "Total number of player cards in {{type}}"
     },
@@ -1277,7 +1277,6 @@
     "help": {
       "about": "About this site",
       "changelog": "Changelog",
-      "collection_stats": "Collection stats",
       "shortcuts": {
         "group_card_list": "Card list",
         "group_card_list_search": "Card list (search focused)",

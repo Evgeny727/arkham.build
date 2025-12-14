@@ -1,5 +1,7 @@
+import { BarChart3Icon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "wouter";
 import PackIcon from "@/components/icons/pack-icon";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { useStore } from "@/store";
@@ -10,6 +12,7 @@ import { official } from "@/utils/card-utils";
 import { CYCLES_WITH_STANDALONE_PACKS } from "@/utils/constants";
 import { displayPackName } from "@/utils/formatting";
 import { isEmpty } from "@/utils/is-empty";
+import { Button } from "../ui/button";
 import { MediaCard } from "../ui/media-card";
 import css from "./collection.module.css";
 import { CollectionCount } from "./collection-count";
@@ -92,6 +95,13 @@ export function CollectionSettings(props: Props) {
     <Field bordered>
       <FieldLabel className={css["collection-label"]} htmlFor="collection">
         <strong>{t("settings.collection.card_collection")}</strong>
+        {!canShowCounts && (
+          <Link asChild href="~/collection-stats">
+            <Button as="a" variant="bare">
+              <BarChart3Icon /> {t("collection_stats.title")}
+            </Button>
+          </Link>
+        )}
       </FieldLabel>
       <fieldset
         className={css["container"]}
