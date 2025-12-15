@@ -2,7 +2,11 @@ name: "[Frontend] Deploy to Cloudflare Pages"
 
 on:
   workflow_dispatch:
-  workflow_call:
+  workflow_run:
+    workflows: ["[Backend] Deploy"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
   deploy:
