@@ -33,3 +33,7 @@ jobs:
           INGEST_URL_METADATA: ${{ secrets.INGEST_URL_METADATA }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: kamal deploy
+
+  deploy-frontend:
+    needs: deploy
+    uses: ./.github/workflows/frontend-deploy.yml
