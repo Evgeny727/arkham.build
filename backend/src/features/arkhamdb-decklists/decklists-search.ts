@@ -131,7 +131,7 @@ export async function search(db: Database, search: DecklistSearchRequest) {
         sql<number>`
           CASE WHEN arkhamdb_decklist.like_count >= 10 THEN 1 ELSE 0 END +
           (LN(arkhamdb_decklist.like_count + 1) / LN(arkhamdb_ranking_cache.max_like_count + 1)) * 0.6 +
-          EXP(-0.004 * GREATEST(0, EXTRACT(EPOCH FROM (CURRENT_DATE - arkhamdb_decklist.date_creation)) / 86400 - 30)) * 0.4
+          EXP(-0.006 * GREATEST(0, EXTRACT(EPOCH FROM (CURRENT_DATE - arkhamdb_decklist.date_creation)) / 86400 - 30)) * 0.4
         `.as("ranking_score"),
       ])
       .orderBy(
