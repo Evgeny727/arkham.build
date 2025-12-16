@@ -43,7 +43,7 @@ export function CardTabooText(props: Props) {
               />
             }
           >
-            <p>
+            <div>
               <i className="icon-tablet color-taboo icon-text" />{" "}
               {t("common.taboo")} <br />
               {textTransformed ? (
@@ -62,7 +62,7 @@ export function CardTabooText(props: Props) {
                   />
                 </p>
               )}
-            </p>
+            </div>
           </DefaultTooltip>
           {textTransformed &&
             showOriginalText &&
