@@ -343,38 +343,24 @@ export class Interpreter {
     // Number fields can have string-like values, or be null (* / - / ?)
     // Check if we have a mixed comparison first as `null` maps to `-`.
 
-    if (left != null && typeof left !== "string" && typeof right === "string") {
+    if (fieldType === "number" && typeof right === "string") {
       try {
         const rightNum = this.toNumber(right);
         return left === rightNum;
       } catch {}
-    }
-
-    if (
-      right != null &&
-      typeof right !== "string" &&
-      typeof left === "string"
-    ) {
+    } else if (fieldType === "number" && typeof left === "string") {
       try {
         const leftNum = this.toNumber(left);
         return leftNum === right;
       } catch {}
     }
 
-    // In the context of the card data, null and empty string are equivalent
-
-    if (left == null || right == null || left === "" || right === "") {
-      // biome-ignore lint/suspicious/noDoubleEquals: null check.
-      return (left || null) == (right || null);
-    }
-
-    if (typeof left === "boolean" || typeof right === "boolean") {
-      // biome-ignore lint/suspicious/noDoubleEquals: intentional
-      return !!left == !!right;
-    }
-
     if (typeof left === "number" && typeof right === "number") {
       return left === right;
+    }
+
+    if (typeof left === "boolean" && typeof right === "boolean") {
+      return !!left === !!right;
     }
 
     if (typeof left === "string" && typeof right === "string") {
@@ -412,6 +398,14 @@ export class Interpreter {
       }
 
       return normalizedLeft === normalizedRight;
+    }
+
+    // In the context of the card data, null and empty string are equivalent
+
+    if (left == null || right == null || left === "" || right === "") {
+      const l = left === "" ? null : (left ?? null);
+      const r = right === "" ? null : (right ?? null);
+      return l === r;
     }
 
     return false;
