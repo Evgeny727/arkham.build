@@ -50,6 +50,10 @@ export class Interpreter {
         return this.evaluateLiteral(expr);
       }
 
+      case "REGEX": {
+        throw new InterpreterError("Regex cannot be evaluated as boolean");
+      }
+
       case "IDENTIFIER": {
         return this.evaluateIdentifier(expr, card);
       }
@@ -230,10 +234,14 @@ export class Interpreter {
     return !!value;
   }
 
-  private getValue(expr: Expr, card: Card): FieldValue {
+  private getValue(expr: Expr, card: Card): FieldValue | RegExp {
     switch (expr.type) {
       case "LITERAL": {
         return expr.value;
+      }
+
+      case "REGEX": {
+        return new RegExp(expr.pattern, "iu");
       }
 
       case "IDENTIFIER": {
@@ -295,7 +303,7 @@ export class Interpreter {
     }
   }
 
-  private getList(expr: Expr, card: Card): FieldValue[] {
+  private getList(expr: Expr, card: Card): (FieldValue | RegExp)[] {
     if (expr.type !== "LIST") {
       throw new InterpreterError("Expected list expression");
     }
@@ -323,8 +331,8 @@ export class Interpreter {
   }
 
   private equals(
-    left: FieldValue,
-    right: FieldValue,
+    left: FieldValue | RegExp,
+    right: FieldValue | RegExp,
     mode: "strict" | "loose",
     fieldType: FieldType | "unknown",
   ): boolean {
@@ -338,6 +346,20 @@ export class Interpreter {
 
     if (Array.isArray(right)) {
       return right.some((val) => this.equals(left, val, mode, fieldType));
+    }
+
+    if (right instanceof RegExp) {
+      if (typeof left === "string") {
+        return right.test(left);
+      }
+      return false;
+    }
+
+    if (left instanceof RegExp) {
+      if (typeof right === "string") {
+        return left.test(right);
+      }
+      return false;
     }
 
     // Number fields can have string-like values, or be null (* / - / ?)
@@ -412,16 +434,16 @@ export class Interpreter {
   }
 
   private strictEquals(
-    left: FieldValue,
-    right: FieldValue,
+    left: FieldValue | RegExp,
+    right: FieldValue | RegExp,
     fieldType: FieldType | "unknown",
   ): boolean {
     return this.equals(left, right, "strict", fieldType);
   }
 
   private looseEquals(
-    left: FieldValue,
-    right: FieldValue,
+    left: FieldValue | RegExp,
+    right: FieldValue | RegExp,
     fieldType: FieldType | "unknown",
   ): boolean {
     return this.equals(left, right, "loose", fieldType);
@@ -431,7 +453,11 @@ export class Interpreter {
     return str.toLocaleLowerCase().trim();
   }
 
-  private toNumber(value: FieldValue): number | null {
+  private toNumber(value: FieldValue | RegExp): number | null {
+    if (value instanceof RegExp) {
+      throw new InterpreterError("Cannot convert regex to number");
+    }
+
     if (typeof value === "number") return value;
 
     if (typeof value === "string") {

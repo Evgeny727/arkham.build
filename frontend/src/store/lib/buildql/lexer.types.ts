@@ -4,6 +4,7 @@ export type TokenType =
   | "NULL"
   | "NUMBER"
   | "STRING"
+  | "REGEX"
   | "IDENTIFIER"
   | "STRICT_EQ"
   | "LOOSE_EQ"

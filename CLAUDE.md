@@ -4,6 +4,7 @@ This document contains critical information about working with this codebase. Fo
 
 ## Core Development Rules
 
+- Always check types, lint, test and format before marking a task as completed.
 - Add comments sparsely, and focus on comments that explain the _WHY_ behind code. Don't add comments that explain the following passage of code.
 
 ## Repository structure

@@ -191,6 +191,44 @@ describe("Lexer", () => {
         }
       `);
     });
+
+    it("tokenizes regex literals", () => {
+      const tokens = tokenize("/test/");
+      expect(prepareSnapshot(tokens)[0]).toMatchInlineSnapshot(`
+        {
+          "lexeme": "/test/",
+          "type": "REGEX",
+          "value": "test",
+        }
+      `);
+    });
+
+    it("tokenizes regex with escaped characters", () => {
+      const tokens = tokenize("/\\d+ damage/");
+      expect(prepareSnapshot(tokens)[0]).toMatchInlineSnapshot(`
+        {
+          "lexeme": "/\\d+ damage/",
+          "type": "REGEX",
+          "value": "\\d+ damage",
+        }
+      `);
+    });
+
+    it("tokenizes regex with escaped forward slash", () => {
+      const tokens = tokenize("/test\\/path/");
+      expect(prepareSnapshot(tokens)[0]).toMatchInlineSnapshot(`
+        {
+          "lexeme": "/test\\/path/",
+          "type": "REGEX",
+          "value": "test\\/path",
+        }
+      `);
+    });
+
+    it("throws on unterminated regex", () => {
+      expect(() => tokenize("/test")).toThrow(LexerError);
+      expect(() => tokenize("/test")).toThrow("Unterminated regex literal");
+    });
   });
 
   describe("identifiers", () => {
@@ -465,17 +503,6 @@ describe("Lexer", () => {
         {
           "lexeme": "*",
           "type": "MULTIPLY",
-          "value": null,
-        }
-      `);
-    });
-
-    it("tokenizes divide (/)", () => {
-      const tokens = tokenize("/");
-      expect(prepareSnapshot(tokens)[0]).toMatchInlineSnapshot(`
-        {
-          "lexeme": "/",
-          "type": "DIVIDE",
           "value": null,
         }
       `);
@@ -930,6 +957,158 @@ describe("Lexer", () => {
             "lexeme": "3",
             "type": "NUMBER",
             "value": 3,
+          },
+          {
+            "lexeme": "",
+            "type": "EOF",
+            "value": null,
+          },
+        ]
+      `);
+    });
+
+    it("distinguishes division operator from regex", () => {
+      const tokens = tokenize("health /sanity");
+      expect(prepareSnapshot(tokens)).toMatchInlineSnapshot(`
+        [
+          {
+            "lexeme": "health",
+            "type": "IDENTIFIER",
+            "value": "health",
+          },
+          {
+            "lexeme": "/",
+            "type": "DIVIDE",
+            "value": null,
+          },
+          {
+            "lexeme": "sanity",
+            "type": "IDENTIFIER",
+            "value": "sanity",
+          },
+          {
+            "lexeme": "",
+            "type": "EOF",
+            "value": null,
+          },
+        ]
+      `);
+    });
+
+    it("parses regex after comparison operator", () => {
+      const tokens = tokenize("name = /test/");
+      expect(prepareSnapshot(tokens)).toMatchInlineSnapshot(`
+        [
+          {
+            "lexeme": "name",
+            "type": "IDENTIFIER",
+            "value": "name",
+          },
+          {
+            "lexeme": "=",
+            "type": "LOOSE_EQ",
+            "value": null,
+          },
+          {
+            "lexeme": "/test/",
+            "type": "REGEX",
+            "value": "test",
+          },
+          {
+            "lexeme": "",
+            "type": "EOF",
+            "value": null,
+          },
+        ]
+      `);
+    });
+
+    it("parses regex in list context", () => {
+      const tokens = tokenize("name ? [/^a/, /^the/]");
+      expect(prepareSnapshot(tokens)).toMatchInlineSnapshot(`
+        [
+          {
+            "lexeme": "name",
+            "type": "IDENTIFIER",
+            "value": "name",
+          },
+          {
+            "lexeme": "?",
+            "type": "LOOSE_CONTAINS",
+            "value": null,
+          },
+          {
+            "lexeme": "[",
+            "type": "LBRACKET",
+            "value": null,
+          },
+          {
+            "lexeme": "/^a/",
+            "type": "REGEX",
+            "value": "^a",
+          },
+          {
+            "lexeme": ",",
+            "type": "COMMA",
+            "value": null,
+          },
+          {
+            "lexeme": "/^the/",
+            "type": "REGEX",
+            "value": "^the",
+          },
+          {
+            "lexeme": "]",
+            "type": "RBRACKET",
+            "value": null,
+          },
+          {
+            "lexeme": "",
+            "type": "EOF",
+            "value": null,
+          },
+        ]
+      `);
+    });
+
+    it("handles division in arithmetic expression", () => {
+      const tokens = tokenize("(health + sanity) / 2");
+      expect(prepareSnapshot(tokens)).toMatchInlineSnapshot(`
+        [
+          {
+            "lexeme": "(",
+            "type": "LPAREN",
+            "value": null,
+          },
+          {
+            "lexeme": "health",
+            "type": "IDENTIFIER",
+            "value": "health",
+          },
+          {
+            "lexeme": "+",
+            "type": "PLUS",
+            "value": null,
+          },
+          {
+            "lexeme": "sanity",
+            "type": "IDENTIFIER",
+            "value": "sanity",
+          },
+          {
+            "lexeme": ")",
+            "type": "RPAREN",
+            "value": null,
+          },
+          {
+            "lexeme": "/",
+            "type": "DIVIDE",
+            "value": null,
+          },
+          {
+            "lexeme": "2",
+            "type": "NUMBER",
+            "value": 2,
           },
           {
             "lexeme": "",

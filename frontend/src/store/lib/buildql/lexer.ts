@@ -15,6 +15,7 @@ class Lexer {
   private position = 0;
   private line = 1;
   private column = 1;
+  private lastTokenType: TokenType | null = null;
 
   constructor(input: string) {
     this.input = input;
@@ -26,7 +27,9 @@ class Lexer {
     while (!this.isAtEnd()) {
       this.skipWhitespace();
       if (!this.isAtEnd()) {
-        tokens.push(this.nextToken());
+        const token = this.nextToken();
+        tokens.push(token);
+        this.lastTokenType = token.type;
       }
     }
 
@@ -39,6 +42,12 @@ class Lexer {
 
     if (char === '"' || char === "'") {
       return this.readString(char);
+    }
+
+    if (char === "/") {
+      if (this.shouldParseRegex()) {
+        return this.readRegex();
+      }
     }
 
     if (this.isDigit(char)) {
@@ -54,6 +63,33 @@ class Lexer {
     }
 
     return this.readOperator();
+  }
+
+  private shouldParseRegex(): boolean {
+    // Regex can only appear in value position, which is after:
+    // - Comparison operators (=, ==, !=, !==, ?, ??, !?, !??)
+    // - Opening bracket [ (for lists)
+    // - Comma , (in lists)
+    // - Start of input (null)
+
+    if (this.lastTokenType === null) {
+      return true;
+    }
+
+    const regexContextTokens: TokenType[] = [
+      "LOOSE_EQ",
+      "STRICT_EQ",
+      "NOT_EQ",
+      "STRICT_NOT_EQ",
+      "LOOSE_CONTAINS",
+      "STRICT_CONTAINS",
+      "LOOSE_NOT_CONTAINS",
+      "STRICT_NOT_CONTAINS",
+      "LBRACKET",
+      "COMMA",
+    ];
+
+    return regexContextTokens.includes(this.lastTokenType);
   }
 
   private readString(quote: '"' | "'"): Token {
@@ -107,6 +143,39 @@ class Lexer {
       type: "STRING",
       lexeme,
       value,
+      span: { start: startPos, end: endPos },
+    };
+  }
+
+  private readRegex(): Token {
+    const startPos = this.currentPosition();
+    this.advance();
+
+    let pattern = "";
+
+    while (!this.isAtEnd() && this.peek() !== "/") {
+      if (this.peek() === "\\") {
+        pattern += this.advance();
+        if (!this.isAtEnd()) {
+          pattern += this.advance();
+        }
+      } else {
+        pattern += this.advance();
+      }
+    }
+
+    if (this.isAtEnd()) {
+      throw new LexerError("Unterminated regex literal", startPos);
+    }
+
+    this.advance();
+    const endPos = this.currentPosition();
+    const lexeme = this.input.slice(startPos.offset, endPos.offset);
+
+    return {
+      type: "REGEX",
+      lexeme,
+      value: pattern,
       span: { start: startPos, end: endPos },
     };
   }

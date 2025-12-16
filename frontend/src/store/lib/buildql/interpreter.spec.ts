@@ -309,4 +309,66 @@ describe("Interpreter", () => {
       ).toBe(true);
     });
   });
+
+  describe("Regex matching", () => {
+    test("regex matches with loose equals (=)", () => {
+      const expr = parse("name = /^test/");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ name: "Test Card" }))).toBe(true);
+      expect(filter(createMockCard({ name: "Another Test" }))).toBe(false);
+    });
+
+    test("regex with not equals (!=)", () => {
+      const expr = parse("name != /^test/");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ name: "Test Card" }))).toBe(false);
+      expect(filter(createMockCard({ name: "Another Card" }))).toBe(true);
+    });
+
+    test("regex is case-insensitive", () => {
+      const expr = parse("name = /test/");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ name: "Test Card" }))).toBe(true);
+      expect(filter(createMockCard({ name: "TEST CARD" }))).toBe(true);
+      expect(filter(createMockCard({ name: "Another Card" }))).toBe(false);
+    });
+
+    test("regex with alternation", () => {
+      const expr = parse("trait = /^(spell|ritual)$/");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ traits: "Spell." }))).toBe(true);
+      expect(filter(createMockCard({ traits: "Ritual." }))).toBe(true);
+      expect(filter(createMockCard({ traits: "Tactic." }))).toBe(false);
+    });
+
+    test("regex with contains operator (?)", () => {
+      const expr = parse("name ? [/^the/, /^a/]");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ name: "The Test" }))).toBe(true);
+      expect(filter(createMockCard({ name: "A Card" }))).toBe(true);
+      expect(filter(createMockCard({ name: "Another Test" }))).toBe(true);
+      expect(filter(createMockCard({ name: "Test" }))).toBe(false);
+    });
+
+    test("regex with digit class", () => {
+      const expr = parse("text = /\\d+ damage/");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ text: "Deal 3 damage" }))).toBe(true);
+      expect(filter(createMockCard({ text: "Deal damage" }))).toBe(false);
+    });
+
+    test("regex supports unicode", () => {
+      const expr = parse("name = /健康/");
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ name: "健康卡" }))).toBe(true);
+      expect(filter(createMockCard({ name: "Another Card" }))).toBe(false);
+    });
+  });
 });

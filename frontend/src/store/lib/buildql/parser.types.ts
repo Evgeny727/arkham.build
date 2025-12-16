@@ -1,6 +1,12 @@
 import type { Span } from "./lexer.types";
 
-export type NodeType = "BINARY" | "GROUP" | "LIST" | "LITERAL" | "IDENTIFIER";
+export type NodeType =
+  | "BINARY"
+  | "GROUP"
+  | "LIST"
+  | "LITERAL"
+  | "REGEX"
+  | "IDENTIFIER";
 
 export type BinaryOperator =
   | "=="
@@ -54,9 +60,15 @@ export interface IdentifierNode extends BaseNode {
   name: string;
 }
 
+export interface RegexNode extends BaseNode {
+  type: "REGEX";
+  pattern: string;
+}
+
 export type Expr =
   | BinaryNode
   | GroupNode
   | ListNode
   | LiteralNode
+  | RegexNode
   | IdentifierNode;

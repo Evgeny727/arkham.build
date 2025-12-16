@@ -15,16 +15,49 @@ Example: If the filters are set to only show player cards, queries will only ret
 - All string operations work on the raw ArkhamDB representation. HTML and icons are not interpolated.
 - All string and text operations are case-insensitive.
 - A localized application matches on the localized text by default.
-- String parameters need to be quoted with either `""` or `''`. Unquoted strings are treated as identifiers, meaning they lookup another field. Example: `"agility"` and `'agility'` would look for the string "agility" while `agility` would reference the value of the agility field.
+
+## Parameter types
+
+### Boolean
+
+Possible values are `true` and `false`. `null` is coerced to `false`.
+
+### Number
+
+Possible values are numeric, `null` or one of `*`, `?`, `x` or `-`. For arithmetic operations, strings are cast as follows:
+
+- `-` => null
+- `x`=> -2
+- `*` => -3
+- `?` => -4
+
+### String
+
+There are two different string types: `string` and `text`. These differ in how the equality checks operate (see below). String can be checked against other strings, `null` or a regular expression.
+
+String parameters need to be quoted with either `""` or `''`. Unquoted strings are treated as identifiers, meaning they lookup another field. Example: `"agility"` and `'agility'` would look for the string "agility" while `agility` would reference the value of the agility field.
+
+#### Regular expressions
+
+In order to check against a regular expression, wrap the regular expression in `//` instead of quotes. Regular expressions use JavaScript regex syntax and are case-insensitive by default (matching the behavior of all string operations in BuildQL).
+
+Examples:
+```
+name = /^the/
+trait = /^(spell|ritual)$/
+text = /\d+ damage/
+```
+
+Regular expressions can be used with all string comparison operators (`=`, `!=`, `?`, `?!`, `==`, `!==`, `??`, `??!`).
 
 ## Operators
 
 ### Equals (=)
 Equality operator. Applies the following:
-* `boolean`: true filters cards where attribute is true. false filters cards where attribute is false or null.
+* `boolean`: `true` filters cards where attribute is `true`. `false` filters cards where attribute is `false` or `null`.
 * `number`: Filters cards where attribute matches exactly.
 * `string`: Filters cards where attribute fuzzy matches the search string. This matches the current search implementation.
-* text: Filters cards where attribute fuzzy matches the search string. This matches the current search implementation.
+* `text`: Filters cards where attribute fuzzy matches the search string. This matches the current search implementation.
 
 ```
 bonded = true

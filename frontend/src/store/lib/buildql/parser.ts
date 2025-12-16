@@ -8,6 +8,7 @@ import type {
   IdentifierNode,
   ListNode,
   LiteralNode,
+  RegexNode,
 } from "./parser.types";
 
 export class ParserError extends Error {
@@ -136,6 +137,13 @@ export class Parser {
 
     if (this.match("STRING")) {
       return this.createLiteralNode(
+        this.previous().value as string,
+        this.previous().span,
+      );
+    }
+
+    if (this.match("REGEX")) {
+      return this.createRegexNode(
         this.previous().value as string,
         this.previous().span,
       );
@@ -285,6 +293,14 @@ export class Parser {
     return {
       type: "IDENTIFIER",
       name,
+      span,
+    };
+  }
+
+  private createRegexNode(pattern: string, span: Span): RegexNode {
+    return {
+      type: "REGEX",
+      pattern,
       span,
     };
   }
