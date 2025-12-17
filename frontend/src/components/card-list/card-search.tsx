@@ -8,6 +8,7 @@ import { debounce } from "@/utils/debounce";
 import { useAgathaEasterEggTrigger } from "@/utils/easter-egg-agatha";
 import { useHotkey } from "@/utils/use-hotkey";
 import { Checkbox } from "../ui/checkbox";
+import { ErrorBubble } from "../ui/error-bubble";
 import { SearchInput } from "../ui/search-input";
 import { Tag } from "../ui/tag";
 import { DefaultTooltip } from "../ui/tooltip";
@@ -125,7 +126,10 @@ export function CardSearch(props: Props) {
             tooltip={search.buildQlError?.message}
             options={{ paused: !search.buildQlError }}
           >
-            <Tag size="sm">BuildQL</Tag>
+            <Tag size="sm">
+              {!!search.buildQlError && <ErrorBubble />}
+              BuildQL
+            </Tag>
           </DefaultTooltip>
         )}
         <div className={css["flags-slot"]}>{slotFlags}</div>

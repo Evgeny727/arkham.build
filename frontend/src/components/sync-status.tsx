@@ -1,4 +1,4 @@
-import { CircleAlertIcon, RefreshCcwIcon } from "lucide-react";
+import { RefreshCcwIcon } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
@@ -10,6 +10,7 @@ import { formatProviderName } from "@/utils/formatting";
 import { isEmpty } from "@/utils/is-empty";
 import css from "./sync-status.module.css";
 import { Button } from "./ui/button";
+import { ErrorBubble } from "./ui/error-bubble";
 
 export function SyncStatus() {
   const [, navigate] = useLocation();
@@ -37,7 +38,7 @@ export function SyncStatus() {
 
   return (
     <Button
-      className={cx(css["sync"], !syncing && !healthy && css["unhealthy"])}
+      className={css["sync"]}
       disabled={syncing}
       onClick={onSyncButtonClick}
       tooltip={
@@ -53,13 +54,9 @@ export function SyncStatus() {
       }
       size="sm"
     >
+      {!syncing && !healthy && <ErrorBubble />}
       <RefreshCcwIcon className={cx(syncing && "spin")} />{" "}
       {t("settings.connections.sync")}
-      {!syncing && !healthy && (
-        <div className={css["unhealthy"]}>
-          <CircleAlertIcon />
-        </div>
-      )}
     </Button>
   );
 }
