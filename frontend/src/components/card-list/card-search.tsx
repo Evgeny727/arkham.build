@@ -10,6 +10,7 @@ import { useHotkey } from "@/utils/use-hotkey";
 import { Checkbox } from "../ui/checkbox";
 import { SearchInput } from "../ui/search-input";
 import { Tag } from "../ui/tag";
+import { DefaultTooltip } from "../ui/tooltip";
 import css from "./card-search.module.css";
 
 type Props = {
@@ -105,6 +106,7 @@ export function CardSearch(props: Props) {
         <div className={css["field"]}>
           <SearchInput
             data-testid="search-input"
+            error={search.buildQlError}
             id="card-search-input"
             label={t("lists.search.placeholder")}
             inputClassName={css["field-input"]}
@@ -118,7 +120,14 @@ export function CardSearch(props: Props) {
         {slotRight}
       </div>
       <div className={css["flags"]}>
-        {search.mode === "buildql" && <Tag size="sm">BuildQL</Tag>}
+        {search.mode === "buildql" && (
+          <DefaultTooltip
+            tooltip={search.buildQlError?.message}
+            options={{ paused: !search.buildQlError }}
+          >
+            <Tag size="sm">BuildQL</Tag>
+          </DefaultTooltip>
+        )}
         <div className={css["flags-slot"]}>{slotFlags}</div>
         {}
         {search.mode === "simple" && (

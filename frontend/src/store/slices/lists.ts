@@ -395,14 +395,10 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       list = state.lists[activeList];
       assert(list, `list ${activeList} not defined.`);
 
-      const interpreter = selectBuildQlInterpreter(state);
-
-      let buildQlSearch: Filter | undefined;
-      try {
-        const filter = interpreter.evaluate(parseBuildQl(list.search.value));
-        filter({} as Card);
-        buildQlSearch = filter;
-      } catch {}
+      const { filter: buildQlSearch, error: buildQlError } = evaluateBuildQl(
+        state,
+        list.search.value,
+      );
 
       if (buildQlSearch) {
         set((state) => ({
@@ -413,6 +409,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
               search: {
                 ...list.search,
                 buildQlSearch,
+                buildQlError,
               },
             },
           },
@@ -428,14 +425,10 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       const list = state.lists[state.activeList];
       assert(list, `list ${state.activeList} not defined.`);
 
-      const interpreter = selectBuildQlInterpreter(state);
-
-      let buildQlSearch: Filter | undefined;
-      try {
-        const filter = interpreter.evaluate(parseBuildQl(value));
-        filter({} as Card);
-        buildQlSearch = filter;
-      } catch {}
+      const { filter: buildQlSearch, error: buildQlError } = evaluateBuildQl(
+        state,
+        value,
+      );
 
       const isBuildQl =
         value && (list.search.mode === "buildql" || !!buildQlSearch);
@@ -450,6 +443,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
             search: {
               ...list.search,
               mode,
+              buildQlError: isBuildQl ? buildQlError : undefined,
               buildQlSearch:
                 isBuildQl && !buildQlSearch
                   ? list.search.buildQlSearch
@@ -588,6 +582,17 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
     });
   },
 });
+
+function evaluateBuildQl(state: StoreState, value: string) {
+  try {
+    const interpreter = selectBuildQlInterpreter(state);
+    const filter = interpreter.evaluate(parseBuildQl(value));
+    filter({} as Card); // test for runtime errors
+    return { filter, error: undefined };
+  } catch (err) {
+    return { filter: undefined, error: err as Error };
+  }
+}
 
 function makeSearch(): Search {
   return {

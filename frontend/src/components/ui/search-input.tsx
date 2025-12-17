@@ -6,6 +6,7 @@ import css from "./search-input.module.css";
 
 interface Props extends React.ComponentProps<"input"> {
   className?: string;
+  error?: Error;
   inputClassName?: string;
   label?: string;
   omitSearchIcon?: boolean;
@@ -18,6 +19,7 @@ export const SearchInput = forwardRef<HTMLInputElement, Props>(
   function SearchInput(
     {
       className,
+      error,
       inputClassName,
       id,
       label,
@@ -46,6 +48,7 @@ export const SearchInput = forwardRef<HTMLInputElement, Props>(
         className={cx(
           css["search"],
           !omitSearchIcon && css["has-icon"],
+          error && css["has-error"],
           className,
         )}
       >

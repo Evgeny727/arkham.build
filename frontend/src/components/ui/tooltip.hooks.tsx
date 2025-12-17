@@ -29,6 +29,7 @@ export interface TooltipOptions {
   placement?: Placement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  paused?: boolean;
 }
 
 export function useTooltip({
@@ -37,10 +38,11 @@ export function useTooltip({
   placement = "top",
   open: controlledOpen,
   onOpenChange,
+  paused,
 }: TooltipOptions = {}) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(initialOpen);
 
-  const open = controlledOpen ?? uncontrolledOpen;
+  const open = !paused && (controlledOpen ?? uncontrolledOpen);
 
   const setOpen = useCallback(
     (value: boolean) => {
@@ -73,7 +75,7 @@ export function useTooltip({
       close: 0,
     },
     move: false,
-    enabled: controlledOpen == null,
+    enabled: !paused && controlledOpen == null,
   });
 
   const dismiss = useDismiss(context);

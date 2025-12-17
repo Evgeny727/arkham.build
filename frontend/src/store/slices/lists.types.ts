@@ -110,6 +110,7 @@ export type FilterObject<K extends FilterKey> = {
 };
 
 export type Search = {
+  buildQlError?: Error;
   buildQlSearch?: Filter;
   includeBacks: boolean;
   includeFlavor: boolean;
