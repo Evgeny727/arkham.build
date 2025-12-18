@@ -92,12 +92,13 @@ export type DefaultTooltipProps = {
   className?: string;
   tooltip?: React.ReactNode;
   options?: TooltipOptions;
+  paused?: boolean;
 };
 
 export const DefaultTooltip = memo(function DefaultTooltip(
   props: DefaultTooltipProps,
 ) {
-  const { children, className, options, tooltip } = props;
+  const { children, className, options, paused, tooltip } = props;
 
   // we don't want to show tooltips on mobile.
   // on iOS, this leads to each button with a tooltip having to be clicked twice.
@@ -106,7 +107,11 @@ export const DefaultTooltip = memo(function DefaultTooltip(
   }
 
   return (
-    <Tooltip delay={200} {...options} paused={options?.paused || !tooltip}>
+    <Tooltip
+      delay={200}
+      {...options}
+      paused={paused || options?.paused || !tooltip}
+    >
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent className={className}>{tooltip}</TooltipContent>
     </Tooltip>
