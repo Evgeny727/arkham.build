@@ -10,6 +10,20 @@
   @media screen and (min-width: 28rem) {
     display: none;
   }
+
+  &.has-filtered {
+    position: relative;
+    &::after {
+      position: absolute;
+      content: "*";
+      top: 0;
+      right: -0.375rem;
+      color: var(--nord-9);
+      z-index: 2;
+      font-size: var(--text-2xs);
+      line-height: 1;
+    }
+  }
 }
 
 .cardlist-count-tooltip {

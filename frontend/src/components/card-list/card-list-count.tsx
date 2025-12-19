@@ -5,6 +5,7 @@ import {
   type ListState,
   selectActiveListChanges,
 } from "@/store/selectors/lists";
+import { cx } from "@/utils/cx";
 import { DefaultTooltip } from "../ui/tooltip";
 import css from "./card-list-count.module.css";
 
@@ -24,7 +25,12 @@ export function CardlistCount(props: { data: ListState | undefined }) {
 
   return (
     <>
-      <span className={css["cardlist-count-short"]}>
+      <span
+        className={cx(
+          css["cardlist-count-short"],
+          filteredCount > 0 && css["has-filtered"],
+        )}
+      >
         {t("lists.nav.card_count", { count })}
       </span>
       <span className={css["cardlist-count"]}>

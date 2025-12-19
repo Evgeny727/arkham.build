@@ -19,7 +19,8 @@
 
 .nav-jump {
   flex: 1 1 auto;
-  width: 10rem;
+  width: 7rem;
+  min-width: 7rem;
 }
 
 .nav-config {

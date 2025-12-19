@@ -599,7 +599,7 @@ const selectBaseListCards = createSelector(
       );
     }
 
-    const filters = [];
+    let filters = [];
 
     if (systemFilter) filters.push(systemFilter);
 
@@ -618,6 +618,27 @@ const selectBaseListCards = createSelector(
     if (deckInvestigatorFilter) {
       filters.push(deckInvestigatorFilter);
     }
+
+    if (filterValues) {
+      const cardTypeFilter = Object.values(filterValues).find(
+        (f) => f.type === "card_type",
+      );
+
+      if (cardTypeFilter) {
+        const value = cardTypeFilter.value as CardTypeFilter;
+
+        if (value === "player") {
+          filters.push(not(filterEncounterCards));
+        } else if (value === "encounter") {
+          filters.push(filterEncounterCards);
+        }
+      }
+    }
+
+    filteredCards = filteredCards.filter(and(filters));
+    const totalCardCount = filteredCards.length;
+
+    filters = [];
 
     if (filterValues) {
       const ownershipFilter = Object.values(filterValues).find(
@@ -642,20 +663,6 @@ const selectBaseListCards = createSelector(
         }
       }
 
-      const cardTypeFilter = Object.values(filterValues).find(
-        (f) => f.type === "card_type",
-      );
-
-      if (cardTypeFilter) {
-        const value = cardTypeFilter.value as CardTypeFilter;
-
-        if (value === "player") {
-          filters.push(not(filterEncounterCards));
-        } else if (value === "encounter") {
-          filters.push(filterEncounterCards);
-        }
-      }
-
       const fanMadeContentFilter = Object.values(filterValues).find(
         (f) => f.type === "fan_made_content",
       );
@@ -676,7 +683,7 @@ const selectBaseListCards = createSelector(
     }
 
     timeEnd("select_base_list_cards");
-    return filteredCards;
+    return { filteredCards, totalCardCount };
   },
 );
 
@@ -697,18 +704,20 @@ export const selectListCards = createSelector(
     metadata,
     lookupTables,
     activeList,
-    _filteredCards,
+    baseFilterResult,
     sortingCollator,
     deck,
     targetDeck,
     showUnusableCards,
   ) => {
-    if (!_filteredCards || !activeList) return undefined;
+    if (!baseFilterResult || !activeList) return undefined;
 
     time("select_list_cards");
-    let filteredCards = _filteredCards;
+    let filteredCards = baseFilterResult.filteredCards;
+    let totalCardCount = baseFilterResult.totalCardCount;
 
     // filter duplicates, taking into account the deck and list context.
+    const currentTotal = filteredCards.length;
     if (!showUnusableCards) {
       filteredCards = filteredCards.filter(
         filterDuplicatesFromContext(
@@ -719,6 +728,7 @@ export const selectListCards = createSelector(
           deck,
         ),
       );
+      totalCardCount -= currentTotal - filteredCards.length;
     }
 
     // apply search after initial filtering to cut down on search operations.
@@ -735,9 +745,6 @@ export const selectListCards = createSelector(
         filteredCards = applySearch(activeList.search, filteredCards, metadata);
       }
     }
-
-    // this is the count of cards that a search would have matched before user filters are taken into account.
-    const totalCardCount = filteredCards.length;
 
     // apply user filters.
     const userFilter = makeUserFilter(
@@ -821,7 +828,7 @@ export const selectListFilterProperties = createSelector(
   selectMetadata,
   selectLookupTables,
   selectBaseListCards,
-  (metadata, lookupTables, cards) => {
+  (metadata, lookupTables, baseFilterResult) => {
     time("select_card_list_properties");
 
     const actionTable = lookupTables.actions;
@@ -849,8 +856,8 @@ export const selectListFilterProperties = createSelector(
     const traits = new Set<string>();
     const types = new Set<string>();
 
-    if (cards) {
-      for (const card of cards) {
+    if (baseFilterResult?.filteredCards) {
+      for (const card of baseFilterResult.filteredCards) {
         if (card.type_code === "investigator") {
           investigators.add(card.code);
         }
@@ -936,7 +943,7 @@ export const selectListFilterProperties = createSelector(
       }
 
       for (const [key, table] of Object.entries(actionTable)) {
-        for (const card of cards) {
+        for (const card of baseFilterResult.filteredCards) {
           if (actions.has(key)) {
             break;
           }
