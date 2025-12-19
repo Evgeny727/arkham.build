@@ -801,7 +801,7 @@
       "collection_empty": "Collection empty",
       "connect_arkhamdb": "Connect to ArkhamDB",
       "count": "{{count}} decks",
-      "count_hidden": " ({{count}} hidden)",
+      "count_hidden": " ({{count}} filtered)",
       "deck_url_or_id": "Deck URL or ID",
       "delete_all": "Delete all local decks",
       "delete_all_confirm": "Are you sure you want to delete all local decks in your collection?",

@@ -548,5 +548,6 @@ export const selectDeckFilterChanges = createSelector(
   selectDeckPropertiesChanges,
   selectTagsChanges,
   selectDeckFactionChanges,
+  selectProviderChanges,
   (...changes) => changes.some((c) => c),
 );
