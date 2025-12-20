@@ -1,3 +1,4 @@
+import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import type { Card } from "../schemas/card.schema";
 import type { Metadata } from "../slices/metadata.types";
 import type { LookupTables } from "./lookup-tables.types";
@@ -11,6 +12,9 @@ export function ownedCardCount(
   showAllCards: boolean | undefined,
   strict = false,
 ) {
+  if (card.code === SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS)
+    return card.quantity;
+
   // Treat fan-made content as owned when not checking the pack filter.
   if (!card.official && !strict) return card.quantity;
 
