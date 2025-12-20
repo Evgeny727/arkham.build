@@ -1,4 +1,8 @@
-import { filterTag } from "@/store/lib/filtering";
+import {
+  filterInvestigatorAccess,
+  filterInvestigatorWeaknessAccess,
+  filterTag,
+} from "@/store/lib/filtering";
 import type { Card } from "@/store/schemas/card.schema";
 import {
   cardBackType,
@@ -205,6 +209,36 @@ const fieldDefinitions: FieldDefinition[] = [
     lookup: backResolver((card) => card.skill_intellect ?? 0),
     name: "intellect",
     type: "number",
+  },
+  {
+    aliases: ["ia"],
+    legacyAlias: "do",
+    lookup: () => (card, ctx, comparison) => {
+      const fieldValue = comparison?.otherValue;
+      if (!fieldValue || typeof fieldValue !== "string") return false;
+
+      const investigator = ctx.metadata.cards[fieldValue];
+      if (investigator?.type_code !== "investigator") return false;
+
+      const accessFilter = filterInvestigatorAccess(investigator, {
+        customizable: {
+          properties: "all",
+          level: "all",
+        },
+      });
+
+      if (!accessFilter) return false;
+
+      const weaknessFilter = filterInvestigatorWeaknessAccess(investigator);
+
+      if (accessFilter(card) || weaknessFilter(card)) {
+        return fieldValue;
+      }
+
+      return null;
+    },
+    name: "investigator_access",
+    type: "string",
   },
   {
     aliases: ["level", "lvl"],

@@ -371,4 +371,36 @@ describe("Interpreter", () => {
       expect(filter(createMockCard({ name: "Another Card" }))).toBe(false);
     });
   });
+
+  describe("Bidirectional comparison context", () => {
+    test("investigator_access field works with investigator code on left side", () => {
+      const expr = parse('investigator_access = "01001"');
+      const filter = compile(expr, ctx);
+
+      const rolandCard = createMockCard({
+        code: "01006",
+        name: ".45 Automatic",
+        type_code: "asset",
+        faction_code: "guardian",
+        xp: 0,
+      });
+
+      expect(filter(rolandCard)).toBe(true);
+    });
+
+    test("investigator_access field works with investigator code on right side", () => {
+      const expr = parse('"01001" = investigator_access');
+      const filter = compile(expr, ctx);
+
+      const rolandCard = createMockCard({
+        code: "01006",
+        name: ".45 Automatic",
+        type_code: "asset",
+        faction_code: "guardian",
+        xp: 0,
+      });
+
+      expect(filter(rolandCard)).toBe(true);
+    });
+  });
 });

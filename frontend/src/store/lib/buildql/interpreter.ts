@@ -88,137 +88,258 @@ export class Interpreter {
       }
 
       case "==": {
-        return this.strictEquals(
-          this.getValue(left, card),
-          this.getValue(right, card),
-          fieldType,
+        return this.evaluateComparison(left, right, card, operator, (l, r) =>
+          this.strictEquals(l, r, fieldType),
         );
       }
 
       case "!==": {
-        return !this.strictEquals(
-          this.getValue(left, card),
-          this.getValue(right, card),
-          fieldType,
+        return this.evaluateComparison(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => !this.strictEquals(l, r, fieldType),
         );
       }
 
       case "=": {
-        return this.looseEquals(
-          this.getValue(left, card),
-          this.getValue(right, card),
-          fieldType,
+        return this.evaluateComparison(left, right, card, operator, (l, r) =>
+          this.looseEquals(l, r, fieldType),
         );
       }
+
       case "!=": {
-        return !this.looseEquals(
-          this.getValue(left, card),
-          this.getValue(right, card),
-          fieldType,
+        return this.evaluateComparison(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => !this.looseEquals(l, r, fieldType),
         );
       }
 
       case "??": {
-        const leftValue = this.getValue(left, card);
-        return this.getList(right, card).some((val) =>
-          this.strictEquals(leftValue, val, leftType),
+        return this.evaluateListComparison(
+          left,
+          right,
+          card,
+          operator,
+          (leftValue, rightList) =>
+            rightList.some((val) =>
+              this.strictEquals(leftValue, val, leftType),
+            ),
         );
       }
 
       case "!??": {
-        const leftValue = this.getValue(left, card);
-        return !this.getList(right, card).some((val) =>
-          this.strictEquals(leftValue, val, leftType),
+        return this.evaluateListComparison(
+          left,
+          right,
+          card,
+          operator,
+          (leftValue, rightList) =>
+            !rightList.some((val) =>
+              this.strictEquals(leftValue, val, leftType),
+            ),
         );
       }
 
       case "?": {
-        const leftValue = this.getValue(left, card);
-        return this.getList(right, card).some((val) =>
-          this.looseEquals(leftValue, val, fieldType),
+        return this.evaluateListComparison(
+          left,
+          right,
+          card,
+          operator,
+          (leftValue, rightList) =>
+            rightList.some((val) =>
+              this.looseEquals(leftValue, val, fieldType),
+            ),
         );
       }
 
       case "!?": {
-        const leftValue = this.getValue(left, card);
-        return !this.getList(right, card).some((val) =>
-          this.looseEquals(leftValue, val, fieldType),
+        return this.evaluateListComparison(
+          left,
+          right,
+          card,
+          operator,
+          (leftValue, rightList) =>
+            !rightList.some((val) =>
+              this.looseEquals(leftValue, val, fieldType),
+            ),
         );
       }
 
       case ">": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return leftNum > rightNum;
+        return this.evaluateNumericComparison(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l > r,
+        );
       }
 
       case "<": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return leftNum < rightNum;
+        return this.evaluateNumericComparison(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l < r,
+        );
       }
 
       case ">=": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return leftNum >= rightNum;
+        return this.evaluateNumericComparison(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l >= r,
+        );
       }
 
       case "<=": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return leftNum <= rightNum;
+        return this.evaluateNumericComparison(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l <= r,
+        );
       }
 
       case "+": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return (leftNum + rightNum) as unknown as boolean;
+        return this.evaluateArithmetic(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l + r,
+        );
       }
 
       case "-": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return (leftNum - rightNum) as unknown as boolean;
+        return this.evaluateArithmetic(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l - r,
+        );
       }
 
       case "*": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-        return (leftNum * rightNum) as unknown as boolean;
+        return this.evaluateArithmetic(
+          left,
+          right,
+          card,
+          operator,
+          (l, r) => l * r,
+        );
       }
 
       case "/": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-
-        if (rightNum === 0) {
-          throw new InterpreterError("Division by zero");
-        }
-
-        return (leftNum / rightNum) as unknown as boolean;
+        return this.evaluateArithmetic(left, right, card, operator, (l, r) => {
+          if (r === 0) {
+            throw new InterpreterError("Division by zero");
+          }
+          return l / r;
+        });
       }
 
       case "%": {
-        const leftNum = this.toNumber(this.getValue(left, card));
-        const rightNum = this.toNumber(this.getValue(right, card));
-        if (leftNum == null || rightNum == null) return false;
-
-        if (rightNum === 0) {
-          throw new InterpreterError("Modulo by zero");
-        }
-
-        return (leftNum % rightNum) as unknown as boolean;
+        return this.evaluateArithmetic(left, right, card, operator, (l, r) => {
+          if (r === 0) {
+            throw new InterpreterError("Modulo by zero");
+          }
+          return l % r;
+        });
       }
     }
+  }
+
+  private evaluateComparison(
+    left: Expr,
+    right: Expr,
+    card: Card,
+    operator: string,
+    compare: (left: FieldValue | RegExp, right: FieldValue | RegExp) => boolean,
+  ): boolean {
+    const leftValue = this.getValue(left, card);
+    const rightValue = this.getValue(right, card, {
+      operator,
+      otherValue: leftValue,
+    });
+    const leftValueWithContext = this.getValue(left, card, {
+      operator,
+      otherValue: rightValue,
+    });
+    return compare(leftValueWithContext, rightValue);
+  }
+
+  private evaluateListComparison(
+    left: Expr,
+    right: Expr,
+    card: Card,
+    operator: string,
+    compare: (
+      left: FieldValue | RegExp,
+      right: (FieldValue | RegExp)[],
+    ) => boolean,
+  ): boolean {
+    const rightList = this.getList(right, card);
+    const leftValue = this.getValue(left, card, {
+      operator,
+      otherValue: rightList,
+    });
+    return compare(leftValue, rightList);
+  }
+
+  private evaluateNumericComparison(
+    left: Expr,
+    right: Expr,
+    card: Card,
+    operator: string,
+    compare: (left: number, right: number) => boolean,
+  ): boolean {
+    const leftValue = this.getValue(left, card);
+    const rightValue = this.getValue(right, card, {
+      operator,
+      otherValue: leftValue,
+    });
+    const leftValueWithContext = this.getValue(left, card, {
+      operator,
+      otherValue: rightValue,
+    });
+    const leftNum = this.toNumber(leftValueWithContext);
+    const rightNum = this.toNumber(rightValue);
+    if (leftNum == null || rightNum == null) return false;
+    return compare(leftNum, rightNum);
+  }
+
+  private evaluateArithmetic(
+    left: Expr,
+    right: Expr,
+    card: Card,
+    operator: string,
+    compute: (left: number, right: number) => number,
+  ): boolean {
+    const leftValue = this.getValue(left, card);
+    const rightValue = this.getValue(right, card, {
+      operator,
+      otherValue: leftValue,
+    });
+    const leftValueWithContext = this.getValue(left, card, {
+      operator,
+      otherValue: rightValue,
+    });
+    const leftNum = this.toNumber(leftValueWithContext);
+    const rightNum = this.toNumber(rightValue);
+    if (leftNum == null || rightNum == null) return false;
+    return compute(leftNum, rightNum) as unknown as boolean;
   }
 
   private evaluateGroup(node: GroupNode, card: Card): boolean {
@@ -234,7 +355,14 @@ export class Interpreter {
     return !!value;
   }
 
-  private getValue(expr: Expr, card: Card): FieldValue | RegExp {
+  private getValue(
+    expr: Expr,
+    card: Card,
+    comparisonContext?: {
+      operator?: string;
+      otherValue?: FieldValue | RegExp | (FieldValue | RegExp)[];
+    },
+  ): FieldValue | RegExp {
     switch (expr.type) {
       case "LITERAL": {
         return expr.value;
@@ -245,11 +373,11 @@ export class Interpreter {
       }
 
       case "IDENTIFIER": {
-        return this.lookupField(expr.name, card);
+        return this.lookupField(expr.name, card, comparisonContext);
       }
 
       case "GROUP": {
-        return this.getValue(expr.expression, card);
+        return this.getValue(expr.expression, card, comparisonContext);
       }
 
       case "BINARY": {
@@ -311,14 +439,25 @@ export class Interpreter {
     return expr.elements.map((element) => this.getValue(element, card));
   }
 
-  private lookupField(name: string, card: Card): FieldValue {
+  private lookupField(
+    name: string,
+    card: Card,
+    comparisonContext?: {
+      operator?: string;
+      otherValue?: FieldValue | RegExp | (FieldValue | RegExp)[];
+    },
+  ): FieldValue {
     const descriptor = this.context.fields[name];
 
     if (!descriptor) {
       throw new InterpreterError(`Unknown field: ${name}`);
     }
 
-    return descriptor.lookup(card, this.context.fieldLookupContext);
+    return descriptor.lookup(
+      card,
+      this.context.fieldLookupContext,
+      comparisonContext,
+    );
   }
 
   private getFieldType(expr: Expr): FieldType | "unknown" {

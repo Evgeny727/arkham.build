@@ -18,9 +18,15 @@ export type FieldLookupContext = {
   metadata: Metadata;
 };
 
+export type ComparisonContext = {
+  operator?: string;
+  otherValue?: FieldValue | RegExp | (FieldValue | RegExp)[];
+};
+
 export type FieldLookup = (
   card: Card,
   context: FieldLookupContext,
+  comparisonContext?: ComparisonContext,
 ) => FieldValue;
 
 export interface FieldDescriptor {
