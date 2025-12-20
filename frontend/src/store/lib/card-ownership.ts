@@ -12,8 +12,9 @@ export function ownedCardCount(
   showAllCards: boolean | undefined,
   strict = false,
 ) {
-  if (card.code === SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS)
+  if (card.code === SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS) {
     return card.quantity;
+  }
 
   // Treat fan-made content as owned when not checking the pack filter.
   if (!card.official && !strict) return card.quantity;

@@ -361,14 +361,13 @@ back:subname != null & back:subname != subname
     "legacyAlias": "i"
   },
   {
-    "name": "xp",
-    "type": "number",
+    "name": "investigator_access",
+    "type": "string",
     "aliases": [
-      "level",
-      "lvl"
+      "ia",
     ],
-    "legacyAlias": "p"
-  },
+    "legacyAlias": "do"
+  }
   {
     "name": "multiclass",
     "type": "boolean",
@@ -538,6 +537,15 @@ back:subname != null & back:subname != subname
       "brain"
     ],
     "legacyAlias": "w"
+  },
+    {
+    "name": "xp",
+    "type": "number",
+    "aliases": [
+      "level",
+      "lvl"
+    ],
+    "legacyAlias": "p"
   }
 ]
 ```
