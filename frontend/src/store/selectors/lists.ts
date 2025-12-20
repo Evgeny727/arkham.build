@@ -1895,7 +1895,7 @@ export function selectFilterChanges<T extends keyof FilterMapping>(
 }
 
 type FilterChange = {
-  type: keyof FilterMapping;
+  type: keyof FilterMapping | "search";
   change: string;
 };
 
@@ -1914,6 +1914,13 @@ export const selectActiveListChanges = createSelector(
 
       return acc;
     }, [] as FilterChange[]);
+
+    if (list.search.value) {
+      changes.push({
+        type: "search",
+        change: list.search.value,
+      });
+    }
 
     return changes;
   },

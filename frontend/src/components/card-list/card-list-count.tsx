@@ -47,7 +47,12 @@ export function CardlistCount(props: { data: ListState | undefined }) {
                   // biome-ignore lint/suspicious/noArrayIndexKey: no stable key available.
                   <Fragment key={i}>
                     <dt>
-                      <strong>{t(`filters.${type}.title`)}:</strong>
+                      <strong>
+                        {type === "search"
+                          ? t("lists.search.title")
+                          : t(`filters.${type}.title`)}
+                        :
+                      </strong>
                     </dt>
                     <dd>{change}</dd>
                   </Fragment>

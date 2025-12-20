@@ -61,12 +61,12 @@
         "faq": "View FAQ",
         "open_on_arkhamdb": "Open on ArkhamDB",
         "reviews": "View reviews",
+        "show_original_image": "Show original card image",
+        "show_taboo_image": "Show taboo card image",
         "usable_by": "Card pool: {{prefix}}{{name}}",
         "usable_by_interpolated": "Card pool: <tooltip>{{name}}</tooltip>",
         "view_backside": "Backside",
-        "who_can_take": "Who can take this card?",
-        "show_original_image": "Show original card image",
-        "show_taboo_image": "Show taboo card image"
+        "who_can_take": "Who can take this card?"
       },
       "faq": {
         "empty": "No FAQ entries available.",
@@ -1349,7 +1349,8 @@
         "include_flavor": "Flavor",
         "include_game_text": "Game text",
         "include_name": "Name",
-        "placeholder": "Search cards..."
+        "placeholder": "Search cards...",
+        "title": "Search"
       },
       "sort_by": "Sort by"
     },

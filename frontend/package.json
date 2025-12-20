@@ -11,6 +11,7 @@
     "check": "tsc --noEmit",
     "dev": "vite",
     "dev:functions": "wrangler pages dev",
+    "fmt": "biome check --write",
     "i18n:sync": "node ./scripts/i18n-sync.ts && npm run fmt",
     "i18n:pull": "npx tsx ./scripts/i18n-pull && npm run fmt",
     "icons:export": "mkdir -p public/lucide && npm i lucide-static && cp -R node_modules/lucide-static/icons public/lucide && npm uninstall lucide-static",
