@@ -201,6 +201,7 @@ export function filterCardPool(
 
   const packFilter = filterPackCode(
     resolveLimitedPoolPacks(metadata, rest).map((p) => p.code),
+    metadata,
     lookupTables,
   );
 
@@ -438,6 +439,7 @@ export function filterOwnership(
 
 export function filterPackCode(
   value: MultiselectFilter,
+  metadata: Metadata,
   lookupTables: LookupTables,
 ) {
   if (isEmpty(value)) return undefined;
@@ -445,14 +447,25 @@ export function filterPackCode(
   const active = Object.values(value).some((x) => x);
   if (!active) return undefined;
 
-  return (card: Card) => {
-    const packCodes = [
-      card.pack_code,
-      ...Object.keys(lookupTables.reprintPacksByPack[card.pack_code] || {}),
-    ];
+  return (card: Card) =>
+    value.some((val) => {
+      if (card.pack_code === val) {
+        return true;
+      }
 
-    return value.some((packCode) => packCodes.includes(packCode));
-  };
+      const reprints = Object.keys(
+        lookupTables.reprintPacksByPack[card.pack_code] ?? {},
+      );
+
+      return reprints.some((reprintCode) => {
+        const reprint = metadata.packs[reprintCode];
+
+        const typeMatches =
+          !!(reprint.reprint?.type === "encounter") === !!card.encounter_code;
+
+        return typeMatches && value.includes(reprintCode);
+      });
+    });
 }
 
 /**

@@ -216,7 +216,7 @@ function makeUserFilter(
       case "pack": {
         const value = filterValue.value as MultiselectFilter;
         if (value.length) {
-          const filter = filterPackCode(value, lookupTables);
+          const filter = filterPackCode(value, metadata, lookupTables);
           if (filter) filters.push(filter);
         }
         break;
