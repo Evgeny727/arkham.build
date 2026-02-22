@@ -1046,7 +1046,7 @@
       "newer_version": "There is a <a>newer version</a> of this deck. This deck is read-only.",
       "scans": "Scans",
       "sharing": {
-        "api_link": "API link",
+        "api_link": "Json API",
         "create": "Create share",
         "create_failed": "Failed to create share: {{error}}",
         "create_tooltip": "Sharing creates a publicly accessible, read-only link to the deck. Anyone with the link can view the deck, but not edit it.<br />Shares can be removed at any time. Removing a share does not affect the deck itself.",

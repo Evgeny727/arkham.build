@@ -4,6 +4,7 @@ import {
   CopyIcon,
   DicesIcon,
   EllipsisIcon,
+  ExternalLinkIcon,
   ImportIcon,
   PencilIcon,
   ShareIcon,
@@ -520,7 +521,6 @@ function Sharing(props: {
             <ShareInfo id={deck.id} path={`/share/${deck.id}`} />
             {origin === "local" && (
               <nav className={css["share-actions"]}>
-                {devModeEnabled && <DevModeApiLinkButton id={deck.id} />}
                 {deck.date_update !== share && (
                   <Button
                     disabled={isReadOnly}
@@ -537,6 +537,7 @@ function Sharing(props: {
                 >
                   {t("deck_view.sharing.delete")}
                 </Button>
+                {devModeEnabled && <DevModeApiLinkButton id={deck.id} />}
               </nav>
             )}
           </div>
@@ -629,9 +630,9 @@ function DevModeApiLinkButton({ id }: { id: Id }) {
       href={`${import.meta.env.VITE_API_LEGACY_URL}/v1/public/share/${id}`}
       rel="noreferrer"
       target="_blank"
-      variant="link"
       size="sm"
     >
+      <ExternalLinkIcon />
       {t("deck_view.sharing.api_link")}
     </Button>
   );
@@ -655,9 +656,6 @@ function ArkhamDBDetails(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
             {t("deck_view.connections.description", { provider: "ArkhamDB" })}
           </p>
           <nav className={css["share-actions"]}>
-            {devModeEnabled && type === "deck" && (
-              <DevModeApiLinkButton id={deck.id} />
-            )}
             <Button
               as="a"
               href={`${localizeArkhamDBBaseUrl()}/deck/view/${deck.id}`}
@@ -667,6 +665,9 @@ function ArkhamDBDetails(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
             >
               {t("deck_view.connections.view", { provider: "ArkhamDB" })}
             </Button>
+            {devModeEnabled && type === "deck" && (
+              <DevModeApiLinkButton id={deck.id} />
+            )}
           </nav>
         </DeckDetail>
       </section>
