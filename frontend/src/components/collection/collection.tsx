@@ -56,10 +56,12 @@ export function CollectionSettings(props: Props) {
         Object.entries(packsByChapter).forEach(([chapterStr, packs]) => {
           const chapter = Number.parseInt(chapterStr, 10);
           acc[chapter] ??= [];
-          acc[chapter].push({
-            ...cycle,
-            packs,
-          });
+          if (!isEmpty(packs)) {
+            acc[chapter].push({
+              ...cycle,
+              packs,
+            });
+          }
         });
         return acc;
       },
