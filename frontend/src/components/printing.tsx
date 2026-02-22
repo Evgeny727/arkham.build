@@ -97,7 +97,13 @@ export function PrintingInner({
         <span className={css["printing-action"]}>{actionNode}</span>
       )}
       {showCopyId && (
-        <CopyToClipboard size="xxs" text={card.code} variant="bare" iconOnly />
+        <CopyToClipboard
+          className={css["printing-action"]}
+          text={card.code}
+          variant="bare"
+          iconOnly
+          size="none"
+        />
       )}
     </span>
   );
