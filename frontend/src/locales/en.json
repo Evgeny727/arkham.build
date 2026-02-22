@@ -57,6 +57,7 @@
       }
     },
     "card_view": {
+      "errata_notice": "Errata ({{date}})",
       "actions": {
         "faq": "View FAQ",
         "open_on_arkhamdb": "Open on ArkhamDB",
