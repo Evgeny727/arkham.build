@@ -1078,6 +1078,7 @@ function parseOption(
     filterCount += 2;
     try {
       const parsed = buildQlInterpeter.evaluate(parse(option.buildql_query));
+      parsed({} as Card); // test for runtime errors
       optionFilter.push(parsed);
     } catch (err) {
       console.warn(err);
