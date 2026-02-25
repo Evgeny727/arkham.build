@@ -293,13 +293,13 @@ describe("Interpreter", () => {
       expect(filter(createMockCard({ name: "Wendy Adams" }))).toBe(false);
     });
 
-    test("throws error when comparing text field with string field", () => {
+    test("returns false when comparing text field with string field", () => {
       const expr = parse("text == name");
       const filter = compile(expr, ctx);
 
-      expect(() =>
+      expect(
         filter(createMockCard({ text: "test", name: "test" })),
-      ).toThrow("Type mismatch: cannot compare text field with string field");
+      ).toBeFalsy();
     });
 
     test("allows comparing string literals with text fields", () => {

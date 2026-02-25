@@ -103,6 +103,7 @@ export function PrintingInner({
           variant="bare"
           iconOnly
           size="none"
+          tooltip={card.code}
         />
       )}
     </span>
