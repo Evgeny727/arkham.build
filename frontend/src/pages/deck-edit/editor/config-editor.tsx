@@ -56,7 +56,10 @@ const selectUpdateTags = createSelector(
 
 const selectUpdateTabooId = (state: StoreState) => state.updateTabooId;
 
-const selectUpdateMetaProperty = createSelector(
+const selectUpdateMetaProperty = (state: StoreState) =>
+  state.updateMetaProperty;
+
+const selectUpdateMetaPropertyDebounced = createSelector(
   (state: StoreState) => state.updateMetaProperty,
   (updateMetaProperty) => debounce(updateMetaProperty, 100),
 );
@@ -83,6 +86,9 @@ export function MetaEditor(props: Props) {
   const updateTabooId = useStore(selectUpdateTabooId);
   const updateMetaProperty = useStore(selectUpdateMetaProperty);
   const updateInvestigatorSide = useStore(selectUpdateInvestigatorSide);
+  const updateMetaPropertyDebounced = useStore(
+    selectUpdateMetaPropertyDebounced,
+  );
 
   const onTabooChange = useCallback(
     (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -145,14 +151,14 @@ export function MetaEditor(props: Props) {
   const onBuildqlDeckOptionChange = useCallback(
     (evt: React.ChangeEvent<HTMLInputElement>) => {
       if (evt.target instanceof HTMLInputElement) {
-        updateMetaProperty(
+        updateMetaPropertyDebounced(
           deck.id,
           "buildql_deck_options_override",
           evt.target.value || null,
         );
       }
     },
-    [updateMetaProperty, deck.id],
+    [updateMetaPropertyDebounced, deck.id],
   );
 
   const onCardPoolChange = useCallback(
