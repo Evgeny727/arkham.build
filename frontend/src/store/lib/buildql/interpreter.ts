@@ -30,7 +30,13 @@ export class Interpreter {
   }
 
   evaluate(expr: Expr): (card: Card) => boolean {
-    return (card: Card) => this.evaluateExpr(expr, card);
+    return (card: Card) => {
+      try {
+        return this.evaluateExpr(expr, card);
+      } catch {
+        return false;
+      }
+    };
   }
 
   private evaluateExpr(expr: Expr, card: Card): boolean {

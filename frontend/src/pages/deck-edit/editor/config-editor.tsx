@@ -18,6 +18,7 @@ import { encodeCardPool, encodeSealedDeck } from "@/store/lib/deck-meta";
 import type { CardWithRelations, ResolvedDeck } from "@/store/lib/types";
 import { selectLimitedPoolPacks } from "@/store/selectors/lists";
 import type { StoreState } from "@/store/slices";
+import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import { debounce } from "@/utils/debounce";
 import css from "./editor.module.css";
 import { SelectionEditor } from "./selection-editor";
@@ -55,8 +56,10 @@ const selectUpdateTags = createSelector(
 
 const selectUpdateTabooId = (state: StoreState) => state.updateTabooId;
 
-const selectUpdateMetaProperty = (state: StoreState) =>
-  state.updateMetaProperty;
+const selectUpdateMetaProperty = createSelector(
+  (state: StoreState) => state.updateMetaProperty,
+  (updateMetaProperty) => debounce(updateMetaProperty, 100),
+);
 
 const selectUpdateInvestigatorSide = (state: StoreState) =>
   state.updateInvestigatorSide;
@@ -137,6 +140,19 @@ export function MetaEditor(props: Props) {
       }
     },
     [updateInvestigatorSide, deck.id],
+  );
+
+  const onBuildqlDeckOptionChange = useCallback(
+    (evt: React.ChangeEvent<HTMLInputElement>) => {
+      if (evt.target instanceof HTMLInputElement) {
+        updateMetaProperty(
+          deck.id,
+          "buildql_deck_options_override",
+          evt.target.value || null,
+        );
+      }
+    },
+    [updateMetaProperty, deck.id],
   );
 
   const onCardPoolChange = useCallback(
@@ -249,6 +265,22 @@ export function MetaEditor(props: Props) {
           value={deck.sealedDeck}
         />
       </Field>
+      {SPECIAL_CARD_CODES.GENERIC_CUSTOM_INVESTIGATORS.includes(
+        deck.investigatorBack.card.code,
+      ) && (
+        <Field full padded>
+          <FieldLabel htmlFor="meta-buildql-deck-option">
+            {t("deck_edit.config.buildql_deck_option")}
+          </FieldLabel>
+          <input
+            data-testid="meta-buildql-deck-option"
+            defaultValue={deck.metaParsed.buildql_deck_options_override ?? ""}
+            id="meta-buildql-deck-option"
+            onChange={onBuildqlDeckOptionChange}
+            type="text"
+          />
+        </Field>
+      )}
     </div>
   );
 }

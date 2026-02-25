@@ -1076,7 +1076,12 @@ function parseOption(
 
   if (buildQlInterpeter && option.buildql_query) {
     filterCount += 2;
-    optionFilter.push(buildQlInterpeter.evaluate(parse(option.buildql_query)));
+    try {
+      const parsed = buildQlInterpeter.evaluate(parse(option.buildql_query));
+      optionFilter.push(parsed);
+    } catch (err) {
+      console.warn(err);
+    }
   }
 
   return { filterCount, optionFilter };

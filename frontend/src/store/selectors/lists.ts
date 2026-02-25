@@ -388,6 +388,7 @@ export function selectCanonicalTabooSetId(
 // 7. Deck card pool changes.
 // 8. Sealed deck changes.
 // 9. Stored deck has changed.
+// 10. BuildQL deck option overrides
 const deckAccessEqual = (
   a: ResolvedDeck | undefined,
   b: ResolvedDeck | undefined,
@@ -404,7 +405,9 @@ const deckAccessEqual = (
       JSON.stringify(a.selections) === JSON.stringify(b.selections) && // 6
       JSON.stringify(a.cardPool) === JSON.stringify(b.cardPool) && // 7
       a.sealedDeck === b.sealedDeck && // 8
-      a.date_update === b.date_update // 9
+      a.date_update === b.date_update && // 9
+      a.metaParsed.buildql_deck_options_override ===
+        b.metaParsed.buildql_deck_options_override // 10
     );
   }
 

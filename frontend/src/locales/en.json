@@ -911,6 +911,7 @@
           "shared": "Shared",
           "title": "Storage provider"
         },
+        "buildql_deck_option": "BuildQL deckbuilding override",
         "taboo": "Taboo list",
         "tags": "Tags",
         "tags_help": "Enter tags, separated by spaces",
