@@ -337,9 +337,15 @@ function validateDeckSize(deck: ResolvedDeck): DeckValidationError[] {
 function validateExtraDeckSize(deck: ResolvedDeck): DeckValidationError[] {
   const investigatorBack = deck.investigatorBack.card;
 
-  // FIXME: this is a hack. Instead, we should not count signatures towards side deck size.
+  const hasSideDeckSizeOption = investigatorBack.side_deck_options?.some(
+    (o) => !!o.deck_size_select,
+  );
+
   const targetDeckSize =
-    (investigatorBack.side_deck_requirements?.size ?? 0) + 1;
+    hasSideDeckSizeOption && deck.metaParsed.deck_size_selected
+      ? Number.parseInt(deck.metaParsed.deck_size_selected, 10)
+      : // FIXME: this is a hack. Instead, we should not count signatures towards side deck size.
+        (investigatorBack.side_deck_requirements?.size ?? 0) + 1;
 
   const deckSize = Object.values(deck.extraSlots ?? {}).reduce(
     (acc, curr) => acc + curr,
@@ -428,7 +434,13 @@ function validateSlots(
   ];
 
   if (mode === "extraSlots") {
-    validators.push(new SideDeckLimitsValidator());
+    validators.push(
+      new SideDeckLimitsValidator(
+        deck.investigatorBack.card.code === SPECIAL_CARD_CODES.PARALLEL_JIM
+          ? 1
+          : undefined,
+      ),
+    );
   }
 
   const accessor =
@@ -1118,7 +1130,12 @@ class DeckOptionsValidator implements SlotValidator {
 
 class SideDeckLimitsValidator implements SlotValidator {
   cards: Card[] = [];
+  limitOverride: number | undefined = undefined;
   quantities: number[] = [];
+
+  constructor(limitOverride?: number) {
+    this.limitOverride = limitOverride;
+  }
 
   add(card: Card, quantity: number) {
     if (card.subtype_code !== "basicweakness") {
@@ -1134,7 +1151,9 @@ class SideDeckLimitsValidator implements SlotValidator {
       const card = this.cards[i];
       const quantity = this.quantities[i];
 
-      if (quantity > 1 && card.xp != null) {
+      const limit = this.limitOverride ?? card.deck_limit ?? 0;
+
+      if (quantity > limit && card.xp != null) {
         errors.push({
           type: "INVALID_CARD_COUNT",
           details: [
