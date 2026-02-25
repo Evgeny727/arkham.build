@@ -259,7 +259,10 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
       undefined,
     );
 
-    const deckSizeOption = back.deck_options?.find((o) => !!o.deck_size_select);
+    const deckSizeOption = [
+      ...(back.deck_options ?? []),
+      ...(back.side_deck_options ?? []),
+    ]?.find((o) => !!o.deck_size_select);
 
     for (const [key, value] of Object.entries(state.deckCreate.selections)) {
       // EDGE CASE: mandy's taboo removes the deck size select,

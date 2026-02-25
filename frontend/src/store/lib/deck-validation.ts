@@ -341,11 +341,11 @@ function validateExtraDeckSize(deck: ResolvedDeck): DeckValidationError[] {
     (o) => !!o.deck_size_select,
   );
 
+  // FIXME: this is a hack. Instead, we should not count signatures towards side deck size.
   const targetDeckSize =
     hasSideDeckSizeOption && deck.metaParsed.deck_size_selected
-      ? Number.parseInt(deck.metaParsed.deck_size_selected, 10)
-      : // FIXME: this is a hack. Instead, we should not count signatures towards side deck size.
-        (investigatorBack.side_deck_requirements?.size ?? 0) + 1;
+      ? Number.parseInt(deck.metaParsed.deck_size_selected, 10) + 1
+      : (investigatorBack.side_deck_requirements?.size ?? 0) + 1;
 
   const deckSize = Object.values(deck.extraSlots ?? {}).reduce(
     (acc, curr) => acc + curr,
