@@ -40,6 +40,7 @@ export type CardWithRelations = ResolvedCard & {
     advanced?: ResolvedCard[];
     replacement?: ResolvedCard[];
     requiredCards?: ResolvedCard[];
+    sideDeckRequiredCards?: ResolvedCard[];
     parallelCards?: ResolvedCard[];
     duplicates?: ResolvedCard[];
     reprints?: ResolvedCard[];

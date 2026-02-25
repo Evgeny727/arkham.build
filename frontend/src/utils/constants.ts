@@ -121,8 +121,6 @@ export const SPECIAL_CARD_CODES = {
   TIDAL_MEMENTO: "90038",
   /** adds deckbuilding requirements. */
   UNDERWORLD_SUPPORT: "08046",
-  /** Weakness starts in spirit deck. */
-  VENGEFUL_SHADE: "90053",
   /** Exceptions for specialist logic. */
   GENERIC_CUSTOM_INVESTIGATORS: [
     "347ff5d0-8521-4d9b-a0fe-90c06114057d",

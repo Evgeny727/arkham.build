@@ -88,6 +88,13 @@ export function resolveCardWithRelations<T extends boolean>(
           card.code,
           tabooSetId,
         ),
+        sideDeckRequiredCards: resolveRelationArray(
+          deps,
+          collator,
+          "sideDeckRequiredCards",
+          card.code,
+          tabooSetId,
+        ),
         parallelCards: resolveRelationArray(
           deps,
           collator,

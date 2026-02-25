@@ -288,7 +288,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
 
         if (!quantity) continue;
 
-        if (card.code === SPECIAL_CARD_CODES.VENGEFUL_SHADE) {
+        if (set.id === "sideDeckRequiredCards") {
           extraSlots[card.code] = quantity;
         } else {
           slots[card.code] = quantity;
