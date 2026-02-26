@@ -1,3 +1,11 @@
+.chapter-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin-bottom: 0.375rem;
+  background-color: var(--palette-0);
+}
+
 .format-toggle {
   margin-bottom: 0.375rem;
   text-align: center;

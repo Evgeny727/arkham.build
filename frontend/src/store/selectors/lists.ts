@@ -1316,6 +1316,36 @@ export const selectCyclesAndPacks = createSelector(
   },
 );
 
+export function groupCyclesByChapter(
+  cycles: CycleWithPacks[],
+): [string, CycleWithPacks[]][] {
+  const byChapter = cycles.reduce(
+    (acc, cycle) => {
+      const packsByChapter = cycle.packs.reduce<Record<number, Pack[]>>(
+        (chapterAcc, pack) => {
+          const chapter = pack.chapter ?? 1;
+          chapterAcc[chapter] ??= [];
+          chapterAcc[chapter].push(pack);
+          return chapterAcc;
+        },
+        {},
+      );
+
+      for (const [chapterStr, packs] of Object.entries(packsByChapter)) {
+        const chapter = Number.parseInt(chapterStr, 10);
+        acc[chapter] ??= [];
+        if (!isEmpty(packs)) {
+          acc[chapter].push({ ...cycle, packs });
+        }
+      }
+      return acc;
+    },
+    {} as Record<number, CycleWithPacks[]>,
+  );
+
+  return Object.entries(byChapter).sort((a, b) => +b[0] - +a[0]);
+}
+
 export const selectCampaignCycles = createSelector(
   selectCyclesAndPacks,
   (cycles) =>

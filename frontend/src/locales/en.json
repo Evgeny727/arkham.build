@@ -1170,6 +1170,7 @@
       "status_installed": "Installed",
       "status_update_available": "Update content",
       "tags": "Tags",
+      "short_title": "Fan-made",
       "title": "Fan-made content",
       "types": {
         "campaign": "Campaign",

@@ -153,7 +153,6 @@ function EncounterEntry(props: Props & { showCopyId: boolean }) {
             card.encounter_position ?? 1,
             card.quantity,
           )}
-          showCopyId={showCopyId}
         />
       </p>
       <hr className={css["meta-divider"]} />
@@ -170,6 +169,7 @@ function EncounterEntry(props: Props & { showCopyId: boolean }) {
               key={printing.id}
               linked={linked}
               printing={printing}
+              showCopyId={showCopyId}
             />
           </p>
         );

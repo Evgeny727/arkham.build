@@ -27,6 +27,8 @@ export function Printing({
 
   const packName = displayPackName(pack);
 
+  const packFormat = pack.reprint ? "new" : "old";
+
   return (
     <PrintingInner
       active={active}
@@ -38,7 +40,7 @@ export function Printing({
         linked ? (
           <a
             className="link-current"
-            href={`/browse/pack/${pack.code}`}
+            href={`/browse/pack/${pack.code}${packFormat ? `?format=${packFormat}` : ""}`}
             target="_blank"
             rel="noreferrer"
           >
