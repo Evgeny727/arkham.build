@@ -855,7 +855,7 @@
         "cycle_decks": "Cycle deck lists",
         "decrement_quantity": "Decrement deck quantity",
         "decrement_side_quantity": "Decrement side deck quantity",
-        "draft_random_basic_weakness": "Draft random basic weakness",
+        "draft_random_basic_weakness": "Draft random basic weakness <em>(Boon of the Morrígan)</em>",
         "draft_random_basic_weakness_success": "<strong>{{name}}</strong> was added to your deck.",
         "draw_random_basic_weakness": "Draw random basic weakness",
         "draw_random_basic_weakness_success": "<strong>{{name}}</strong> is your random basic weakness.",
@@ -935,7 +935,7 @@
         "cancel_button": "Cancel",
         "choice_title": "Choose one weakness to cancel",
         "confirm_button": "Confirm",
-        "explanation_body": "This is a common house rule to give the player more control over the basic weakness in comparison to fully randomizing it. Three basic weaknesses are drawn at random, the player gets to cancel one of them and then one of the remaining two weaknesses is added to the deck at random.",
+        "explanation_body": "The <em>Boon of the Morrígan</em> gives players more control over the basic weakness in comparison to fully randomizing it. Three basic weaknesses are drawn at random, the player gets to cancel one of them and then one of the remaining two weaknesses is added to the deck at random.",
         "explanation_title": "Explanation",
         "title": "Drafting a basic weakness",
         "too_few_rbw": "Too few random basic weaknesses available to perform draft."
