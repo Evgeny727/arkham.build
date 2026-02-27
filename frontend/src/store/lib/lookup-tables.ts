@@ -295,7 +295,13 @@ function createRelations(metadata: Metadata, tables: LookupTables) {
         } else {
           if (card.parallel && !requiredCardCodes.has(card.code)) {
             setInLookupTable(card.code, tables.relations.parallelCards, key);
+          } else if (
+            !requiredCardCodes.has(card.code) &&
+            !card.duplicate_of_code &&
             // Kate has bonded cards restricted to her, these should not be part of the deck.
+            card.deck_limit
+          ) {
+            setInLookupTable(card.code, tables.relations.requiredCards, key);
           }
         }
       }
