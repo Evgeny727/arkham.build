@@ -22,11 +22,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    react({
-      babel: {
-        plugins: ["babel-plugin-react-compiler"],
-      },
-    }),
+    react(),
     bundleStats({
       baseline: true,
       silent: true,
