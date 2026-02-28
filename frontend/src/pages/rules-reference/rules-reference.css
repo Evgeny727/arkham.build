@@ -81,7 +81,6 @@ html[data-theme="light"] {
 
 .toc-inner {
   flex: 1 1 auto;
-  padding-right: 0.625rem;
 }
 
 .toc-container > * + * {
