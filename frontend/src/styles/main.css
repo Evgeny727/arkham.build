@@ -391,9 +391,11 @@
     font-size: var(--text-xs);
   }
 
-  * {
-    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar);
-    scrollbar-width: thin;
+  @supports (scrollbar-color: auto) {
+    * {
+      scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar);
+      scrollbar-width: thin;
+    }
   }
 
   .color-health {
