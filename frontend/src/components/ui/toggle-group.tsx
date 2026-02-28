@@ -1,6 +1,5 @@
 import {
   createContext,
-  forwardRef,
   useCallback,
   useContext,
   useEffect,
@@ -111,7 +110,7 @@ export function ToggleGroup({
   );
 
   return (
-    <ToggleGroupContext.Provider value={ctx}>
+    <ToggleGroupContext value={ctx}>
       <div
         {...rest}
         className={cx(
@@ -123,7 +122,7 @@ export function ToggleGroup({
       >
         {children}
       </div>
-    </ToggleGroupContext.Provider>
+    </ToggleGroupContext>
   );
 }
 
@@ -131,14 +130,19 @@ type GroupItemProps = Omit<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "value"
 > & {
+  ref?: React.Ref<HTMLButtonElement>;
   tooltip?: string;
   value: string;
 };
 
-export const ToggleGroupItem = forwardRef(function ToggleGroupItem(
-  { className, tooltip, value, onClick, ...rest }: GroupItemProps,
-  ref: React.Ref<HTMLButtonElement>,
-) {
+export function ToggleGroupItem({
+  className,
+  tooltip,
+  value,
+  onClick,
+  ref,
+  ...rest
+}: GroupItemProps) {
   const {
     disabled: groupDisabled,
     isSelected,
@@ -176,4 +180,4 @@ export const ToggleGroupItem = forwardRef(function ToggleGroupItem(
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
   );
-});
+}
