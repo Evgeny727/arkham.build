@@ -93,7 +93,7 @@ test.describe("deck create", () => {
   test("select advanced signatures", async ({ page }) => {
     await page.goto("/deck/create/02003");
 
-    await page.getByLabel("Advanced Signatures", { exact: true }).click();
+    await page.getByText("Advanced Signatures", { exact: true }).click();
 
     await page.getByTestId("create-save").click();
 

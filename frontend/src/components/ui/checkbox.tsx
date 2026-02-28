@@ -9,6 +9,7 @@ interface Props
     "label" | "onChange"
   > {
   className?: string;
+  "data-testid"?: string;
   hideLabel?: boolean;
   id?: string;
   label: React.ReactNode;
@@ -17,9 +18,17 @@ interface Props
 
 export const Checkbox = forwardRef(function Checkbox(
   props: Props,
-  ref: React.ForwardedRef<HTMLDivElement>,
+  ref: React.ForwardedRef<HTMLLabelElement>,
 ) {
-  const { className, id, hideLabel, label, onCheckedChange, ...rest } = props;
+  const {
+    className,
+    "data-testid": testid,
+    id,
+    hideLabel,
+    label,
+    onCheckedChange,
+    ...rest
+  } = props;
 
   const handleChange = useCallback(
     (evt: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,7 +38,7 @@ export const Checkbox = forwardRef(function Checkbox(
   );
 
   return (
-    <div className={cx(css["checkbox"], className)} ref={ref}>
+    <label className={cx(css["checkbox"], className)} ref={ref}>
       <span className={css["control"]}>
         <input
           {...rest}
@@ -38,13 +47,11 @@ export const Checkbox = forwardRef(function Checkbox(
           className={cx(css["input"], "sr-only")}
           onChange={handleChange}
         />
-        <span className={css["box"]}>
+        <span data-testid={testid} className={css["box"]}>
           <CheckIcon />
         </span>
       </span>
-      <label className={cx(css["label"], hideLabel && "sr-only")} htmlFor={id}>
-        {label}
-      </label>
-    </div>
+      <span className={cx(css["label"], hideLabel && "sr-only")}>{label}</span>
+    </label>
   );
 });

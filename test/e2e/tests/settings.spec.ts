@@ -18,8 +18,8 @@ test.describe("settings", () => {
 
     await page.getByTestId("settings-show-all").click();
 
-    await page.getByLabel("The Dunwich Legacy Investigator Expansion").click();
-    await page.getByLabel("The Dunwich Legacy Campaign").click();
+    await page.getByText("The Dunwich Legacy Investigator Expansion").click();
+    await page.getByText("The Dunwich Legacy Campaign").click();
     await page.getByTestId("settings-save").click();
     await page.getByTestId("settings-back").click();
 

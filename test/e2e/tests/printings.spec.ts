@@ -146,7 +146,7 @@ async function filterPack(page: Page, packName: string) {
 
 async function enablePreviews(page: Page) {
   await page.goto("/settings?tab=collection");
-  await page.getByTestId("settings-show-previews").check();
+  await page.getByTestId("settings-show-previews").click();
   await page.getByTestId("settings-save").click();
   await page.goto("/");
 }
