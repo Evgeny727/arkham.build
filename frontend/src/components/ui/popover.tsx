@@ -39,19 +39,21 @@ export function PopoverTrigger({
   ...props
 }: React.HTMLProps<HTMLElement> & PopoverTriggerProps) {
   const context = usePopoverContextChecked();
-  // biome-ignore lint/suspicious/noExplicitAny: safe.
-  const childrenRef = (children as any).ref;
+  const childrenRef = isValidElement(children)
+    ? (children.props as { ref?: React.Ref<unknown> }).ref
+    : null;
   const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
   // `asChild` allows the user to pass any element as the anchor
   if (asChild && isValidElement(children)) {
+    const { ref: _, ...childProps } = (children as React.ReactElement<any>)
+      .props;
     return cloneElement(
       children as React.ReactElement,
       context.getReferenceProps({
         ref,
         ...props,
-        // biome-ignore lint/suspicious/noExplicitAny: safe.
-        ...(children as React.ReactElement<any>).props,
+        ...childProps,
         "data-state": context.open ? "open" : "closed",
       } as React.HTMLProps<Element>),
     );

@@ -287,8 +287,8 @@ function SidebarActions(props: {
       <div className={css["actions"]}>
         {origin === "local" ? (
           <>
-            <HotkeyTooltip keybind="e" description={t("deck.actions.edit")}>
-              <Link to={`/deck/edit/${deck.id}`} asChild>
+            <Link to={`/deck/edit/${deck.id}`} asChild>
+              <HotkeyTooltip keybind="e" description={t("deck.actions.edit")}>
                 <Button
                   data-testid="view-edit"
                   disabled={isReadOnly}
@@ -297,8 +297,8 @@ function SidebarActions(props: {
                 >
                   <PencilIcon /> {t("deck.actions.edit_short")}
                 </Button>
-              </Link>
-            </HotkeyTooltip>
+              </HotkeyTooltip>
+            </Link>
             <Dialog
               onOpenChange={onUpgradeModalOpenChange}
               open={upgradeModalOpen}

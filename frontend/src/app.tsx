@@ -131,7 +131,7 @@ function AppInner() {
   return (
     <>
       <Loader message={t("app.init")} show={!storeInitialized} delay={200} />
-      <Suspense fallback={<Loader delay={200} show />}>
+      <Suspense fallback={<Loader delay={300} show />}>
         {storeInitialized && (
           <Router hook={useBrowserLocation}>
             <Switch>
