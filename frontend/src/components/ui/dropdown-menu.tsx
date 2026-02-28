@@ -1,10 +1,9 @@
-import type { RadioGroupItemProps } from "@radix-ui/react-radio-group";
 import { forwardRef } from "react";
 import { cx } from "@/utils/cx";
 import { Button, type Props as ButtonProps, type ButtonType } from "./button";
 import css from "./dropdown-menu.module.css";
 import { Keybind } from "./hotkey";
-import { RadioGroupItem } from "./radio-group";
+import { RadioGroupItem, type RadioGroupItemProps } from "./radio-group";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;

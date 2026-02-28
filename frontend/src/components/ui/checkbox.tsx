@@ -35,7 +35,7 @@ export const Checkbox = forwardRef(function Checkbox(
           {...rest}
           id={id}
           type="checkbox"
-          className={css["input"]}
+          className={cx(css["input"], "sr-only")}
           onChange={handleChange}
         />
         <span className={css["box"]}>
