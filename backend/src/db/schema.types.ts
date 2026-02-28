@@ -50,6 +50,7 @@ export interface ArkhamdbDecklist {
   version: string | null;
   xp: number | null;
   xp_adjustment: number | null;
+  xp_required: number | null;
   xp_spent: number | null;
 }
 
