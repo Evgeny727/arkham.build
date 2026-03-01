@@ -198,6 +198,33 @@ export function isResolvedDeck(a: unknown): a is ResolvedDeck {
   return (a as ResolvedDeck)?.investigatorFront != null;
 }
 
+export type DeckSummary = Pick<
+  Deck,
+  | "date_creation"
+  | "date_update"
+  | "id"
+  | "name"
+  | "problem"
+  | "source"
+  | "tags"
+  | "xp"
+  | "xp_adjustment"
+  | "slots"
+> &
+  Pick<
+    ResolvedDeck,
+    | "investigatorFront"
+    | "investigatorBack"
+    | "cardPool"
+    | "extraSlots"
+    | "hasParallel"
+    | "sealedDeck"
+    | "shared"
+    | "sideSlots"
+  > & {
+    stats: Omit<ResolvedDeck["stats"], "charts">;
+  };
+
 export type CardSet = {
   canSetQuantity?: boolean;
   canSelect?: boolean;

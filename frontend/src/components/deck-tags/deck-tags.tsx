@@ -44,7 +44,11 @@ export function DeckTags(props: { tags: string[] }) {
   ));
 }
 
-export function SealedDeckTag({ deck }: { deck: ResolvedDeck | undefined }) {
+export function SealedDeckTag({
+  deck,
+}: {
+  deck: Pick<ResolvedDeck, "sealedDeck"> | undefined;
+}) {
   const { t } = useTranslation();
 
   const value = deck?.sealedDeck;
@@ -95,7 +99,11 @@ export const providerTagRenderer = (tag: StorageProvider, t: TFunction) => {
   );
 };
 
-export function ProviderTag({ deck }: { deck: ResolvedDeck | undefined }) {
+export function ProviderTag({
+  deck,
+}: {
+  deck: Pick<ResolvedDeck, "source" | "shared"> | undefined;
+}) {
   const { t } = useTranslation();
 
   let source: StorageProvider = "local";
@@ -127,7 +135,7 @@ export function LimitedCardPoolTag({
   deck,
   omitLegacy = false,
 }: {
-  deck: ResolvedDeck | undefined;
+  deck: Pick<ResolvedDeck, "cardPool"> | undefined;
   omitLegacy?: boolean;
 }) {
   const { t } = useTranslation();

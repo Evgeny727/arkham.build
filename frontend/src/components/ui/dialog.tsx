@@ -43,6 +43,7 @@ export function DialogTrigger({
 
   // `asChild` allows the user to pass any element as the anchor
   if (asChild && isValidElement(children)) {
+    // biome-ignore lint/suspicious/noExplicitAny: safe.
     const { ref: _, ...childProps } = (children as React.ReactElement<any>)
       .props;
     return cloneElement(

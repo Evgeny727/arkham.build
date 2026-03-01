@@ -147,7 +147,7 @@ export const selectConnectionLock = createSelector(
 
 export const selectConnectionLockForDeck = createSelector(
   selectConnectionLock,
-  (_: StoreState, deck: ResolvedDeck) => deck,
+  (_: StoreState, deck: Pick<ResolvedDeck, "source">) => deck,
   (remoting, deck) => {
     return remoting && deck.source === "arkhamdb" ? remoting : undefined;
   },
