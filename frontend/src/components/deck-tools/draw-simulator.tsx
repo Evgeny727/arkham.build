@@ -37,8 +37,8 @@ export function DrawSimulator(props: Props) {
   );
 
   const reset = useCallback(() => {
-    dispatch({ type: "reset" });
-  }, []);
+    dispatch({ type: "reset", deck });
+  }, [deck]);
 
   const reshuffle = useCallback(() => {
     dispatch({ type: "reshuffle" });
@@ -187,6 +187,7 @@ type RedrawAction = {
 
 type ResetAction = {
   type: "reset";
+  deck: ResolvedDeck;
 };
 
 type SelectAction = {
@@ -246,7 +247,7 @@ function drawReducer(state: State, action: Action): State {
     case "reset": {
       return {
         ...state,
-        bag: shuffle([...state.bag, ...state.drawn]),
+        bag: prepareBag(action.deck),
         drawn: [],
         mulliganMode: state.mulliganMode,
         selection: [],
