@@ -22,45 +22,6 @@ type Props = {
   deck: ResolvedDeck;
 };
 
-type DrawSimulatorCardProps = {
-  index: number;
-  state: State;
-  card: Card;
-  dispatch: React.Dispatch<Action>;
-};
-
-function DrawSimulatorCard(props: DrawSimulatorCardProps) {
-  const { card, dispatch, index, state } = props;
-
-  const { refs, referenceProps, isMounted, floatingStyles, transitionStyles } =
-    useRestingTooltip({ delay: 350 });
-
-  return (
-    <li className={css["card"]}>
-      <button
-        {...referenceProps}
-        ref={refs.setReference}
-        className={cx(
-          css["card-toggle"],
-          state.selection.includes(index) && css["selected"],
-        )}
-        onClick={() => dispatch({ type: "select", index })}
-        type="button"
-      >
-        <CardScan card={card} preventFlip draggable={false} />
-      </button>
-      {isMounted && (
-        <PortaledCardTooltip
-          card={card}
-          ref={refs.setFloating}
-          floatingStyles={floatingStyles}
-          transitionStyles={transitionStyles}
-        />
-      )}
-    </li>
-  );
-}
-
 export function DrawSimulator(props: Props) {
   const { deck } = props;
 
@@ -162,6 +123,47 @@ export function DrawSimulator(props: Props) {
     </Plane>
   );
 }
+
+type DrawSimulatorCardProps = {
+  index: number;
+  state: State;
+  card: Card;
+  dispatch: React.Dispatch<Action>;
+};
+
+function DrawSimulatorCard(props: DrawSimulatorCardProps) {
+  const { card, dispatch, index, state } = props;
+
+  const { refs, referenceProps, isMounted, floatingStyles, transitionStyles } =
+    useRestingTooltip({ delay: 350 });
+
+  return (
+    <li className={css["card"]}>
+      <button
+        {...referenceProps}
+        ref={refs.setReference}
+        className={cx(
+          css["card-toggle"],
+          state.selection.includes(index) && css["selected"],
+        )}
+        onClick={() => dispatch({ type: "select", index })}
+        type="button"
+      >
+        <CardScan card={card} preventFlip draggable={false} />
+      </button>
+      {isMounted && (
+        <PortaledCardTooltip
+          card={card}
+          ref={refs.setFloating}
+          floatingStyles={floatingStyles}
+          transitionStyles={transitionStyles}
+        />
+      )}
+    </li>
+  );
+}
+
+// Reducer
 
 type InitAction = {
   type: "init";
@@ -372,29 +374,42 @@ function drawReducer(state: State, action: Action): State {
 }
 
 function prepareBag(deck: ResolvedDeck) {
-  const cards = Object.values(deck.cards.slots).reduce((acc, { card }) => {
+  const cards = [];
+
+  const attachedQuantities = Object.values(deck.attachments ?? {}).reduce(
+    (acc, curr) => {
+      for (const [code, qty] of Object.entries(curr)) {
+        acc[code] ??= 0;
+        acc[code] += qty;
+      }
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+
+  for (const { card } of Object.values(deck.cards.slots)) {
     const drawable =
       !card.permanent &&
       !card.double_sided &&
       !card.back_link_id &&
       !card.starts_in_play &&
       !card.starts_in_hand &&
-      card.code !== SPECIAL_CARD_CODES.ON_THE_MEND &&
-      Object.entries(deck.attachments ?? {}).every(
-        ([_, attached]) => !attached?.[card.code],
-      );
+      card.code !== SPECIAL_CARD_CODES.ON_THE_MEND;
 
-    if (drawable) {
-      const quantity = deck.slots[card.code] ?? 0;
-      for (const _ of range(0, quantity)) {
-        acc.push(card.code);
-      }
+    if (!drawable) {
+      continue;
     }
 
-    return acc;
-  }, [] as string[]);
+    const quantity =
+      (deck.slots[card.code] ?? 0) - (attachedQuantities[card.code] ?? 0);
+
+    if (quantity > 0) {
+      for (const _ of range(0, quantity)) {
+        cards.push(card.code);
+      }
+    }
+  }
 
   shuffle(cards);
-
   return cards;
 }
