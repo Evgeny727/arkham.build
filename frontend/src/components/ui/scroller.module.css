@@ -12,27 +12,15 @@
   overflow-y: auto;
 }
 
-.viewport-always {
-  overflow-y: scroll;
-}
-
-@supports (scrollbar-color: auto) {
-  .viewport {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar);
-    scrollbar-gutter: stable;
-  }
-
-  .viewport-hover {
-    scrollbar-color: transparent transparent;
-
-    &:hover {
-      scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar);
-    }
-  }
-}
-
 @supports selector(::-webkit-scrollbar) {
+  .viewport {
+    padding-right: calc(var(--scrollbar-padding) - 6px);
+  }
+
+  .viewport-always {
+    overflow-y: scroll;
+  }
+
   .viewport::-webkit-scrollbar {
     background: var(--color-scrollbar);
     width: 6px;
@@ -41,17 +29,36 @@
   .viewport::-webkit-scrollbar-thumb {
     background: var(--color-scrollbar-thumb);
     border-radius: var(--rounded);
+    z-index: 9999;
   }
 
-  /* Mask the scrollbar area (right 6px) by default, reveal on hover.
-     Safari doesn't re-render ::-webkit-scrollbar on CSS :hover state changes,
-     but mask transitions do work reliably. */
   .viewport-hover {
     mask-image: linear-gradient(to left, transparent 6px, black 6px);
     transition: mask-image 300ms;
 
     &:hover {
       mask-image: linear-gradient(to left, black 6px, black 6px);
+    }
+  }
+}
+
+@supports (scrollbar-color: auto) {
+  .viewport {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar);
+    scrollbar-gutter: stable;
+    padding-right: 0;
+  }
+
+  .padded .viewport {
+    padding-right: var(--scrollbar-padding);
+  }
+
+  .viewport-hover {
+    scrollbar-color: transparent transparent;
+
+    &:hover {
+      scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar);
     }
   }
 }
