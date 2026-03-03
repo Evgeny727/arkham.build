@@ -3,6 +3,7 @@ import {
   QueryClientProvider,
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -237,23 +238,23 @@ function CardDataSyncTask() {
   });
 
   const init = useStore((state) => state.init);
-  const settings = useStore((state) => state.settings);
+  const queryClient = useQueryClient();
 
-  const initMutation = useMutation({
-    mutationFn: () =>
-      init(queryMetadata, queryDataVersion, queryCards, {
+  const { isError, isPending, mutateAsync } = useMutation({
+    mutationFn: async () => {
+      await init(queryMetadata, queryDataVersion, queryCards, {
         refresh: true,
-        locale: settings.locale,
-      }),
+        locale,
+      });
+      queryClient.setQueryData(
+        ["tasks", "dataVersion", locale],
+        useStore.getState().metadata.dataVersion,
+      );
+    },
   });
 
   useEffect(() => {
-    if (
-      !remoteDataVersion ||
-      !dataVersion ||
-      initMutation.isPending ||
-      initMutation.isError
-    ) {
+    if (!remoteDataVersion || !dataVersion || isPending || isError) {
       return;
     }
 
@@ -270,8 +271,7 @@ function CardDataSyncTask() {
         children: t("settings.card_data.loading"),
       });
 
-      initMutation
-        .mutateAsync()
+      mutateAsync()
         .then(() => {
           if (toastId.current) {
             toast.dismiss(toastId.current);
@@ -281,9 +281,9 @@ function CardDataSyncTask() {
     }
   }, [
     dataVersion,
-    initMutation.isError,
-    initMutation.isPending,
-    initMutation.mutateAsync,
+    isError,
+    isPending,
+    mutateAsync,
     remoteDataVersion,
     toast,
     t,
