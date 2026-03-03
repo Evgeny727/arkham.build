@@ -1,6 +1,6 @@
 import type { Card } from "@arkham-build/shared";
 import { ShuffleIcon } from "lucide-react";
-import { useCallback, useReducer } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { useTranslation } from "react-i18next";
 import type { ResolvedDeck } from "@/store/lib/types";
 import type { Id } from "@/store/schemas/deck.schema";
@@ -51,6 +51,11 @@ export function DrawSimulator(props: Props) {
   const toggleMulligan = useCallback(() => {
     dispatch({ type: "toggleMulligan" });
   }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we want to reset on deck changes
+  useEffect(() => {
+    reset();
+  }, [deck, reset]);
 
   return (
     <Plane className={css["container"]} as="article">
@@ -109,15 +114,18 @@ export function DrawSimulator(props: Props) {
       </nav>
       {!isEmpty(state.drawn) && (
         <ol className={css["drawn"]}>
-          {state.drawn.map((code, index) => (
-            <DrawSimulatorCard
-              key={`${index}-${code}`}
-              card={deck.cards.slots[code].card}
-              index={index}
-              state={state}
-              dispatch={dispatch}
-            />
-          ))}
+          {state.drawn.map((code, index) => {
+            if (!deck.cards.slots[code]) return null;
+            return (
+              <DrawSimulatorCard
+                key={`${index}-${code}`}
+                card={deck.cards.slots[code].card}
+                index={index}
+                state={state}
+                dispatch={dispatch}
+              />
+            );
+          })}
         </ol>
       )}
     </Plane>
