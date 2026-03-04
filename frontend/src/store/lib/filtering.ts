@@ -1278,6 +1278,7 @@ export function filterDuplicatesFromContext(
   metadata: Metadata,
   lookupTables: LookupTables,
   deck: ResolvedDeck | undefined,
+  collection: Record<string, boolean | number>,
 ) {
   const cardPool = deck?.cardPool
     ? resolveLimitedPoolPacks(metadata, deck.cardPool).map((p) => p.code)
@@ -1358,6 +1359,26 @@ export function filterDuplicatesFromContext(
       .sort((a, b) => {
         const aCard = metadata.cards[a];
         const bCard = metadata.cards[b];
+
+        const aOwned = ownedCardCount({
+          card: aCard,
+          metadata,
+          lookupTables,
+          collection,
+          showAllCards: false,
+        });
+
+        const bOwned = ownedCardCount({
+          card: bCard,
+          metadata,
+          lookupTables,
+          collection,
+          showAllCards: false,
+        });
+
+        if (aOwned !== bOwned) {
+          return bOwned - aOwned;
+        }
 
         const aPack = metadata.packs[aCard.pack_code];
         const bPack = metadata.packs[bCard.pack_code];

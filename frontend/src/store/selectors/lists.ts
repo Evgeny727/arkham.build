@@ -737,6 +737,7 @@ export const selectListCards = createSelector(
     targetDeck: TargetDeck | undefined,
   ) => targetDeck,
   (state: StoreState) => state.ui.showUnusableCards,
+  (state: StoreState) => state.settings.collection,
   (
     metadata,
     lookupTables,
@@ -747,6 +748,7 @@ export const selectListCards = createSelector(
     deck,
     targetDeck,
     showUnusableCards,
+    collection,
   ) => {
     if (!baseFilterResult || !activeList) return undefined;
 
@@ -765,6 +767,7 @@ export const selectListCards = createSelector(
           metadata,
           lookupTables,
           deck,
+          collection,
         ),
       );
 
