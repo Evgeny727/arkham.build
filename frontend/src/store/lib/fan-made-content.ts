@@ -211,7 +211,8 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
     for (const [code, quantity] of slots) {
       if (
         meta.fan_made_content?.cards?.[code] ||
-        metadata.cards[code]?.preview
+        (metadata.cards[code]?.preview &&
+          metadata.cards[code].pack_code !== "core_2026")
       ) {
         hiddenSlots[key] ??= {};
         hiddenSlots[key][code] = quantity;
@@ -222,7 +223,8 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
 
   if (
     meta.fan_made_content?.cards[deck.investigator_code] ||
-    metadata.cards[deck.investigator_code]?.preview
+    (metadata.cards[deck.investigator_code]?.preview &&
+      metadata.cards[deck.investigator_code].pack_code !== "core_2026")
   ) {
     hiddenSlots.investigator_code = deck.investigator_code;
     deck.investigator_code = SPECIAL_CARD_CODES.SUZI;
