@@ -15,6 +15,7 @@ type Props = {
   canToggleBackside?: boolean;
   children?: React.ReactNode;
   className?: string;
+  omitImage?: boolean;
   onPrintingSelect?: (card: CardT) => void;
   resolvedCard: ResolvedCard | CardWithRelations;
   slotCardFooter?: React.ReactNode;
@@ -34,6 +35,7 @@ export function Card(props: Props) {
     canToggleBackside,
     children,
     className,
+    omitImage,
     onPrintingSelect,
     resolvedCard,
     size = "full",
@@ -53,6 +55,7 @@ export function Card(props: Props) {
   const frontNode = (
     <CardFace
       className={className}
+      omitImage={omitImage}
       onPrintingSelect={onPrintingSelect}
       resolvedCard={resolvedCard}
       size={size}

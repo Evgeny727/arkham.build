@@ -84,6 +84,10 @@ const InstallFanMadeContent = lazy(
 
 const Core2026Reveal = lazy(() => import("./pages/blog/core-2026-reveal"));
 
+const Investigator2026Reveal = lazy(
+  () => import("./pages/blog/investigator-2026-reveal"),
+);
+
 const FanMadeContentPreview = lazy(
   () => import("./pages/fan-made-content-preview/fan-made-content-preview"),
 );
@@ -163,6 +167,10 @@ function AppInner() {
               <Route component={Connect} path="/connect" />
               <Route component={Rules} path="/rules" />
               <Route component={Core2026Reveal} path="/blog/core-2026-reveal" />
+              <Route
+                component={Investigator2026Reveal}
+                path="/blog/investigator-2026-reveal"
+              />
               <Route
                 component={FanMadeContentPreview}
                 path="/fan-made-content/preview/:id"

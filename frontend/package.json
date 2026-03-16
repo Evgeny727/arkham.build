@@ -10,7 +10,6 @@
     "build": "vite build",
     "check": "tsc --noEmit",
     "dev": "vite",
-    "dev:functions": "wrangler pages dev",
     "fmt:rules": "npx prettier src/assets/rules.html --write",
     "i18n:sync": "node ./scripts/i18n-sync.ts && npm run fmt",
     "i18n:pull": "npx tsx ./scripts/i18n-pull && npm run fmt",
