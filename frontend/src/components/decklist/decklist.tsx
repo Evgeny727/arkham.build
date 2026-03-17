@@ -24,7 +24,7 @@ import { Button } from "../ui/button";
 import { DropdownMenu } from "../ui/dropdown-menu";
 import { HotkeyTooltip } from "../ui/hotkey";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { useTabUrlState } from "../ui/tabs";
+import { useTabUrlState } from "../ui/tabs.hooks";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import css from "./decklist.module.css";
 import { DecklistGroup } from "./decklist-groups";

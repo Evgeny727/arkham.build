@@ -7,8 +7,8 @@ import {
 } from "@/store/selectors/lists";
 import { selectActiveList, selectMetadata } from "@/store/selectors/shared";
 import { assert } from "@/utils/assert";
-import { useResolvedDeck } from "@/utils/use-resolved-deck";
 import { Footer } from "../footer";
+import { useResolvedDeck } from "../resolved-deck-context";
 import { CardGrid } from "./card-grid";
 import { CardGridGrouped } from "./card-grid-grouped";
 import { CardList } from "./card-list";

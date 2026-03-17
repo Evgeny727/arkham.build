@@ -5,12 +5,8 @@ import { Link } from "wouter";
 import EncounterIcon from "@/components/icons/encounter-icon";
 import PackIcon from "@/components/icons/pack-icon";
 import { Scroller } from "@/components/ui/scroller";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  useTabUrlState,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTabUrlState } from "@/components/ui/tabs.hooks";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useStore } from "@/store";
 import { sortByEncounterSet } from "@/store/lib/sorting";

@@ -70,7 +70,13 @@ export function SealedDeckTag({
   );
 }
 
-export const providerTagRenderer = (tag: StorageProvider, t: TFunction) => {
+export function ProviderTagInner({
+  tag,
+  t,
+}: {
+  tag: StorageProvider;
+  t: TFunction;
+}) {
   let icon = null;
 
   if (tag === "arkhamdb") {
@@ -97,7 +103,7 @@ export const providerTagRenderer = (tag: StorageProvider, t: TFunction) => {
       </span>
     </>
   );
-};
+}
 
 export function ProviderTag({
   deck,
@@ -115,7 +121,7 @@ export function ProviderTag({
 
   return (
     <Tag as="li" size="xs">
-      {providerTagRenderer(source, t)}
+      <ProviderTagInner tag={source} t={t} />
     </Tag>
   );
 }

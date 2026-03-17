@@ -18,15 +18,12 @@ import { CoreCardCheckbox } from "@/components/card-recommender/core-card-checkb
 import { DeckTools } from "@/components/deck-tools/deck-tools";
 import { DecklistValidation } from "@/components/decklist/decklist-validation";
 import { Filters } from "@/components/filters/filters";
+import { useResolvedDeckChecked } from "@/components/resolved-deck-context";
+import { ResolvedDeckProvider } from "@/components/resolved-deck-context-provider";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/ui/page-title";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  useTabUrlState,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTabUrlState } from "@/components/ui/tabs.hooks";
 import { useToast } from "@/components/ui/toast.hooks";
 import { ListLayoutContextProvider } from "@/layouts/list-layout-context-provider";
 import { useStore } from "@/store";
@@ -40,17 +37,13 @@ import { mapTabToSlot } from "@/store/slices/deck-edits.types";
 import { isStaticInvestigator } from "@/utils/card-utils";
 import { useAccentColor } from "@/utils/use-accent-color";
 import { useHotkey } from "@/utils/use-hotkey";
-import {
-  ResolvedDeckProvider,
-  useResolvedDeckChecked,
-} from "@/utils/use-resolved-deck";
 import { ErrorStatus } from "../errors/404";
 import { CardAccessToggles } from "./card-access-toggles";
 import { CardExtras } from "./card-extras";
 import css from "./deck-edit.module.css";
 import { Editor } from "./editor/editor";
 import { NotesEditor } from "./editor/notes-editor";
-import { NotesRichTextEditorContextProvider } from "./editor/notes-rte/notes-rte-context";
+import { NotesRichTextEditorContextProvider } from "./editor/notes-rte/notes-rte-context-provider";
 import { UndoHistory } from "./editor/undo-history";
 
 function DeckEdit() {

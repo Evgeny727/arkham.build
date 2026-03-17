@@ -1,6 +1,3 @@
-import type { ReactNode, SVGProps } from "react";
-import css from "./deck-tools.module.css";
-
 export const chartTheme = {
   height: 360,
 
@@ -36,7 +33,7 @@ export const chartTheme = {
   },
 } as const;
 
-export const axisTickStyle: SVGProps<SVGTextElement> = {
+export const axisTickStyle: React.SVGProps<SVGTextElement> = {
   fontFamily: chartTheme.font.family,
   fontSize: chartTheme.font.size,
   fill: chartTheme.colors.text,
@@ -47,20 +44,3 @@ export const axisLabelStyle = {
   fontSize: chartTheme.font.size,
   fill: chartTheme.colors.text,
 };
-
-type ChartTooltipProps = {
-  active?: boolean;
-  payload?: ReadonlyArray<{ payload: Record<string, unknown> }>;
-  formatter: (data: Record<string, unknown>) => ReactNode;
-};
-
-export function ChartTooltip({
-  active,
-  payload,
-  formatter,
-}: ChartTooltipProps) {
-  if (!active || !payload?.[0]) return null;
-  return (
-    <div className={css["chart-tooltip"]}>{formatter(payload[0].payload)}</div>
-  );
-}
