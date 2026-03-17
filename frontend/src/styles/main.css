@@ -1,5 +1,3 @@
-@layer base, ui-base, ui-components, app, overrides;
-
 @layer base {
   :root {
     --font-family-ui:
