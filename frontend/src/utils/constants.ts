@@ -64,9 +64,10 @@ export const SIDEWAYS_TYPE_CODES = ["act", "agenda", "investigator"];
 
 export const CYCLES_WITH_STANDALONE_PACKS = [
   "core",
-  "core_2026",
+  "core_ch2",
   "return",
   "investigator",
+  "investigator_decks_ch2",
   "promotional",
   "parallel",
   "side_stories",
