@@ -3,35 +3,34 @@ import { Button } from "@/components/ui/button";
 import css from "./collection.module.css";
 
 type Props = {
-  cycleCode: string;
-  onToggleCycle: (evt: React.MouseEvent) => void;
-  reprint?: boolean;
+  chapter: string;
+  onToggleChapter: (evt: React.MouseEvent) => void;
 };
 
-export function CollectionCycleActions(props: Props) {
-  const { cycleCode, onToggleCycle, reprint } = props;
+export function CollectionChapterActions(props: Props) {
+  const { chapter, onToggleChapter } = props;
 
   return (
     <div className={css["cycle-actions"]}>
       <Button
-        data-cycle={cycleCode}
-        data-reprint={reprint ? "true" : "false"}
+        data-chapter={chapter}
         data-val={1}
-        onClick={onToggleCycle}
+        onClick={onToggleChapter}
         iconOnly
         type="button"
         variant="bare"
+        size="sm"
       >
         <PlusIcon />
       </Button>
       <Button
-        data-cycle={cycleCode}
+        data-chapter={chapter}
         data-val={0}
-        data-reprint={reprint ? "true" : "false"}
-        onClick={onToggleCycle}
+        onClick={onToggleChapter}
         iconOnly
         type="button"
         variant="bare"
+        size="sm"
       >
         <MinusIcon />
       </Button>
