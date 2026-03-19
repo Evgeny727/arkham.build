@@ -1,8 +1,16 @@
 [
   {
-    "code": "core_2026",
-    "name": "Core 2026",
-    "position": 1,
-    "preview": true
+    "code": "core_ch2",
+    "name": "Core Set",
+    "position": 12,
+    "preview": true,
+    "size": 1
+  },
+  {
+    "code": "investigator_decks_ch2",
+    "name": "Investigator Decks",
+    "position": 61,
+    "preview": true,
+    "size": 20
   }
 ]
