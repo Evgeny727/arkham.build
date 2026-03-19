@@ -8,9 +8,8 @@ html[data-theme="light"] {
 }
 
 .container {
-  max-width: 80rem;
-  margin-inline: auto;
   position: relative;
+  padding: 1rem;
 
   @media screen and (min-width: 58rem) {
     display: grid;
@@ -108,6 +107,10 @@ html[data-theme="light"] .toc a {
   color: var(--nord-10);
 }
 
+.rules-container {
+  padding-block: 1rem;
+}
+
 .rules-container > * + * {
   margin-top: 1rem;
 }
@@ -152,4 +155,10 @@ html[data-theme="light"] .toc a {
   padding: 0.25rem;
   background: var(--palette-point-five);
   box-shadow: var(--shadow);
+}
+
+.grimoire {
+  max-width: 90ch;
+  margin-inline: auto;
+  padding-block: 1rem;
 }
