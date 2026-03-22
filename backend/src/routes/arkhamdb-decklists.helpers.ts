@@ -1,5 +1,4 @@
 import { type DateRange, DECKLIST_SEARCH_MAX_XP } from "@arkham-build/shared";
-import type { Context } from "hono";
 import { type Expression, expressionBuilder, sql } from "kysely";
 import type { DB } from "../db/schema.types.ts";
 
@@ -89,12 +88,6 @@ export function inXpRangeConds(
   if (max < DECKLIST_SEARCH_MAX_XP) conds.push(eb(xpRequired, "<=", max));
 
   return conds;
-}
-
-export function rangeFromQuery(key: string, c: Context) {
-  return c.req.query(`${key}_start`)
-    ? [c.req.query(`${key}_start`), c.req.query(`${key}_end`)]
-    : undefined;
 }
 
 function requiredCardsCond(

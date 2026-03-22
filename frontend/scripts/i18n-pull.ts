@@ -2,8 +2,8 @@ import { execSync } from "node:child_process";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import type { Card } from "../../shared/src/index";
 import { applyLocalData } from "../src/store/lib/local-data.ts";
-import type { Card } from "../src/store/schemas/card.schema.ts";
 import { cardUses } from "../src/utils/card-utils.ts";
 
 type JsonObject = { [key: string]: JsonValue };

@@ -53,12 +53,6 @@ export type CardWithRelations = ResolvedCard & {
   };
 };
 
-export function isCardWithRelations(
-  x: ResolvedCard | CardWithRelations,
-): x is CardWithRelations {
-  return "relations" in x;
-}
-
 export type Customization = {
   index: number;
   xp_spent: number;

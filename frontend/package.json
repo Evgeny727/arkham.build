@@ -12,7 +12,7 @@
     "dev": "vite",
     "fmt:rules": "npx prettier src/assets/rules.html --write",
     "i18n:sync": "node ./scripts/i18n-sync.ts && npm run fmt",
-    "i18n:pull": "npx tsx ./scripts/i18n-pull && npm run fmt",
+    "i18n:pull": "npx tsx ./scripts/i18n-pull.ts && npm run fmt",
     "icons:export": "mkdir -p public/lucide && npm i lucide-static && cp -R node_modules/lucide-static/icons public/lucide && npm uninstall lucide-static",
     "knip": "npx knip",
     "preview": "vite preview",
@@ -56,7 +56,6 @@
     "autoprefixer": "10.4.27",
     "happy-dom": "20.7.0",
     "rollup-plugin-bundle-stats": "4.21.10",
-    "vite": "8.0.0",
-    "wrangler": "4.69.0"
+    "vite": "8.0.0"
   }
 }

@@ -171,7 +171,7 @@ function CardGridGroup(
   );
 }
 
-export function CardGridItem(
+function CardGridItem(
   props: {
     card: Card;
   } & Pick<

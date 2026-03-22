@@ -33,7 +33,6 @@
     "@tsconfig/strictest": "2.0.8",
     "@types/pg": "8.16.0",
     "dbmate": "2.31.0",
-    "kysely-codegen": "0.20.0",
-    "testcontainers": "11.12.0"
+    "kysely-codegen": "0.20.0"
   }
 }
