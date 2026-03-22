@@ -57,7 +57,6 @@
       }
     },
     "card_view": {
-      "errata_notice": "Errata ({{date}})",
       "actions": {
         "faq": "View FAQ",
         "open_on_arkhamdb": "Open on ArkhamDB",
@@ -69,6 +68,7 @@
         "view_backside": "Backside",
         "who_can_take": "Who can take this card?"
       },
+      "errata_notice": "Errata ({{date}})",
       "faq": {
         "empty": "No FAQ entries available.",
         "error": "Failed to load FAQ entries.",
@@ -226,8 +226,8 @@
         "parallelCards": "Parallel cards",
         "replacement": "Replacements",
         "requiredCards": "Signatures",
-        "sideDeckRequiredCards": "Extra Deck Signatures",
         "restrictedTo": "Restricted to",
+        "sideDeckRequiredCards": "Extra Deck Signatures",
         "specialist": "Specialist",
         "specialist_investigators": "Specialist Investigators"
       },
@@ -843,12 +843,12 @@
       "help_advanced": "<p>Signature cards with \"Advanced\" are stronger versions of an investigator's signature cards that are listed under \"Deck Requirements\".</p><p>At any point during a campaign (including at deck creation) you may optionally choose to include these advanced signature cards <strong>instead of</strong> the original signature cards.</p>",
       "help_replacements": "<p>Signature cards with \"Replacement\" can replace the signature cards that are listed under \"Deckbuilding Requirements\". Doing so still satisfies the requirement and the deck is valid to play.</p><p>If doing so, <strong>both</strong> signature cards must be replaced and if doing so for a campaign, you cannot later change to using the original signature cards.</p><p>Alternatively, the \"Replacement\" cards can be included in addition to the signature cards.</p>",
       "loading": "Creating deck...",
-      "title": "Create {{name}} deck",
       "random_basic_weakness": "Random basic weakness",
       "sealed_deck": {
         "error": "Failed to fetch sealed deck: {{error}}",
         "loading": "Fetching sealed deck..."
-      }
+      },
+      "title": "Create {{name}} deck"
     },
     "deck_edit": {
       "actions": {
@@ -873,6 +873,7 @@
       },
       "changes_restored": "Unsaved changes were restored.",
       "config": {
+        "buildql_deck_option": "BuildQL deckbuilding override",
         "card_pool": {
           "apply_environment": "Apply {{environment}} environment",
           "campaign_playalong": "Campaign Play-Along",
@@ -913,7 +914,6 @@
           "shared": "Shared",
           "title": "Storage provider"
         },
-        "buildql_deck_option": "BuildQL deckbuilding override",
         "taboo": "Taboo list",
         "tags": "Tags",
         "tags_help": "Enter tags, separated by spaces",
@@ -1162,6 +1162,7 @@
         "card_lists": "Card lists",
         "card_lists_help": "This setting controls the default value of the \"Fan-made content\" filter in card lists."
       },
+      "short_title": "Fan-made",
       "status": {
         "alpha": "Alpha",
         "beta": "Beta",
@@ -1172,7 +1173,6 @@
       "status_installed": "Installed",
       "status_update_available": "Update content",
       "tags": "Tags",
-      "short_title": "Fan-made",
       "title": "Fan-made content",
       "types": {
         "campaign": "Campaign",
@@ -1189,7 +1189,6 @@
       },
       "all": "All",
       "and": "and",
-      "locked": "This filter is locked",
       "asset": {
         "title": "Asset"
       },
@@ -1239,6 +1238,7 @@
         "no_level": "Null",
         "title": "Level"
       },
+      "locked": "This filter is locked",
       "or": "or",
       "ownership": {
         "owned": "Owned",
@@ -1384,9 +1384,9 @@
       "title": "Preview season is here!"
     },
     "rules": {
-      "title": "Rules reference",
       "back_to_top": "Back to top",
       "search_placeholder": "Search keywords...",
+      "title": "Rules reference",
       "toc": "Table of contents"
     },
     "search": {
@@ -1453,6 +1453,10 @@
         "user_id": "User ID",
         "username": "Username"
       },
+      "developer": {
+        "dev_mode_enabled": "Enable developer mode",
+        "title": "Developer"
+      },
       "display": {
         "card_display": "Card display settings",
         "card_level": "Card level",
@@ -1485,10 +1489,6 @@
         "theme_light": "Light",
         "theme_system": "System",
         "title": "Display"
-      },
-      "developer": {
-        "dev_mode_enabled": "Enable developer mode",
-        "title": "Developer"
       },
       "error": "Failed to save settings: {{error}}",
       "general": {

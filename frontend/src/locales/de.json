@@ -68,6 +68,7 @@
         "view_backside": "Rückseite",
         "who_can_take": "Wer kann {{name}} verwenden?"
       },
+      "errata_notice": "Errata ({{date}})",
       "faq": {
         "empty": "Keine FAQ-Einträge vorhanden.",
         "error": "FAQ-Einträge konnten nicht geladen werden.",
@@ -197,6 +198,7 @@
       "more_actions": "Weitere Aktionen",
       "myriad": "Unzählig",
       "no_entries": "Keine Einträge",
+      "non_collection_cards": "{{count}} nicht im Besitz",
       "none": "Keine Auswahl",
       "nonexceptional": "Nicht-Außergewöhnlich",
       "ok": "OK",
@@ -225,8 +227,9 @@
         "replacement": "Ersatz-Signaturkarten",
         "requiredCards": "Signaturkarten",
         "restrictedTo": "Limitiert auf",
-        "specialist": "Specialist",
-        "specialist_investigators": "Specialist Investigators"
+        "sideDeckRequiredCards": "Extra Deck Signaturen",
+        "specialist": "Spezialistenkarten",
+        "specialist_investigators": "Spezialisten-Ermittler"
       },
       "reset": "Zurücksetzen",
       "seal": "Versiegeln",
@@ -732,6 +735,8 @@
       "id": "Deck Id",
       "latest_upgrade": {
         "add_to_deck": "Zum Deck hinzufügen",
+        "decrement_xp": "Reduziere die Anzahl an verfügbaren EP",
+        "increment_xp": "Erhöhe die Anzahl an verfügbaren EP",
         "no_changes": "Keine Änderungen.",
         "summary": "{{xpSpent}} von {{xp}} EP ausgegeben",
         "title": "Aktuelle Verbesserung",
@@ -842,7 +847,8 @@
       "sealed_deck": {
         "error": "Versiegeltes Deck konnte nicht geladen werden: {{error}}",
         "loading": "Versiegeltes Deck wird geladen..."
-      }
+      },
+      "title": "{{name}} Deck erstellen"
     },
     "deck_edit": {
       "actions": {
@@ -867,6 +873,7 @@
       },
       "changes_restored": "Ungespeicherte Änderungen wurden wiederhergestellt.",
       "config": {
+        "buildql_deck_option": "BuildQL deckbuilding override",
         "card_pool": {
           "apply_environment": "{{environment}} Umgebung anwenden",
           "campaign_playalong": "Campaign Play-Along",
@@ -1043,6 +1050,7 @@
       "newer_version": "Dieses Deck ist schreibgeschützt, da eine <a>aktuellere Version</a> verfügbar ist.",
       "scans": "Scans",
       "sharing": {
+        "api_link": "Json API",
         "create": "Freigeben",
         "create_failed": "Erstellen der Freigabe fehlgeschlagen: {{error}}",
         "create_tooltip": "Eine Freigabe ist ein öffentlich verfügbarer, schreibgeschützter Link zu diesem Deck. Jeder, der über diesen Link verfügt, kann das Deck ansehen, es aber nicht bearbeiten.<br />Die Freigabe kann jederzeit aufgehoben werden, ohne das lokale Deck zu löschen.",
@@ -1054,6 +1062,7 @@
         "update": "Freigabe aktualisieren",
         "update_failed": "Aktualisieren der Freigabe fehlgeschlagen: {{error}}"
       },
+      "show_deck_list": "Show deck list",
       "tab_deck_list": "Deck",
       "tab_history": "Verlauf",
       "tab_notes": "Notizen",
@@ -1089,7 +1098,8 @@
         "name_placeholder": "Name eingeben...",
         "required_cards": "Benötigte Karten",
         "submit": "Anwenden",
-        "title": "Suchkriterien"
+        "title": "Suchkriterien",
+        "xp_range": "XP required"
       },
       "sorting": {
         "date": "Most recent",
@@ -1133,6 +1143,7 @@
       "content_types": "Inhaltstypen",
       "content_version": "Inhaltsversion",
       "empty": "Keine Inhalte installiert",
+      "filter_fan_made_content": "Search content...",
       "import_url": {
         "label": "Inhalts-URL",
         "placeholder": "Gib eine URL ein...",
@@ -1143,6 +1154,7 @@
         "available_content_loading": "Verfügbare Inhalte werden geladen...",
         "content_loading": "Lade Inhalte...",
         "fetch_failed": "Inhalt konnte nicht geladen werden: {{error}}",
+        "no_match": "No available content matches your filter",
         "parse_failed": "Inhalt konnte nicht hinzugefügt werden: {{error}}",
         "registry_failed": "Verfügbare Inhalte konnten nicht geladen werden: {{error}}"
       },
@@ -1150,6 +1162,7 @@
         "card_lists": "Kartenlisten",
         "card_lists_help": "Standardwert für den \"Inoffizielle Inhalte\" Filter in den Kartenlisten."
       },
+      "short_title": "Fan-made",
       "status": {
         "alpha": "Alpha",
         "beta": "Beta",
@@ -1225,6 +1238,7 @@
         "no_level": "Keine Stufe",
         "title": "Stufe"
       },
+      "locked": "This filter is locked",
       "or": "oder",
       "ownership": {
         "owned": "In Besitz",
@@ -1337,6 +1351,7 @@
         "display_as_list_text": "Liste mit Kartentext",
         "display_as_scans": "Scans",
         "display_as_scans_grouped": "Scans (gruppiert)",
+        "export": "Export",
         "jump_to": "Springe zu...",
         "list_settings": "Listenoptionen",
         "sort": "Sortierung",
@@ -1369,7 +1384,10 @@
       "title": "Kartenvorschau"
     },
     "rules": {
-      "title": "Spielregeln"
+      "back_to_top": "Back to top",
+      "search_placeholder": "Search keywords...",
+      "title": "Spielregeln",
+      "toc": "Table of contents"
     },
     "search": {
       "title": "Ergebnisse"
@@ -1400,6 +1418,7 @@
       "collection": {
         "card_collection": "Kartensammlung",
         "card_count": "Kartenanzahl",
+        "chapter": "Chapter {{number}}",
         "new_format": "Neues Format",
         "old_format": "Altes Format",
         "show_all_cards_owned": "Alle Karten anzeigen",
@@ -1433,6 +1452,10 @@
         "title": "Verbundene Konten",
         "user_id": "Nutzer ID",
         "username": "Nutzername"
+      },
+      "developer": {
+        "dev_mode_enabled": "Enable developer mode",
+        "title": "Developer"
       },
       "display": {
         "card_display": "Kartenanzeige",
