@@ -580,7 +580,10 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
         }),
         initialValues: values,
         key,
-        systemFilter: and([...SYSTEM_FILTERS]),
+        systemFilter: and([
+          ...SYSTEM_FILTERS,
+          ...(state.settings.showPreviews ? [] : [not(filterPreviews)]),
+        ]),
         search: {
           value: opts.search ?? "",
           mode: "simple",
