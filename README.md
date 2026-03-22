@@ -2,8 +2,7 @@
 
 > [arkham.build](https://arkham.build) is a web-based deckbuilder for Arkham Horror: The Card Game™.
 
-> [!NOTE]  
-> The application is currently being restructured into a monorepo. The frontend and its README (what this repo previously contained) can be found in `./frontend`.
+![Screenshot](./.github/screenshot.png)
 
 ## Metadata additions
 
