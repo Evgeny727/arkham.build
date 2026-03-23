@@ -70,7 +70,7 @@ function CardPackDetail(props: { card: Card; invert?: boolean }) {
   const displayPack = cycleOrPack(cycle, pack);
 
   return (
-    <span className={css["pack-detail"]}>
+    <span className={cx(css["pack-detail"], invert && css["invert"])}>
       <PackIcon
         className={css["pack-detail-icon"]}
         code={displayPack.code}
