@@ -662,7 +662,7 @@ function ArkhamDBDetails(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
           <nav className={css["share-actions"]}>
             <Button
               as="a"
-              href={`${localizeArkhamDBBaseUrl()}/deck/view/${deck.id}`}
+              href={`${localizeArkhamDBBaseUrl()}/${type}/view/${deck.id}`}
               size="sm"
               rel="noreferrer"
               target="_blank"
@@ -681,7 +681,7 @@ function ArkhamDBDetails(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
           icon={<ShareIcon />}
           label={t("deck_view.sharing.title")}
         >
-          <ShareInfo id={deck.id} path={`/deck/view/${deck.id}`} />
+          <ShareInfo id={deck.id} path={`/${type}/view/${deck.id}`} />
         </DeckDetail>
       </section>
     </>
