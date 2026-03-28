@@ -9,6 +9,7 @@ import perInvestigatorAttributes from "./per-investigator-attributes.json";
 import playerCardDeckOptions from "./player-card-deck-options.json";
 import previews from "./previews.json";
 import rbw from "./rbw.json";
+import reprints from "./reprints.json";
 
 export default [
   ...attachments,
@@ -20,5 +21,6 @@ export default [
   ...playerCardDeckOptions,
   ...previews.map((card) => ({ ...card, preview: card.preview !== false })),
   ...rbw,
+  ...reprints,
   ...perInvestigatorAttributes,
 ] as (Partial<JsonDataCard> & { code: string; patch?: true })[];
