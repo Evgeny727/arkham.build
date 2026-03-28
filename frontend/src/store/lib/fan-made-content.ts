@@ -209,11 +209,17 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
     if (!slots.length) continue;
 
     for (const [code, quantity] of slots) {
-      if (
-        meta.fan_made_content?.cards?.[code] ||
-        (metadata.cards[code]?.preview &&
-          metadata.cards[code].pack_code !== "core_2026")
-      ) {
+      const isFanMade = meta.fan_made_content?.cards?.[code];
+
+      const isUnreleasedEncounter =
+        metadata.cards[code].pack_code === "core_2026" &&
+        !!metadata.cards[code].encounter_code;
+
+      const isPreview =
+        metadata.cards[code]?.preview &&
+        metadata.cards[code].pack_code !== "core_2026";
+
+      if (isFanMade || isUnreleasedEncounter || isPreview) {
         hiddenSlots[key] ??= {};
         hiddenSlots[key][code] = quantity;
         delete deck[key]?.[code];

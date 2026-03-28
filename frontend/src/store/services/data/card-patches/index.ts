@@ -18,7 +18,7 @@ export default [
   ...investigatorDuplicates,
   ...missingTags,
   ...playerCardDeckOptions,
-  ...previews.map((card) => ({ ...card, preview: true })),
+  ...previews.map((card) => ({ ...card, preview: card.preview !== false })),
   ...rbw,
   ...perInvestigatorAttributes,
 ] as (Partial<JsonDataCard> & { code: string; patch?: true })[];
