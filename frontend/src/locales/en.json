@@ -760,6 +760,7 @@
         "xp_spent": "XP spent"
       },
       "limited_decks": {
+        "Collector": "Collector",
         "Secondary Class": "Secondary class",
         "Versatile": "Versatile"
       },
