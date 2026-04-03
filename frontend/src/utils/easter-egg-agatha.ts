@@ -5,8 +5,8 @@ const AGATHA_TRIGGER = "agathaallalong";
 const AGATHA_CODES = ["11007", "11008", "11007b", "11008b"];
 const AGATHA_FLAG = "easter_egg_agatha";
 
-const MONTEREY_CODES = ["08007", "08007b"];
-const MONTEREY_FLAG = "easter_egg_monty";
+const _MONTEREY_CODES = ["08007", "08007b"];
+const _MONTEREY_FLAG = "easter_egg_monty";
 
 export function useAgathaEasterEggTrigger() {
   const toggleFlag = useStore((state) => state.toggleFlag);
@@ -36,14 +36,7 @@ export function useAgathaEasterEggTrigger() {
 
 export function useAgathaEasterEggTransform(code: string) {
   const flag = useStore((state) => !!state.settings.flags?.[AGATHA_FLAG]);
-
-  if (!AGATHA_CODES.includes(code) && !MONTEREY_CODES.includes(code))
-    return code;
-
-  if (MONTEREY_CODES.includes(code)) {
-    return `${MONTEREY_FLAG}_${code}`;
-  }
-
+  if (!AGATHA_CODES.includes(code)) return code;
   return flag ? `${AGATHA_FLAG}_${code}` : code;
 }
 
