@@ -28,23 +28,7 @@ import { useColorThemeListener } from "./utils/use-color-theme";
 
 const Index = lazy(() => import("./pages/index"));
 
-const Browse = lazy(() =>
-  import("./pages/browse/index").then((m) => ({ default: m.Browse })),
-);
-
-const BrowsePack = lazy(() =>
-  import("./pages/browse/index").then((m) => ({ default: m.BrowsePack })),
-);
-
-const BrowseCycle = lazy(() =>
-  import("./pages/browse/index").then((m) => ({ default: m.BrowseCycle })),
-);
-
-const BrowseEncounterSet = lazy(() =>
-  import("./pages/browse/index").then((m) => ({
-    default: m.BrowseEncounterSet,
-  })),
-);
+const BrowseRoutes = lazy(() => import("./pages/browse/index"));
 
 const DeckEdit = lazy(() => import("./pages/deck-edit/deck-edit"));
 
@@ -141,11 +125,14 @@ function AppInner() {
           <Router hook={useBrowserLocation}>
             <Switch>
               <Route component={Index} path="/" />
-              <Route component={Browse} path="/browse" />
-              <Route component={BrowsePack} path="/browse/pack/:pack_code" />
-              <Route component={BrowseCycle} path="/browse/cycle/:cycle_code" />
+              <Route component={BrowseRoutes} path="/browse" />
+              <Route component={BrowseRoutes} path="/browse/pack/:pack_code" />
               <Route
-                component={BrowseEncounterSet}
+                component={BrowseRoutes}
+                path="/browse/cycle/:cycle_code"
+              />
+              <Route
+                component={BrowseRoutes}
                 path="/browse/encounter_set/:encounter_code"
               />
               <Route component={Search} path="/search" />

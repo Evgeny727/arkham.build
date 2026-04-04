@@ -1,7 +1,7 @@
 import type { Card } from "@arkham-build/shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "wouter";
+import { Route, Switch, useParams } from "wouter";
 import { CardListContainer } from "@/components/card-list/card-list-container";
 import { CardModalProvider } from "@/components/card-modal/card-modal-provider";
 import { Filters } from "@/components/filters/filters";
@@ -171,5 +171,19 @@ export function BrowseEncounterSet() {
       icon={<EncounterIcon code={encounter_code} />}
       title={encounterSet.name}
     />
+  );
+}
+
+export default function BrowseRoutes() {
+  return (
+    <Switch>
+      <Route component={Browse} path="/browse" />
+      <Route component={BrowsePack} path="/browse/pack/:pack_code" />
+      <Route component={BrowseCycle} path="/browse/cycle/:cycle_code" />
+      <Route
+        component={BrowseEncounterSet}
+        path="/browse/encounter_set/:encounter_code"
+      />
+    </Switch>
   );
 }
