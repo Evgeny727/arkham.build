@@ -12,6 +12,7 @@
     "node": "24.x"
   },
   "scripts": {
+    "check": "tsc --noEmit",
     "test": "vitest run --pass-with-no-tests"
   },
   "devDependencies": {
