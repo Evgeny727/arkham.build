@@ -1,5 +1,9 @@
 # Metadata
 
+## Data source
+
+Metadata is sourced from [Kamalisk/arkhamdb-json-data/](https://github.com/Kamalisk/arkhamdb-json-data/).
+
 ## Deck schema
 
 arkham.build extends the _arkhamdb deck schema_ with a few fields for additional functionality.
