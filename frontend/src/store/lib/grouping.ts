@@ -262,6 +262,8 @@ function groupByCost(cards: Card[]) {
 }
 
 function groupByCycle(cards: Card[], metadata: Metadata) {
+  const chapterCycles: Record<string, number | undefined> = {};
+
   const results = cards.reduce<Grouping>(
     (acc, card) => {
       const pack = metadata.packs[card.pack_code];
@@ -270,6 +272,7 @@ function groupByCycle(cards: Card[], metadata: Metadata) {
       if (!acc.data[cycle]) {
         acc.data[cycle] = [card];
         acc.groupings.push(cycle);
+        chapterCycles[cycle] = pack.chapter ?? undefined;
       } else {
         acc.data[cycle].push(card);
       }
@@ -280,9 +283,20 @@ function groupByCycle(cards: Card[], metadata: Metadata) {
   );
 
   omitEmptyGroupings(results);
-  results.groupings.sort(
-    (a, b) => metadata.cycles[a].position - metadata.cycles[b].position,
-  );
+
+  results.groupings.sort((a, b) => {
+    const aCycle = metadata.cycles[a];
+    const bCycle = metadata.cycles[b];
+
+    const aChapter = chapterCycles[a] ?? 1;
+    const bChapter = chapterCycles[b] ?? 1;
+
+    if (aChapter !== bChapter) {
+      return aChapter - bChapter;
+    }
+
+    return aCycle.position - bCycle.position;
+  });
 
   return toGroupingResult(results);
 }
@@ -318,6 +332,13 @@ function groupByPack(cards: Card[], metadata: Metadata) {
   results.groupings.sort((a, b) => {
     const aCycle = metadata.cycles[metadata.packs[a].cycle_code];
     const bCycle = metadata.cycles[metadata.packs[b].cycle_code];
+
+    const aChapter = metadata.packs[a].chapter ?? 1;
+    const bChapter = metadata.packs[b].chapter ?? 1;
+
+    if (aChapter !== bChapter) {
+      return aChapter - bChapter;
+    }
 
     if (aCycle.position !== bCycle.position) {
       return aCycle.position - bCycle.position;

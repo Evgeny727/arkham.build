@@ -63,6 +63,10 @@ function sortByCycle(metadata: Metadata) {
       return 0;
     }
 
+    if (packA.chapter !== packB.chapter) {
+      return (packA.chapter ?? 1) - (packB.chapter ?? 1);
+    }
+
     const cycleA = metadata.cycles[packA.cycle_code];
     const cycleB = metadata.cycles[packB.cycle_code];
 
