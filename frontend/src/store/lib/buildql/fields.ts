@@ -52,11 +52,7 @@ const fieldDefinitions: FieldDefinition[] = [
   {
     aliases: ["ch"],
     name: "chapter",
-    lookup: backResolver((card, { metadata }) => {
-      const pack = metadata.packs[card.pack_code];
-      if (!pack?.chapter) return 1;
-      return pack.chapter;
-    }),
+    lookup: backResolver((card) => card.chapter ?? 1),
     type: "number",
   },
   {

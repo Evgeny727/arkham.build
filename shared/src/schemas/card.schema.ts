@@ -322,6 +322,8 @@ export const AdditionalAttributes = {
 const CardRuntimeAttributes = {
   /* indicates the amount of xp spent on customizations for a card. only relevant in deckbuilder mode. */
   customization_xp: z.number().nullish(),
+  /* chapter inferred from the card's pack. */
+  chapter: z.number().nullish(),
   /** marks fan-made cards */
   official: z.boolean().nullish(),
   /* copy of card attributes, can be changed by customizable or taboos */

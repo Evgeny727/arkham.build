@@ -14,6 +14,7 @@ import { randomId } from "@/utils/crypto";
 import { download } from "@/utils/download";
 import { time, timeEnd } from "@/utils/time";
 import { prepareBackup, restoreBackup } from "../lib/backup";
+import { inferCardChapter } from "../lib/card-chapter";
 import { applyCardChanges } from "../lib/card-edits";
 import { mapValidationToProblem } from "../lib/deck-io";
 import {
@@ -169,6 +170,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
 
       // "tags" is sometimes empty string, see: https://github.com/Kamalisk/arkhamdb-json-data/pull/1351#issuecomment-1937852236
       if (!card.tags) card.tags = undefined;
+      card.chapter = inferCardChapter(card.pack_code, metadata.packs);
       card.parallel = cycle?.code === "parallel";
 
       metadata.cards[card.code] = card;
