@@ -1392,7 +1392,11 @@ export const selectPackOptions = createSelector(
             listFilterProperties.packs.has(p.code),
           ),
         );
-      } else if (official(cycle) && cycle.packs.length === 2) {
+      } else if (
+        official(cycle) &&
+        cycle.packs.length === 2 &&
+        cycle.position <= 11
+      ) {
         acc.push(
           ...cycle.packs.filter((p) => listFilterProperties.packs.has(p.code)),
         );
@@ -1416,12 +1420,26 @@ function newFormatPlayerPack(pack: Pack) {
 export const selectLimitedPoolPackOptions = createSelector(
   selectCyclesAndPacks,
   (state: StoreState) => state.fanMadeData.projects,
-  (cycles, fanMadeProjects) => {
+  (_: StoreState, filter?: (cycle: Cycle) => boolean) => filter,
+  (cycles, fanMadeProjects, filter) => {
     return cycles.flatMap((cycle) => {
+      if (filter && !filter(cycle)) {
+        return [];
+      }
+
       // Fan-made content
       if (!official(cycle)) {
         if (!fanMadeProjects?.[cycle.code]) return [];
         return cycle.packs;
+      }
+
+      // Non-deckbuilding
+      if (
+        cycle.code === "parallel" ||
+        cycle.code === "promotional" ||
+        cycle.code === "side_stories"
+      ) {
+        return [];
       }
 
       // Core set
@@ -1435,11 +1453,10 @@ export const selectLimitedPoolPackOptions = createSelector(
       }
 
       // New format
-      if (cycle.packs.length === 2) {
+      if (cycle.packs.length === 2 && cycle.position <= 11) {
         return cycle.packs.filter(newFormatPlayerPack);
       }
 
-      // Everything else
       return cycle.packs;
     });
   },

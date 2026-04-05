@@ -211,7 +211,7 @@ test.describe("settings", () => {
     await page.getByTestId("create-choose-investigator").click();
 
     await expect(page.getByTestId("limited-card-pool-field")).toBeVisible();
-    await expect(page.getByText("Revised Core Set")).toBeVisible();
+    await expect(page.getByText("Core Set (2026)")).toBeVisible();
   });
 
   test("rbw are limited to card pool when configured", async ({ page }) => {
