@@ -19,7 +19,10 @@ export default [
   ...investigatorDuplicates,
   ...missingTags,
   ...playerCardDeckOptions,
-  ...previews.map((card) => ({ ...card, preview: card.preview !== false })),
+  ...previews.map((card) => ({
+    ...card,
+    preview: card.pack_code !== "core_2026",
+  })),
   ...rbw,
   ...reprints,
   ...perInvestigatorAttributes,
