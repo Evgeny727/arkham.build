@@ -5,7 +5,7 @@ type Locale = {
   value: string;
   label: string;
   unicode?: boolean;
-  dataLocale?: string; // TECH DEBT: For mixed locales like zh-Hans/zh-Hant
+  displayValue?: string; // TECH DEBT: For mixed locales like zh-Hans/zh-Hant
   additionalCharacters?: string; // For languages with additional characters like ß or ñ
 };
 
@@ -25,11 +25,17 @@ export const LOCALES: Record<string, Locale> = {
   ko: { value: "ko", label: "한국어/Korean (ko)", unicode: true },
   pl: { value: "pl", label: "Polski (pl)" },
   ru: { value: "ru", label: "Русский (ru)", unicode: true },
+  "zh-cn": {
+    value: "zh-cn",
+    displayValue: "zh-Hans",
+    label: "简体中文/Chinese (zh-Hans)",
+    unicode: true,
+  },
   zh: {
     value: "zh",
-    label: "简体中文/Chinese (zh)",
+    displayValue: "zh-Hant",
+    label: "繁體中文/Chinese (zh-Hant)",
     unicode: true,
-    dataLocale: "zh-Hant",
   },
 };
 
