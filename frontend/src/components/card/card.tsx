@@ -71,10 +71,22 @@ export function Card(props: Props) {
   let backNode = null;
 
   if (card.double_sided && !back) {
-    backNode = <CardBack card={card} size={size} ignoreTaboo={ignoreTaboo} />;
+    backNode = (
+      <CardBack
+        card={card}
+        ignoreTaboo={ignoreTaboo}
+        size={size}
+        titleLinks={titleLinks}
+      />
+    );
   } else if (back) {
     backNode = (
-      <CardFace resolvedCard={back} size={size} ignoreTaboo={ignoreTaboo} />
+      <CardFace
+        ignoreTaboo={ignoreTaboo}
+        resolvedCard={back}
+        size={size}
+        titleLinks={titleLinks}
+      />
     );
   }
 

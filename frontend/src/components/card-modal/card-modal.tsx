@@ -126,6 +126,7 @@ export function CardModal(props: Props) {
         resolvedCard={cardWithRelations}
         onPrintingSelect={handlePrintingSelect}
         size={canRenderFull ? "full" : "compact"}
+        titleLinks="card"
         slotCardFooter={
           <>
             {ctx.resolvedDeck &&
