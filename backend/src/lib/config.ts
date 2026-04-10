@@ -12,7 +12,7 @@ export const configSchema = z.object({
       z.array(z.string()),
     )
     .default(["en"]),
-  METADATA_VERSION: z.coerce.number().int().default(8),
+  METADATA_VERSION: z.coerce.number().int().default(9),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),

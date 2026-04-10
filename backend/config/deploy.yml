@@ -59,7 +59,7 @@ env:
     DBMATE_MIGRATIONS_DIR: /app/backend/src/db/migrations
     DBMATE_SCHEMA_FILE: /app/backend/src/db/schema.sql
     METADATA_LOCALES: "de,en,es,fr,it,ko,pl,ru,zh"
-    METADATA_VERSION: 8
+    METADATA_VERSION: 9
     NODE_ENV: production
     PORT: 3000
     POSTGRES_HOST: api-arkham-build-db

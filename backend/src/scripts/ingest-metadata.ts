@@ -174,6 +174,7 @@ function query(config: Config) {
     {
       all_card(
         where: {
+          preview: { _is_null: true },
           official: { _eq: true },
           taboo_placeholder: { _is_null: true },
           pack_code: { _neq: "zbh_00008" },
@@ -299,7 +300,11 @@ function query(config: Config) {
         }
       }
 
-      pack(where: {official: { _eq: true }, code: { _neq: "books" }}) {
+      pack(where: {
+        official: { _eq: true },
+        code: { _neq: "books" },
+        reprint: { _is_null: true }
+      }) {
         code
         cycle_code
         position
