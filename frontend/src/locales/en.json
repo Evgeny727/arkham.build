@@ -260,6 +260,7 @@
       "sort_asc": "Sort ascending",
       "sort_desc": "Sort descending",
       "specialist": "Specialist",
+      "stage": "Stage",
       "subtype": {
         "basicweakness": "Basic Weakness",
         "none": "No subtype",
