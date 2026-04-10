@@ -156,6 +156,7 @@ const Faction = z.enum(FACTION_ORDER);
 
 export const JsonDataCardSchema = z.object({
   alternate_of: z.string().nullish(),
+  abbreviation: z.string().nullish(),
   back_flavor: z.string().nullish(),
   back_illustrator: z.string().nullish(),
   back_link: z.string().nullish(),

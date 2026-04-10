@@ -10,6 +10,7 @@ function prepareCardFace(card: Card, search: Search) {
   if (search.includeName) {
     if (card.real_name) needle.push(displayAttribute(card, "name"));
     if (card.real_subname) needle.push(displayAttribute(card, "subname"));
+    if (card.abbreviation) needle.push(card.abbreviation);
   }
 
   if (search.includeGameText) {

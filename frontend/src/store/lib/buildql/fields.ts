@@ -331,7 +331,10 @@ const fieldDefinitions: FieldDefinition[] = [
   },
   {
     aliases: ["na"],
-    lookup: backResolver((card) => displayAttribute(card, "name")),
+    lookup: backResolver((card) => {
+      const name = displayAttribute(card, "name");
+      return card.abbreviation ? [name, card.abbreviation] : name;
+    }),
     name: "name",
     type: "string",
   },

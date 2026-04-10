@@ -1,4 +1,5 @@
 import type { JsonDataCard } from "@arkham-build/shared";
+import abbreviations from "./abbreviations.json";
 import attachments from "./attachments.json";
 import cardBackTypes from "./card-back-types.json";
 import gameBeginAttributes from "./game-begin-attributes.json";
@@ -19,6 +20,7 @@ export default [
   ...investigatorDuplicates,
   ...missingTags,
   ...playerCardDeckOptions,
+  ...abbreviations,
   ...previews.map((card) => ({
     ...card,
     preview: card.pack_code !== "core_2026",
