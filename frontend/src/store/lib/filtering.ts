@@ -554,6 +554,15 @@ export function filterTag(tag: string, checkUnselectedCustomizations: boolean) {
 
     const hasTag = !!card.tags?.includes(tag);
 
+    // XXX: McGlenn always wants to check of customizable cards (FiLP)
+    if (
+      tag === "fa" &&
+      !!card.customization_options &&
+      filterTagFallback(tag, checkUnselectedCustomizations)(card)
+    ) {
+      return true;
+    }
+
     if (
       hasTag ||
       !checkUnselectedCustomizations ||
