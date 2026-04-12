@@ -616,6 +616,10 @@ function filterMyriad(card: Card) {
  */
 
 function filterRestrictions(card: Card, investigator: Card) {
+  if (Array.isArray(card.restrictions?.faction)) {
+    return card.restrictions.faction.includes(investigator.faction_code);
+  }
+
   if (Array.isArray(card.restrictions?.trait)) {
     // placeholder investigators don't have restrictions
     if (
@@ -1191,7 +1195,9 @@ function makePlayerCardsFilter(
   } else {
     ors.push(
       filterRequired(investigator),
-      (card: Card) => card.subtype_code === "basicweakness",
+      (card: Card) =>
+        card.subtype_code === "basicweakness" &&
+        filterRestrictions(card, investigator),
       (card: Card) => {
         return (
           !!card.encounter_code &&
@@ -1255,7 +1261,12 @@ export function filterInvestigatorWeaknessAccess(
     config?.targetDeck !== "extraSlots"
       ? [
           filterRequired(investigator),
-          filterSubtypes({ basicweakness: true, weakness: false, none: false }),
+          (c) =>
+            filterSubtypes({
+              basicweakness: true,
+              weakness: false,
+              none: false,
+            })(c) && filterRestrictions(c, investigator),
           (card: Card) => card.xp == null && !card.restrictions && !card.hidden,
         ]
       : [(c: Card) => !!investigator.side_deck_requirements?.card?.[c.code]];
