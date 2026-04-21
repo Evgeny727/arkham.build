@@ -107,10 +107,13 @@ const AtLeastSchema = z.object({
 
 const OptionSelectSchema = z.object({
   id: z.string(),
-  level: z.object({
-    min: z.number(),
-    max: z.number(),
-  }),
+  level: z
+    .object({
+      min: z.number(),
+      max: z.number(),
+    })
+    .nullish(),
+  buildql_query: z.string().nullish(),
   name: z.string(),
   size: z.number().nullish(),
   trait: z.array(z.string()).nullish(),
