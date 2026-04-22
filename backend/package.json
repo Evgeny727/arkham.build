@@ -13,9 +13,9 @@
     "dev": "node --watch --experimental-strip-types --env-file=.env src/main.ts",
     "dev:inspect": "node --inspect=localhost:9229 --experimental-strip-types --env-file=.env src/main.ts",
     "generate:database-types": "kysely-codegen --out-file src/db/schema.types.ts",
-    "ingest": "npm run ingest:metadata && npm run ingest:arkhamdb-decklists",
-    "ingest:metadata": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=../.env src/scripts/ingest-metadata.ts",
-    "ingest:arkhamdb-decklists": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=../.env src/scripts/ingest-arkhamdb-decklists.ts",
+    "ingest": "npm run ingest:json-data && npm run ingest:arkhamdb-decklists",
+    "ingest:json-data": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=../.env src/tasks/ingest/index.ts",
+    "ingest:arkhamdb-decklists": "node --experimental-strip-types --env-file-if-exists=.env --env-file-if-exists=../.env src/tasks/ingest-arkhamdb-decklists.ts",
     "start": "node --experimental-strip-types src/main.ts",
     "test": "vitest run"
   },
@@ -24,7 +24,8 @@
     "@hono/node-server": "1.19.13",
     "hono": "4.12.14",
     "kysely": "0.28.14",
-    "pg": "8.19.0"
+    "pg": "8.19.0",
+    "tar": "7.5.13"
   },
   "devDependencies": {
     "@testcontainers/postgresql": "11.12.0",
