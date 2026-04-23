@@ -44,7 +44,7 @@ export function EncounterSetFilter({
   );
 
   const itemToString = useCallback(
-    (set: EncounterSet) => set.name.toLowerCase(),
+    (set: EncounterSet) => displayPackName(set).toLowerCase(),
     [],
   );
 

@@ -126,7 +126,7 @@ const fieldDefinitions: FieldDefinition[] = [
         const encounterSet = metadata.encounterSets[card.encounter_code];
         if (!encounterSet) return null;
 
-        return [card.encounter_code, encounterSet.name];
+        return [card.encounter_code, displayPackName(encounterSet)];
       },
     name: "encounter_set",
     type: "string",

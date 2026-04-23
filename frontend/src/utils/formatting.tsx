@@ -87,7 +87,7 @@ export function formatProviderName(name: StorageProvider) {
 }
 
 export function displayPackName(pack: Pack | Cycle | EncounterSet) {
-  return pack.name ?? pack.real_name ?? "";
+  return pack?.name ?? pack?.real_name ?? "";
 }
 
 export function shortenPackName(pack: Pack) {

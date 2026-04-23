@@ -169,7 +169,7 @@ export function BrowseEncounterSet() {
       filterValue={[encounter_code]}
       listKeyPrefix="browse-encounter-set"
       icon={<EncounterIcon code={encounter_code} />}
-      title={encounterSet.name}
+      title={displayPackName(encounterSet)}
     />
   );
 }
