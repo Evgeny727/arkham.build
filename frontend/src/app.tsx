@@ -221,6 +221,7 @@ function CardDataSyncTask() {
 
   const toast = useToast();
   const toastId = useRef<string | undefined>(undefined);
+  const hasTriggeredSync = useRef(false);
 
   const shouldQueryDataVersion =
     !navigator.webdriver && !location.includes("/connect");
@@ -249,7 +250,13 @@ function CardDataSyncTask() {
   });
 
   useEffect(() => {
-    if (!remoteDataVersion || !dataVersion || isPending || isError) {
+    if (
+      hasTriggeredSync.current ||
+      !remoteDataVersion ||
+      !dataVersion ||
+      isPending ||
+      isError
+    ) {
       return;
     }
 
@@ -257,10 +264,10 @@ function CardDataSyncTask() {
       remoteDataVersion.locale === dataVersion.locale &&
       remoteDataVersion.cards_updated_at === dataVersion.cards_updated_at &&
       remoteDataVersion.translation_updated_at ===
-        dataVersion.translation_updated_at &&
-      remoteDataVersion.ingested_commit_id === dataVersion.ingested_commit_id;
+        dataVersion.translation_updated_at;
 
     if (!upToDate) {
+      hasTriggeredSync.current = true;
       toastId.current = toast.show({
         variant: "loading",
         children: t("settings.card_data.loading"),
