@@ -1794,7 +1794,7 @@ const selectEncounterSetChanges = createSelector(
   selectMetadata,
   (value, metadata) => {
     return value
-      .map((id) => metadata.encounterSets[id].name)
+      .map((id) => displayPackName(metadata.encounterSets[id]))
       .join(` ${i18n.t("filters.or")} `);
   },
 );

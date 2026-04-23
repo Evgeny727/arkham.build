@@ -8,6 +8,7 @@ import {
 } from "@arkham-build/shared";
 import { displayAttribute, splitMultiValue } from "@/utils/card-utils";
 import { inferChapterNumber } from "@/utils/chapters";
+import { displayPackName } from "@/utils/formatting";
 import type { SortingType } from "../slices/lists.types";
 import type { Metadata } from "../slices/metadata.types";
 
@@ -179,7 +180,7 @@ export function sortByEncounterSet(
       cycleA.position - cycleB.position ||
       packA.position - packB.position ||
       (setA.position ?? 0) - (setB.position ?? 0) ||
-      collator.compare(setA.name, setB.name)
+      collator.compare(displayPackName(setA), displayPackName(setB))
     );
   };
 }

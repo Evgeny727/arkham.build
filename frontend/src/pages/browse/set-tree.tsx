@@ -195,7 +195,7 @@ function SetTreeNode({
         {item.type === "encounter_set" && (
           <>
             <EncounterIcon code={item.data.code} />
-            {item.data.name}
+            {displayPackName(item.data)}
           </>
         )}
       </Link>
