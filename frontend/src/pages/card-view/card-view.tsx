@@ -30,12 +30,12 @@ import {
   isStaticInvestigator,
   oldFormatCardUrl,
 } from "@/utils/card-utils";
+import { groupPrintingsByChapter } from "@/utils/chapters";
 import {
   CYCLES_WITH_STANDALONE_PACKS,
   FLOATING_PORTAL_ID,
 } from "@/utils/constants";
 import { cx } from "@/utils/cx";
-import { groupPrintingsByChapter } from "@/utils/group-printings-by-chapter";
 import { ErrorStatus } from "../errors/404";
 import css from "./card-view.module.css";
 import { Faq } from "./faq";

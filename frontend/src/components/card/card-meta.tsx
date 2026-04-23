@@ -6,9 +6,9 @@ import {
   type Printing as CardPrinting,
   selectPrintingsForCard,
 } from "@/store/selectors/shared";
+import { groupPrintingsByChapter } from "@/utils/chapters";
 import { cx } from "@/utils/cx";
 import { displayPackName } from "@/utils/formatting";
-import { groupPrintingsByChapter } from "@/utils/group-printings-by-chapter";
 import EncounterIcon from "../icons/encounter-icon";
 import { Printing, PrintingInner } from "../printing";
 import { Button } from "../ui/button";

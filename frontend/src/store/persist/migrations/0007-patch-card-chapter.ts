@@ -1,5 +1,5 @@
-import { inferCardChapter } from "@/store/lib/card-chapter";
 import type { StoreState } from "@/store/slices";
+import { inferChapterNumber } from "@/utils/chapters";
 
 function migrate(_state: unknown, version: number) {
   const state = _state as StoreState;
@@ -13,7 +13,7 @@ function migrate(_state: unknown, version: number) {
     }
 
     for (const card of Object.values(cards)) {
-      card.chapter = inferCardChapter(card.pack_code, packs);
+      card.chapter = inferChapterNumber(packs[card.pack_code]);
     }
   }
 

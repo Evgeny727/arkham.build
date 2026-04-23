@@ -7,6 +7,7 @@ import {
   type PlayerType,
 } from "@arkham-build/shared";
 import { displayAttribute, splitMultiValue } from "@/utils/card-utils";
+import { inferChapterNumber } from "@/utils/chapters";
 import type { SortingType } from "../slices/lists.types";
 import type { Metadata } from "../slices/metadata.types";
 
@@ -64,7 +65,7 @@ function sortByCycle(metadata: Metadata) {
     }
 
     if (packA.chapter !== packB.chapter) {
-      return (packA.chapter ?? 1) - (packB.chapter ?? 1);
+      return inferChapterNumber(packA) - inferChapterNumber(packB);
     }
 
     const cycleA = metadata.cycles[packA.cycle_code];

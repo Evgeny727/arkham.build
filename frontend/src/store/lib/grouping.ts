@@ -1,4 +1,5 @@
 import type { Card } from "@arkham-build/shared";
+import { inferChapterNumber } from "@/utils/chapters";
 import {
   displayPackName,
   formatSlots,
@@ -333,8 +334,8 @@ function groupByPack(cards: Card[], metadata: Metadata) {
     const aCycle = metadata.cycles[metadata.packs[a].cycle_code];
     const bCycle = metadata.cycles[metadata.packs[b].cycle_code];
 
-    const aChapter = metadata.packs[a].chapter ?? 1;
-    const bChapter = metadata.packs[b].chapter ?? 1;
+    const aChapter = inferChapterNumber(metadata.packs[a]);
+    const bChapter = inferChapterNumber(metadata.packs[b]);
 
     if (aChapter !== bChapter) {
       return aChapter - bChapter;
@@ -511,7 +512,7 @@ export function getGroupingKeyLabel(
     }
 
     case "encounter_set": {
-      return metadata.encounterSets[segment]?.name ?? "";
+      return displayPackName(metadata.encounterSets[segment]) ?? "";
     }
 
     case "slot": {

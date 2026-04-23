@@ -12,6 +12,7 @@ import {
   official,
   splitMultiValue,
 } from "@/utils/card-utils";
+import { inferChapterNumber } from "@/utils/chapters";
 import {
   CYCLES_WITH_STANDALONE_PACKS,
   NO_SLOT_STRING,
@@ -1326,7 +1327,7 @@ export function groupCyclesByChapter(
     (acc, cycle) => {
       const packsByChapter = cycle.packs.reduce<Record<number, Pack[]>>(
         (chapterAcc, pack) => {
-          const chapter = pack.chapter ?? 1;
+          const chapter = inferChapterNumber(pack);
           chapterAcc[chapter] ??= [];
           chapterAcc[chapter].push(pack);
           return chapterAcc;

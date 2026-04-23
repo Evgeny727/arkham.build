@@ -1,7 +1,7 @@
 import { selectCyclesAndPacks } from "@/store/selectors/lists";
 import { selectLookupTables, selectMetadata } from "@/store/selectors/shared";
 import type { StoreState } from "@/store/slices";
-import { official } from "@/utils/card-utils";
+import { FAN_MADE_CHAPTER, inferChapterNumber } from "@/utils/chapters";
 import type { ChapterTab } from "./set-tree";
 
 export function selectInitialChapterTab(
@@ -16,9 +16,11 @@ export function selectInitialChapterTab(
       (c) => c.code === activeCode,
     );
     if (!cycle) return undefined;
-    return official(cycle)
-      ? ((cycle.packs[0]?.chapter ?? 1).toString() as ChapterTab)
-      : "fan-made";
+    const chapter = inferChapterNumber(cycle.packs[0]);
+
+    return chapter === FAN_MADE_CHAPTER
+      ? "fan-made"
+      : (chapter.toString() as ChapterTab);
   }
 
   const metadata = selectMetadata(state);
@@ -26,9 +28,12 @@ export function selectInitialChapterTab(
   if (activeType === "pack") {
     const pack = metadata.packs[activeCode];
     if (!pack) return undefined;
-    return official(pack)
-      ? ((pack.chapter ?? 1).toString() as ChapterTab)
-      : "fan-made";
+
+    const chapter = inferChapterNumber(pack);
+
+    return chapter === FAN_MADE_CHAPTER
+      ? "fan-made"
+      : (chapter.toString() as ChapterTab);
   }
 
   if (activeType === "encounter_set") {
@@ -38,9 +43,12 @@ export function selectInitialChapterTab(
     );
     const pack = packCode ? metadata.packs[packCode] : undefined;
     if (!pack) return undefined;
-    return official(pack)
-      ? ((pack.chapter ?? 1).toString() as ChapterTab)
-      : "fan-made";
+
+    const chapter = inferChapterNumber(pack);
+
+    return chapter === FAN_MADE_CHAPTER
+      ? "fan-made"
+      : (chapter.toString() as ChapterTab);
   }
 
   return undefined;
