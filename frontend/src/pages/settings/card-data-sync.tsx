@@ -65,7 +65,10 @@ export function CardDataSync(props: Props) {
           <dt>{t("settings.card_data.card_count")}:</dt>
           <dd>{dataVersion.card_count}</dd>
           <dt>{t("settings.card_data.data_version")}:</dt>
-          <dd>{dataVersion.ingested_commit_id.slice(0, 7)}</dd>
+          <dd>
+            {dataVersion.ingested_commit_id?.slice(0, 7) ??
+              "arkham-cards-api-legacy"}
+          </dd>
           <dt>{t("settings.card_data.locale")}:</dt>
           <dd>{dataVersion.locale}</dd>
         </dl>
