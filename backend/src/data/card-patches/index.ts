@@ -1,6 +1,8 @@
 import type { JsonDataCard } from "@arkham-build/shared";
 import abbreviations from "./abbreviations.json" with { type: "json" };
+import additionalCards from "./additional-cards.json" with { type: "json" };
 import attachments from "./attachments.json" with { type: "json" };
+
 import cardBackTypes from "./card-back-types.json" with { type: "json" };
 import gameBeginAttributes from "./game-begin-attributes.json" with {
   type: "json",
@@ -21,19 +23,20 @@ import rbw from "./rbw.json" with { type: "json" };
 import reprints from "./reprints.json" with { type: "json" };
 
 export default [
+  ...abbreviations,
+  ...additionalCards,
   ...attachments,
   ...cardBackTypes,
   ...gameBeginAttributes,
   ...hiddenFixes,
   ...investigatorDuplicates,
   ...missingTags,
+  ...perInvestigatorAttributes,
   ...playerCardDeckOptions,
-  ...abbreviations,
   ...previews.map((card) => ({
     ...(card as JsonDataCard),
     preview: true,
   })),
   ...rbw,
   ...reprints,
-  ...perInvestigatorAttributes,
 ] as (Partial<JsonDataCard> & { code: string; patch?: true })[];
