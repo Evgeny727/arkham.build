@@ -12,15 +12,20 @@ export function applyCacheHeaders(
   c: Context<HonoEnv>,
   options: ApplyCacheHeadersOptions,
 ) {
-  c.header("Cache-Control", cacheControlHeader(options.resource));
-  c.header("ETag", formatEtag(options.etag));
+  c.header("Cache-Control", browserCacheControlHeader(options.resource));
+  c.header(
+    "Cloudflare-CDN-Cache-Control",
+    cloudflareCacheControlHeader(options.resource),
+  );
+  c.header("Cache-Tag", "cache");
+  c.header("ETag", formatWeakEtag(options.etag));
 }
 
 export function requestHasMatchingEtag(c: Context<HonoEnv>, etag: string) {
   const ifNoneMatch = c.req.header("If-None-Match");
   if (!ifNoneMatch) return false;
 
-  const formattedEtag = formatEtag(etag);
+  const formattedEtag = formatWeakEtag(etag);
 
   return ifNoneMatch
     .split(",")
@@ -31,30 +36,18 @@ export function requestHasMatchingEtag(c: Context<HonoEnv>, etag: string) {
     );
 }
 
-function cacheControlHeader(resource: CacheResource) {
-  if (resource === "version") {
-    return [
-      "public",
-      "max-age=0",
-      "must-revalidate",
-      "s-maxage=60",
-      "stale-while-revalidate=60",
-    ].join(", ");
-  }
-
-  return [
-    "public",
-    "max-age=0",
-    "must-revalidate",
-    "s-maxage=3600",
-    "stale-while-revalidate=604800",
-  ].join(", ");
+function browserCacheControlHeader(_resource: CacheResource) {
+  return ["public", "max-age=0", "must-revalidate"].join(", ");
 }
 
-function formatEtag(etag: string) {
+function cloudflareCacheControlHeader(_resource: CacheResource) {
+  return ["public", "s-maxage=86400", "stale-while-revalidate=0"].join(", ");
+}
+
+function formatWeakEtag(etag: string) {
   if (etag.startsWith('W/"') && etag.endsWith('"')) return etag;
-  if (etag.startsWith('"') && etag.endsWith('"')) return etag;
-  return `"${etag}"`;
+  if (etag.startsWith('"') && etag.endsWith('"')) return `W/${etag}`;
+  return `W/"${etag}"`;
 }
 
 function normalizeEtag(etag: string) {

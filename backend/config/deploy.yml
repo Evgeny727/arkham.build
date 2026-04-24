@@ -66,6 +66,8 @@ env:
     POSTGRES_HOST: api-arkham-build-db
   secret:
     - ADMIN_API_KEY
+    - CLOUDFLARE_API_TOKEN
+    - CLOUDFLARE_ZONE_ID
     - DATABASE_URL
     - INGEST_URL_ARKHAMDB_DECKLISTS
     - POSTGRES_PASSWORD
@@ -122,6 +124,6 @@ logging:
 aliases:
   console: app exec --interactive --reuse -r web "sh"
   ingest: app exec --primary --reuse -r web "npm run ingest -w backend"
-  ingest-json-data: app exec --primary --reuse -r web "npm run ingest:json-data -w backend"
+  ingest-json-data: app exec --primary --reuse -r web "npm run ingest:json-data -w backend && npm run purge:cloudflare-cache -w backend"
   logs: app logs --follow
   db-console: accessory exec db --interactive --reuse "psql -d api_arkham_build_production -U postgres"
