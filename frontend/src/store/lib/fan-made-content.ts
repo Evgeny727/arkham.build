@@ -1,4 +1,5 @@
 import {
+  type Card,
   type FanMadeCard,
   type FanMadeProject,
   FanMadeProjectSchema,
@@ -215,11 +216,11 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
         metadata.cards[code].pack_code === "core_2026" &&
         !!metadata.cards[code].encounter_code;
 
-      const isPreview = ["mar", "tom", "mig", "and", "car"].includes(
-        metadata.cards[code].pack_code,
-      );
-
-      if (isFanMade || isUnreleasedEncounter || isPreview) {
+      if (
+        isFanMade ||
+        isUnreleasedEncounter ||
+        isPreview(metadata.cards[code])
+      ) {
         hiddenSlots[key] ??= {};
         hiddenSlots[key][code] = quantity;
         delete deck[key]?.[code];
@@ -229,8 +230,7 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
 
   if (
     meta.fan_made_content?.cards[deck.investigator_code] ||
-    (metadata.cards[deck.investigator_code]?.preview &&
-      metadata.cards[deck.investigator_code].pack_code !== "core_2026")
+    isPreview(metadata.cards[deck.investigator_code])
   ) {
     hiddenSlots.investigator_code = deck.investigator_code;
     deck.investigator_code = SPECIAL_CARD_CODES.SUZI;
@@ -240,6 +240,10 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
   meta.hidden_slots = hiddenSlots;
 
   deck.meta = JSON.stringify(meta);
+}
+
+function isPreview(card: Card) {
+  return ["mar", "tom", "mig", "and", "car"].includes(card.pack_code);
 }
 
 export function applyHiddenSlots(deck: Deck, metadata: Metadata) {
