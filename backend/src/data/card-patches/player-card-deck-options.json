@@ -81,5 +81,22 @@
       }
     ],
     "patch": true
+  },
+  {
+    "code": "12181",
+    "deck_requirements": "size:5",
+    "deck_options": [
+      {
+        "name": "Collector",
+        "level": {
+          "min": 0,
+          "max": 3
+        },
+        "trait": ["relic", "charm"],
+        "limit": 1,
+        "error": "Too many off-class cards for Collector."
+      }
+    ],
+    "patch": true
   }
 ]
