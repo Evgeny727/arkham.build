@@ -89,7 +89,7 @@ async function cachedResponse<T>(
 ) {
   const db = c.get("db");
   const version = await getVersionForLocale(db, options.locale);
-  const etag = `${options.resource}:${options.locale}:${version.ingested_commit_id}`;
+  const etag = `${options.resource}:${options.locale}:${version.cards_updated_at}:${version.translation_updated_at}`;
 
   applyCacheHeaders(c, { etag, resource: options.resource });
 
