@@ -242,8 +242,8 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
   deck.meta = JSON.stringify(meta);
 }
 
-function isPreview(card: Card) {
-  return ["mar", "tom", "mig", "and", "car"].includes(card.pack_code);
+function isPreview(_: Card) {
+  return false;
 }
 
 export function applyHiddenSlots(deck: Deck, metadata: Metadata) {
