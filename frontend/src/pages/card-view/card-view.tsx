@@ -1,5 +1,6 @@
 import { FloatingPortal } from "@floating-ui/react";
-import { GlobeIcon } from "lucide-react";
+import { DownloadIcon, GlobeIcon } from "lucide-react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "wouter";
 import {
@@ -36,6 +37,7 @@ import {
   FLOATING_PORTAL_ID,
 } from "@/utils/constants";
 import { cx } from "@/utils/cx";
+import { download } from "@/utils/download";
 import { ErrorStatus } from "../errors/404";
 import css from "./card-view.module.css";
 import { Faq } from "./faq";
@@ -48,6 +50,22 @@ function CardView() {
   const cardWithRelations = useStore((state) =>
     selectCardWithRelations(state, code, true, undefined),
   );
+  const devModeEnabled = useStore((state) => state.settings.devModeEnabled);
+
+  const onExport = useCallback(() => {
+    if (!cardWithRelations) return;
+
+    const cards = [
+      cardWithRelations.card,
+      ...(cardWithRelations.back?.card ? [cardWithRelations.back.card] : []),
+    ];
+
+    download(
+      JSON.stringify(cards, null, 2),
+      `${cardWithRelations.card.code}.json`,
+      "application/json",
+    );
+  }, [cardWithRelations]);
 
   if (!cardWithRelations) {
     return <ErrorStatus statusCode={404} />;
@@ -84,6 +102,16 @@ function CardView() {
                 <GlobeIcon /> {t("card_view.actions.open_on_arkhamdb")}
               </CardArkhamDBLink>
               <CardReviewsLink card={cardWithRelations.card} size="full" />
+              {devModeEnabled && (
+                <Button
+                  data-testid="card-view-export"
+                  onClick={onExport}
+                  size="full"
+                >
+                  <DownloadIcon />
+                  {t("lists.nav.export")}
+                </Button>
+              )}
               {isBuildableInvestigator && (
                 <Link asChild href={deckCreateLink(cardWithRelations.card)}>
                   <Button
