@@ -124,6 +124,6 @@ logging:
 aliases:
   console: app exec --interactive --reuse -r web "sh"
   ingest: app exec --primary --reuse -r web "npm run ingest -w backend"
-  ingest-json-data: app exec --primary --reuse -r web "npm run ingest:json-data -w backend && npm run purge:cloudflare-cache -w backend"
+  ingest-json-data: app exec --primary --reuse -r web "sh -lc 'npm run ingest:json-data -w backend && npm run purge:cloudflare-cache -w backend'"
   logs: app logs --follow
   db-console: accessory exec db --interactive --reuse "psql -d api_arkham_build_production -U postgres"
