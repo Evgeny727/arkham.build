@@ -212,15 +212,7 @@ export function extractHiddenSlots(deck: Deck, metadata: Metadata) {
     for (const [code, quantity] of slots) {
       const isFanMade = meta.fan_made_content?.cards?.[code];
 
-      const isUnreleasedEncounter =
-        metadata.cards[code].pack_code === "core_2026" &&
-        !!metadata.cards[code].encounter_code;
-
-      if (
-        isFanMade ||
-        isUnreleasedEncounter ||
-        isPreview(metadata.cards[code])
-      ) {
+      if (isFanMade || isPreview(metadata.cards[code])) {
         hiddenSlots[key] ??= {};
         hiddenSlots[key][code] = quantity;
         delete deck[key]?.[code];
