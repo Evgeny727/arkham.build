@@ -917,6 +917,7 @@
           "placeholder": "Select packs...",
           "section_title": "Card pool settings",
           "selected_cards": "Selected cards",
+          "substitute_chapter_2_with_chapter_1": "Substitute chapter 2 core and investigator decks with chapter 1 equivalents",
           "title": "Limited card pool"
         },
         "name": "Deck name",
