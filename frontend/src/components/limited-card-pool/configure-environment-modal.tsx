@@ -332,6 +332,7 @@ function CampaignPlayalongTab(props: TabProps) {
         />
         <Checkbox
           checked={selectedChapter === "1"}
+          data-testid="cpa-use-chapter-1"
           label={t(
             "deck_edit.config.card_pool.substitute_chapter_2_with_chapter_1",
           )}
