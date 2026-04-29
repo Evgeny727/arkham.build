@@ -453,7 +453,9 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
           ...state.data,
           decks,
           history,
+          undoHistory,
         },
+        deckEdits: edits,
       };
     });
 
