@@ -811,10 +811,9 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
     const state = get();
 
     const deck = state.data.decks[id];
+    assert(deck, `Deck ${id} does not exist.`);
 
     const previousId = deck.previous_deck;
-
-    assert(deck, `Deck ${id} does not exist.`);
     assert(previousId, "Deck does not have a previous deck");
     assert(state.data.decks[previousId], "Previous deck does not exist");
 
