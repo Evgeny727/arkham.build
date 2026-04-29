@@ -717,7 +717,6 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
     );
 
     if (resolved.fanMadeData) {
-      const meta = decodeDeckMeta(newDeck);
       meta.fan_made_content = resolved.fanMadeData;
     }
 
