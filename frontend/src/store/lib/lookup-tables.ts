@@ -103,8 +103,6 @@ function addCardToLookupTables(tables: LookupTables, card: Card) {
       indexBySkillBoosts(tables, card);
       indexByUses(tables, card);
     }
-  } else {
-    // TODO: add enemy filters.
   }
 }
 
