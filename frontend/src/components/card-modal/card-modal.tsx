@@ -11,6 +11,7 @@ import {
   getRelatedCardQuantity,
   getRelatedCards,
 } from "@/store/lib/resolve-card";
+import type { ResolvedDeck } from "@/store/lib/types";
 import { selectCardWithRelations } from "@/store/selectors/card-view";
 import { selectShowFanMadeRelations } from "@/store/selectors/shared";
 import type { CardModalConfig } from "@/store/slices/ui.types";
@@ -44,6 +45,7 @@ import { AnnotationEdit } from "./card-modal-annotation-edit";
 import { CardModalAttachmentQuantities } from "./card-modal-attachment-quantities";
 import { CardModalQuantities } from "./card-modal-quantities";
 import { CardPageLink } from "./card-page-link";
+import { InvestigatorTraitsChoice } from "./investigator-traits-choice";
 import { SpecialistAccess, SpecialistInvestigators } from "./specialist";
 
 type Props = {
@@ -199,7 +201,14 @@ export function CardModal(props: Props) {
             );
           })}
           {cardWithRelations.card.type_code === "investigator" && (
-            <SpecialistAccess card={cardWithRelations.card} />
+            <SpecialistAccess
+              card={cardWithRelations.card}
+              investigatorFront={
+                isDeckInvestigator(cardWithRelations.card, ctx.resolvedDeck)
+                  ? ctx.resolvedDeck?.investigatorFront.card
+                  : undefined
+              }
+            />
           )}
         </div>
       )}
@@ -216,6 +225,15 @@ export function CardModal(props: Props) {
             <PopularDecks scope={cardWithRelations.card} />
           </div>
         )}
+      {ctx.resolvedDeck && (
+        <div className={css["related"]}>
+          <InvestigatorTraitsChoice
+            canEdit={canEdit}
+            card={cardWithRelations.card}
+            deck={ctx.resolvedDeck}
+          />
+        </div>
+      )}
     </>
   );
 
@@ -288,6 +306,14 @@ export function CardModal(props: Props) {
         )}
       </ModalInner>
     </Modal>
+  );
+}
+
+function isDeckInvestigator(card: CardT, deck: ResolvedDeck | undefined) {
+  return (
+    !!deck &&
+    (card.code === deck.investigatorFront.card.code ||
+      card.code === deck.investigatorBack.card.code)
   );
 }
 

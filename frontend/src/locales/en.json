@@ -54,6 +54,12 @@
         "complete_task": "Complete task",
         "open_card_page": "Card page",
         "reviews": "Reviews"
+      },
+      "custom_behavior": {
+        "investigator_traits": {
+          "help": "{{card}} can add a new trait to your your investigator's traits.",
+          "title": "Investigator trait choice"
+        }
       }
     },
     "card_view": {
