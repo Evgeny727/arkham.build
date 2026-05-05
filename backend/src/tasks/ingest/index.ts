@@ -1,30 +1,43 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import type {
-  JsonDataCard,
-  JsonDataCycle,
-  JsonDataEncounterSet,
-  JsonDataFaction,
-  JsonDataPack,
-  JsonDataSubtype,
-  JsonDataType,
+import {
+  JsonDataCampaignSchema,
+  type JsonDataCard,
+  type JsonDataCycle,
+  type JsonDataEncounterSet,
+  JsonDataErrataSchema,
+  type JsonDataFaction,
+  JsonDataFaqSchema,
+  type JsonDataPack,
+  JsonDataScenarioSchema,
+  type JsonDataSubtype,
+  type JsonDataType,
 } from "@arkham-build/shared";
 import { serializeRecords } from "../../db/db.helpers.ts";
 import { connectionString, getDatabase } from "../../db/db.ts";
 import { chunkArray } from "../../lib/chunk-array.ts";
 import { configFromEnv } from "../../lib/config.ts";
+import { resolveCampaignRecords } from "./lib/campaign.ts";
 import { mergeTranslations, resolveCards } from "./lib/cards.ts";
 import { resolveCycles } from "./lib/cycles.ts";
 import { syncDataVersions } from "./lib/data-version.ts";
 import { resolveEncounterSets } from "./lib/encounter-sets.ts";
+import {
+  resolveErrataRecords,
+  resolveErrataReferenceRecords,
+} from "./lib/errata.ts";
 import { resolveFactions } from "./lib/factions.ts";
+import { resolveFaqRecords, resolveFaqReferenceRecords } from "./lib/faq.ts";
 import {
   downloadJsonDataRepo,
+  downloadMetadataRepo,
+  getJsonData,
   getMetadataWithTranslations,
   withTranslations,
 } from "./lib/json-data.ts";
 import { applyLocalData } from "./lib/local-data.ts";
 import { resolvePacks } from "./lib/packs.ts";
+import { resolveScenarioRecords } from "./lib/scenario.ts";
 import {
   downloadTabooRepo,
   getTabooDataWithTranslations,
@@ -35,11 +48,15 @@ async function ingest() {
   const config = configFromEnv();
   const db = getDatabase(connectionString(config));
 
-  const [{ path: dir, sha: jsonDataSha }, { path: tabooDir, sha: tabooSha }] =
-    await Promise.all([
-      downloadJsonDataRepo(config),
-      downloadTabooRepo(config),
-    ]);
+  const [
+    { path: dir, sha: jsonDataSha },
+    { path: metadataDir, sha: metadataSha },
+    { path: tabooDir, sha: tabooSha },
+  ] = await Promise.all([
+    downloadJsonDataRepo(config),
+    downloadMetadataRepo(config),
+    downloadTabooRepo(config),
+  ]);
 
   const packFiles = await readdir(path.join(dir, "pack"), {
     recursive: true,
@@ -52,6 +69,12 @@ async function ingest() {
     encounterSets,
     factions,
     packs,
+    campaignRecords,
+    errataRecords,
+    faqRecords,
+    scenarioRecords,
+    sourceErrata,
+    sourceFaq,
     subtypes,
     tabooSets,
     types,
@@ -84,6 +107,45 @@ async function ingest() {
       locales: config.METADATA_LOCALES,
       file: "taboos.json",
     }),
+    getJsonData(
+      metadataDir,
+      "campaigns/campaigns.json",
+      JsonDataCampaignSchema.array(),
+    ),
+    getJsonData(
+      metadataDir,
+      "scenarios/scenarios.json",
+      JsonDataScenarioSchema.array(),
+    ),
+    Promise.all([
+      getJsonData(
+        metadataDir,
+        "errata/campaign_errata.json",
+        JsonDataErrataSchema.array(),
+      ),
+      getJsonData(
+        metadataDir,
+        "errata/card_errata.json",
+        JsonDataErrataSchema.array(),
+      ),
+      getJsonData(
+        metadataDir,
+        "errata/rulebook_errata.json",
+        JsonDataErrataSchema.array(),
+      ),
+    ]).then((data) => data.flat()),
+    Promise.all([
+      getJsonData(
+        metadataDir,
+        "faqs/campaign_faq.json",
+        JsonDataFaqSchema.array(),
+      ),
+      getJsonData(
+        metadataDir,
+        "faqs/general_faq.json",
+        JsonDataFaqSchema.array(),
+      ),
+    ]).then((data) => data.flat()),
     ...packFiles.map((file) =>
       getMetadataWithTranslations<JsonDataCard>(dir, {
         locales: config.METADATA_LOCALES,
@@ -99,6 +161,10 @@ async function ingest() {
       encounterSets,
       packs,
       tabooSets,
+      campaigns,
+      scenarios,
+      errata,
+      faq,
       ...cardPacks
     ]) => {
       const allCardTranslations = mergeTranslations(cardPacks);
@@ -127,6 +193,12 @@ async function ingest() {
           factions.data.map((f) => withTranslations(f, factions.translations)),
         ),
         packs: resolvePacks(data.packs),
+        campaignRecords: resolveCampaignRecords(campaigns),
+        errataRecords: resolveErrataRecords(errata),
+        faqRecords: resolveFaqRecords(faq),
+        scenarioRecords: resolveScenarioRecords(scenarios),
+        sourceErrata: errata,
+        sourceFaq: faq,
         subtypes: subtypes.data.map((s) =>
           withTranslations(s, subtypes.translations),
         ),
@@ -137,6 +209,19 @@ async function ingest() {
   );
 
   await db.transaction().execute(async (tx) => {
+    await tx.deleteFrom("faq_card").execute();
+    await tx.deleteFrom("faq_cycle").execute();
+    await tx.deleteFrom("faq_scenario").execute();
+    await tx.deleteFrom("faq").execute();
+    await tx.deleteFrom("errata_card").execute();
+    await tx.deleteFrom("errata_cycle").execute();
+    await tx.deleteFrom("errata_scenario").execute();
+    await tx.deleteFrom("errata").execute();
+    await tx.deleteFrom("scenario_encounter_set_card").execute();
+    await tx.deleteFrom("scenario_encounter_set").execute();
+    await tx.deleteFrom("campaign_scenario").execute();
+    await tx.deleteFrom("scenario").execute();
+    await tx.deleteFrom("campaign").execute();
     await tx.deleteFrom("card_resolution").execute();
     await tx.deleteFrom("card").execute();
     await tx.deleteFrom("encounter_set").execute();
@@ -174,9 +259,112 @@ async function ingest() {
         .execute();
     }
 
+    if (campaignRecords.campaigns.length) {
+      await tx
+        .insertInto("campaign")
+        .values(serializeRecords(campaignRecords.campaigns))
+        .execute();
+    }
+
+    if (scenarioRecords.scenarios.length) {
+      await tx
+        .insertInto("scenario")
+        .values(serializeRecords(scenarioRecords.scenarios))
+        .execute();
+    }
+
+    if (campaignRecords.campaignScenarios.length) {
+      await tx
+        .insertInto("campaign_scenario")
+        .values(serializeRecords(campaignRecords.campaignScenarios))
+        .execute();
+    }
+
+    if (scenarioRecords.scenarioEncounterSets.length) {
+      await tx
+        .insertInto("scenario_encounter_set")
+        .values(serializeRecords(scenarioRecords.scenarioEncounterSets))
+        .execute();
+    }
+
+    if (scenarioRecords.scenarioEncounterSetCards.length) {
+      await tx
+        .insertInto("scenario_encounter_set_card")
+        .values(serializeRecords(scenarioRecords.scenarioEncounterSetCards))
+        .execute();
+    }
+
+    const insertedErrata = errataRecords.length
+      ? await tx
+          .insertInto("errata")
+          .values(serializeRecords(errataRecords))
+          .returning(["id", "position"])
+          .execute()
+      : [];
+
+    const errataReferences = resolveErrataReferenceRecords(
+      sourceErrata,
+      new Map(insertedErrata.map((item) => [item.position, item.id])),
+    );
+
+    if (errataReferences.errataCards.length) {
+      await tx
+        .insertInto("errata_card")
+        .values(serializeRecords(errataReferences.errataCards))
+        .execute();
+    }
+
+    if (errataReferences.errataCycles.length) {
+      await tx
+        .insertInto("errata_cycle")
+        .values(serializeRecords(errataReferences.errataCycles))
+        .execute();
+    }
+
+    if (errataReferences.errataScenarios.length) {
+      await tx
+        .insertInto("errata_scenario")
+        .values(serializeRecords(errataReferences.errataScenarios))
+        .execute();
+    }
+
+    const insertedFaq = faqRecords.length
+      ? await tx
+          .insertInto("faq")
+          .values(serializeRecords(faqRecords))
+          .returning(["id", "position"])
+          .execute()
+      : [];
+
+    const faqReferences = resolveFaqReferenceRecords(
+      sourceFaq,
+      new Map(insertedFaq.map((item) => [item.position, item.id])),
+    );
+
+    if (faqReferences.faqCards.length) {
+      await tx
+        .insertInto("faq_card")
+        .values(serializeRecords(faqReferences.faqCards))
+        .execute();
+    }
+
+    if (faqReferences.faqCycles.length) {
+      await tx
+        .insertInto("faq_cycle")
+        .values(serializeRecords(faqReferences.faqCycles))
+        .execute();
+    }
+
+    if (faqReferences.faqScenarios.length) {
+      await tx
+        .insertInto("faq_scenario")
+        .values(serializeRecords(faqReferences.faqScenarios))
+        .execute();
+    }
+
     await syncDataVersions(tx, {
       locales: config.METADATA_LOCALES,
-      sha: `${jsonDataSha}:${tabooSha}`,
+      sha: `${jsonDataSha}:${metadataSha}:${tabooSha}`,
       cardCount: cards.length,
     });
   });

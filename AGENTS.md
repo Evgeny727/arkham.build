@@ -2,6 +2,7 @@
 
 - Keep answers short and concise.
 - Don't start implementing, designing, or modifying code unless explicitly asked to.
+- Do not edit `schema.sql` directly. use dbmate's dump command to generate it.
 
 ## Code style
 
