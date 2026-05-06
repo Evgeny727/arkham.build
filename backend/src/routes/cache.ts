@@ -1,6 +1,5 @@
 import type { JsonDataScenario } from "@arkham-build/shared";
 import { type Context, Hono } from "hono";
-import { compress } from "hono/compress";
 import type { Selectable } from "kysely";
 import type { Database } from "../db/db.ts";
 import type {
@@ -21,12 +20,6 @@ import {
 } from "./cache.helpers.ts";
 
 const router = new Hono<HonoEnv>();
-
-router.use("*", compress({ threshold: 0 }));
-router.use("*", async (_c, next) => {
-  await next();
-  appendVaryHeader(_c.res.headers, "Accept-Encoding");
-});
 
 router.get("/cards", (c) =>
   cachedResponse(c, {
@@ -191,20 +184,6 @@ function versionResponse(_db: Database, _locale: string, version: DataVersion) {
       all_card_updated: [version],
     },
   });
-}
-
-function appendVaryHeader(headers: Headers, value: string) {
-  const current = headers.get("Vary");
-  if (!current) {
-    headers.set("Vary", value);
-    return;
-  }
-
-  const values = current.split(",").map((part) => part.trim().toLowerCase());
-
-  if (!values.includes(value.toLowerCase())) {
-    headers.set("Vary", `${current}, ${value}`);
-  }
 }
 
 function groupScenarioCodesByCampaign(records: Selectable<CampaignScenario>[]) {
