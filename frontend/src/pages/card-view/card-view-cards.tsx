@@ -35,6 +35,7 @@ import { cx } from "@/utils/cx";
 import { displayPackName, formatRelationTitle } from "@/utils/formatting";
 import { and } from "@/utils/fp";
 import { isEmpty } from "@/utils/is-empty";
+import { CardFaq } from "./card-faq";
 import css from "./card-view.module.css";
 
 type Props = {
@@ -222,6 +223,8 @@ export function CardViewCards({
           ) : undefined}
         </Card>
       </div>
+
+      <CardFaq code={cardWithRelations.card.code} />
 
       {official(cardWithRelations.card) && !cardWithRelations.card.preview && (
         <PopularDecks scope={cardWithRelations.card} />

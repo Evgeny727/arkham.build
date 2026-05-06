@@ -52,14 +52,6 @@ export type AllCardApiResponse = {
 
 export type AllCardResponse = ApiCard[];
 
-type FaqResponse = {
-  code: string;
-  html: string;
-  updated: {
-    date: string;
-  };
-}[];
-
 async function request(
   path: string,
   options: RequestInit = {},
@@ -111,16 +103,6 @@ export async function queryCards(locale: Locale = "en"): Promise<ApiCard[]> {
 /**
  * Public API
  */
-
-export async function queryFaq(clientId: string, code: string) {
-  const res = await request(`/public/faq/${code}`, {
-    headers: {
-      "X-Client-Id": clientId,
-    },
-  });
-  const data: FaqResponse = await res.json();
-  return data;
-}
 
 export async function queryDeck(clientId: string, type: string, id: number) {
   const res = await request(`/public/arkhamdb/${type}/${id}`, {

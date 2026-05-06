@@ -1,6 +1,20 @@
 /** biome-ignore-all lint/performance/noBarrelFile: TECH DEBT: look into `exports` */
 
 export {
+  type CardErrata,
+  type CardErrataResponse,
+  CardErrataResponseSchema,
+  CardErrataSchema,
+} from "./dtos/card-errata-response.schema.ts";
+
+export {
+  type CardFaq,
+  type CardFaqResponse,
+  CardFaqResponseSchema,
+  CardFaqSchema,
+} from "./dtos/card-faq-response.schema.ts";
+
+export {
   type DateRange,
   DateRangeSchema,
 } from "./dtos/date-range.schema.ts";

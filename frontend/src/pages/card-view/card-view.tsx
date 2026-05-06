@@ -40,7 +40,6 @@ import { cx } from "@/utils/cx";
 import { download } from "@/utils/download";
 import { ErrorStatus } from "../errors/404";
 import css from "./card-view.module.css";
-import { Faq } from "./faq";
 import { UsableBy } from "./usable-by";
 
 function CardView() {
@@ -124,12 +123,6 @@ function CardView() {
                 </Link>
               )}
             </SidebarSection>
-
-            {cardWithRelations.card.official && (
-              <SidebarSection title={t("card_view.section_faq")}>
-                <Faq card={cardWithRelations.card} />
-              </SidebarSection>
-            )}
 
             {(deckbuildable || isInvestigator) && (
               <SidebarSection title={t("card_view.section_deckbuilding")}>
