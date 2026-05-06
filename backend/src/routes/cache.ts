@@ -1,6 +1,13 @@
+import type { JsonDataScenario } from "@arkham-build/shared";
 import { type Context, Hono } from "hono";
 import { compress } from "hono/compress";
+import type { Selectable } from "kysely";
 import type { Database } from "../db/db.ts";
+import type {
+  CampaignScenario,
+  ScenarioEncounterSet,
+  ScenarioEncounterSetCard,
+} from "../db/schema.types.ts";
 import {
   applyCacheHeaders,
   type CacheResource,
@@ -109,12 +116,39 @@ async function cardsResponse(db: Database, locale: string) {
 }
 
 async function metadataResponse(db: Database, locale: string) {
-  const [packs, cycles, encounterSets, tabooSets] = await Promise.all([
+  const [
+    packs,
+    cycles,
+    encounterSets,
+    tabooSets,
+    campaigns,
+    campaignScenarios,
+    scenarios,
+    scenarioEncounterSets,
+    scenarioEncounterSetCards,
+  ] = await Promise.all([
     db.selectFrom("pack").selectAll().execute(),
     db.selectFrom("cycle").selectAll().execute(),
     db.selectFrom("encounter_set").selectAll().execute(),
     db.selectFrom("taboo_set").selectAll().execute(),
+    db.selectFrom("campaign").selectAll().execute(),
+    db.selectFrom("campaign_scenario").selectAll().execute(),
+    db.selectFrom("scenario").selectAll().execute(),
+    db.selectFrom("scenario_encounter_set").selectAll().execute(),
+    db.selectFrom("scenario_encounter_set_card").selectAll().execute(),
   ]);
+
+  const scenarioCodesByCampaign =
+    groupScenarioCodesByCampaign(campaignScenarios);
+
+  const cardIdsByScenarioEncounterSet = groupCardIdsByScenarioEncounterSet(
+    scenarioEncounterSetCards,
+  );
+
+  const encounterSetsByScenario = groupEncounterSetsByScenario(
+    scenarioEncounterSets,
+    cardIdsByScenarioEncounterSet,
+  );
 
   return {
     data: {
@@ -129,6 +163,24 @@ async function metadataResponse(db: Database, locale: string) {
         name: t.name,
         date: t.date_start,
       })),
+      campaign: campaigns.map((campaign) =>
+        applyTranslations(
+          {
+            ...campaign,
+            scenarios: scenarioCodesByCampaign[campaign.code] ?? [],
+          },
+          locale,
+        ),
+      ),
+      scenario: scenarios.map((scenario) =>
+        applyTranslations(
+          {
+            ...scenario,
+            encounter_sets: encounterSetsByScenario[scenario.code] ?? [],
+          },
+          locale,
+        ),
+      ),
     },
   };
 }
@@ -153,4 +205,58 @@ function appendVaryHeader(headers: Headers, value: string) {
   if (!values.includes(value.toLowerCase())) {
     headers.set("Vary", `${current}, ${value}`);
   }
+}
+
+function groupScenarioCodesByCampaign(records: Selectable<CampaignScenario>[]) {
+  return records
+    .toSorted((a, b) => a.position - b.position)
+    .reduce<Record<string, string[]>>((acc, curr) => {
+      const scenarios = acc[curr.campaign_code] ?? [];
+      scenarios.push(curr.scenario_code);
+      acc[curr.campaign_code] = scenarios;
+      return acc;
+    }, {});
+}
+
+type CardIdsByScenarioEncounterSet = Record<string, Record<string, string[]>>;
+
+function groupCardIdsByScenarioEncounterSet(
+  records: Selectable<ScenarioEncounterSetCard>[],
+) {
+  return records
+    .toSorted((a, b) => a.position - b.position)
+    .reduce<CardIdsByScenarioEncounterSet>((acc, curr) => {
+      const encounterSets = acc[curr.scenario_code] ?? {};
+      const cards = encounterSets[curr.encounter_code] ?? [];
+      cards.push(curr.card_id);
+      encounterSets[curr.encounter_code] = cards;
+      acc[curr.scenario_code] = encounterSets;
+      return acc;
+    }, {});
+}
+
+function groupEncounterSetsByScenario(
+  records: Selectable<ScenarioEncounterSet>[],
+  cardIdsByScenarioEncounterSet: CardIdsByScenarioEncounterSet,
+) {
+  return records
+    .toSorted((a, b) => a.position - b.position)
+    .reduce<Record<string, JsonDataScenario["encounter_sets"]>>((acc, curr) => {
+      const cards =
+        cardIdsByScenarioEncounterSet[curr.scenario_code]?.[
+          curr.encounter_code
+        ];
+      const encounterSet: JsonDataScenario["encounter_sets"][number] = {
+        code: curr.encounter_code,
+      };
+
+      if (cards?.length) {
+        encounterSet.cards = cards;
+      }
+
+      const encounterSets = acc[curr.scenario_code] ?? [];
+      encounterSets.push(encounterSet);
+      acc[curr.scenario_code] = encounterSets;
+      return acc;
+    }, {});
 }

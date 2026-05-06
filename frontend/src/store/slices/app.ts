@@ -75,6 +75,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
 
     if (!refresh && persistedState?.metadata?.dataVersion?.cards_updated_at) {
       const metadata = {
+        ...getInitialMetadata(),
         ...persistedState.metadata,
         factions: mappedByCode(factions),
         subtypes: mappedByCode(subTypes),
@@ -118,10 +119,12 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
       dataVersion: dataVersionResponse,
       cards: {},
       taboos: {},
+      campaigns: mappedByCode(metadataResponse.campaign ?? []),
       cycles: mappedByCode(metadataResponse.cycle),
       packs: mappedByCode(metadataResponse.pack),
       encounterSets: mappedByCode(metadataResponse.card_encounter_set),
       factions: mappedByCode(factions),
+      scenarios: mappedByCode(metadataResponse.scenario ?? []),
       subtypes: mappedByCode(subTypes),
       types: mappedByCode(types),
       tabooSets: mappedById(metadataResponse.taboo_set),

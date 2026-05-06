@@ -98,10 +98,12 @@ export function validateFanMadeProject(project: FanMadeProject): void {
 export function cloneMetadata(metadata: StoreState["metadata"]) {
   return {
     ...metadata,
+    campaigns: { ...metadata.campaigns },
     cards: { ...metadata.cards },
     encounterSets: { ...metadata.encounterSets },
     packs: { ...metadata.packs },
     cycles: { ...metadata.cycles },
+    scenarios: { ...metadata.scenarios },
   };
 }
 

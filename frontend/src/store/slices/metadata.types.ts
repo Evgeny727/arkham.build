@@ -1,7 +1,9 @@
 import type {
   Card,
   DataVersion,
+  JsonDataCampaign,
   JsonDataFaction,
+  JsonDataScenario,
   JsonDataSubtype,
   JsonDataType,
 } from "@arkham-build/shared";
@@ -12,12 +14,14 @@ import type { Taboo } from "../schemas/taboo.schema";
 import type { TabooSet } from "../schemas/taboo-set.schema";
 
 export type Metadata = {
+  campaigns: Record<string, JsonDataCampaign>;
   cards: Record<string, Card>;
   dataVersion?: DataVersion;
   encounterSets: Record<string, EncounterSet>;
   cycles: Record<string, Cycle>;
   factions: Record<string, JsonDataFaction>;
   packs: Record<string, Pack>;
+  scenarios: Record<string, JsonDataScenario>;
   subtypes: Record<string, JsonDataSubtype>;
   types: Record<string, JsonDataType>;
   tabooSets: Record<string, TabooSet>;

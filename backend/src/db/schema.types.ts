@@ -70,7 +70,7 @@ export interface ArkhamdbUser {
 export interface Campaign {
   code: string;
   name: string;
-  translations: Json;
+  translations: { locale: string; name: string }[];
 }
 
 export interface CampaignScenario {
@@ -285,7 +285,7 @@ export interface Scenario {
   campaign_code: string | null;
   code: string;
   name: string;
-  translations: Json;
+  translations: { locale: string; name: string }[];
 }
 
 export interface ScenarioEncounterSet {

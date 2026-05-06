@@ -2,6 +2,8 @@ import type {
   ApiCard,
   FanMadeProject,
   FanMadeProjectInfo,
+  JsonDataCampaign,
+  JsonDataScenario,
   SealedDeckResponse,
 } from "@arkham-build/shared";
 import {
@@ -26,9 +28,11 @@ export type MetadataApiResponse = {
 };
 
 export type MetadataResponse = {
+  campaign: JsonDataCampaign[];
   cycle: Cycle[];
   pack: Pack[];
   card_encounter_set: EncounterSet[];
+  scenario: JsonDataScenario[];
   taboo_set: TabooSet[];
 };
 
