@@ -1,9 +1,11 @@
 import { LoaderCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useCardLinkTooltip } from "@/components/card-tooltip/use-card-link-tooltip";
 import { Plane } from "@/components/ui/plane";
 import { Tag } from "@/components/ui/tag";
 import { useCardFaqQuery } from "@/queries/grimoire";
 import { parseCardTextHtml } from "@/utils/card-utils";
+import { parseMarkdown } from "@/utils/markdown";
 import css from "./card-faq.module.css";
 
 type Props = {
@@ -14,6 +16,7 @@ export function CardFaq(props: Props) {
   const { code } = props;
   const { t } = useTranslation();
   const faq = useCardFaqQuery(code);
+  const { cardLinkTooltip, referenceProps } = useCardLinkTooltip();
 
   return (
     <Plane as="section" className={css["container"]}>
@@ -34,20 +37,20 @@ export function CardFaq(props: Props) {
       )}
 
       {!!faq.data?.length && (
-        <ul className={css["list"]}>
+        <ul className={css["list"]} {...referenceProps}>
           {faq.data.map((item) => (
             <li key={item.id}>
-              <p
+              <div
                 className={css["question"]}
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is from trusted source.
                 dangerouslySetInnerHTML={{
-                  __html: parseCardTextHtml(item.question),
+                  __html: parseCardTextHtml(parseMarkdown(item.question)),
                 }}
               />
-              <p
+              <div
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML is from trusted source.
                 dangerouslySetInnerHTML={{
-                  __html: parseCardTextHtml(item.ruling),
+                  __html: parseCardTextHtml(parseMarkdown(item.ruling)),
                 }}
               />
               <p>
@@ -57,6 +60,8 @@ export function CardFaq(props: Props) {
           ))}
         </ul>
       )}
+
+      {cardLinkTooltip}
     </Plane>
   );
 }

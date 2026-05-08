@@ -24,7 +24,3 @@
 .question {
   font-weight: 700;
 }
-
-.list li > * + * {
-  margin-top: 0.25rem;
-}
