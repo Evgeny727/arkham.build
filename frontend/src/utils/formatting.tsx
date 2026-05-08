@@ -1,8 +1,10 @@
 import i18next from "i18next";
 import { createSelector } from "reselect";
+import type { Campaign } from "@/store/schemas/campaign.schema";
 import type { Cycle } from "@/store/schemas/cycle.schema";
 import type { EncounterSet } from "@/store/schemas/encounter-set.schema";
 import type { Pack } from "@/store/schemas/pack.schema";
+import type { Scenario } from "@/store/schemas/scenario.schema";
 import type { TabooSet } from "@/store/schemas/taboo-set.schema";
 import i18n from "@/utils/i18n";
 import { LOCALES, type StorageProvider } from "./constants";
@@ -86,7 +88,9 @@ export function formatProviderName(name: StorageProvider) {
   }
 }
 
-export function displayPackName(pack: Pack | Cycle | EncounterSet) {
+export function displayPackName(
+  pack: Pack | Cycle | EncounterSet | Scenario | Campaign,
+) {
   return pack?.name ?? pack?.real_name ?? "";
 }
 

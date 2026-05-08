@@ -8,6 +8,7 @@ import {
   SpecialistAccess,
   SpecialistInvestigators,
 } from "@/components/card-modal/specialist";
+import { CardScenarios } from "@/components/card-scenarios/card-scenarios";
 import { CustomizationsEditor } from "@/components/customizations/customizations-editor";
 import PackIcon from "@/components/icons/pack-icon";
 import { OwnershipPartitionedCardList } from "@/components/ownership-partitioned-card-list";
@@ -225,6 +226,10 @@ export function CardViewCards({
       </div>
 
       <CardFaq code={cardWithRelations.card.code} />
+
+      {cardWithRelations.card.encounter_code && (
+        <CardScenarios card={cardWithRelations.card} />
+      )}
 
       {official(cardWithRelations.card) && !cardWithRelations.card.preview && (
         <PopularDecks scope={cardWithRelations.card} />

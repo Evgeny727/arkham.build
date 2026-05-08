@@ -1,23 +1,21 @@
-import type {
-  ApiCard,
-  FanMadeProject,
-  FanMadeProjectInfo,
-  JsonDataCampaign,
-  JsonDataScenario,
-  SealedDeckResponse,
-} from "@arkham-build/shared";
 import {
+  type ApiCard,
+  type DataVersion,
   encodeSearch,
+  type FanMadeProject,
+  type FanMadeProjectInfo,
   type RecommendationsRequest,
   type RecommendationsResponse,
   RecommendationsResponseSchema,
+  type SealedDeckResponse,
 } from "@arkham-build/shared";
 import { assert } from "@/utils/assert";
-import type { DataVersion } from "../../../../shared/src/schemas/data-version.schema";
+import type { Campaign } from "../schemas/campaign.schema";
 import type { Cycle } from "../schemas/cycle.schema";
 import { type Deck, type Id, isDeck } from "../schemas/deck.schema";
 import type { EncounterSet } from "../schemas/encounter-set.schema";
 import type { Pack } from "../schemas/pack.schema";
+import type { Scenario } from "../schemas/scenario.schema";
 import type { TabooSet } from "../schemas/taboo-set.schema";
 import type { History } from "../selectors/decks";
 import type { Locale } from "../slices/settings.types";
@@ -28,11 +26,11 @@ export type MetadataApiResponse = {
 };
 
 export type MetadataResponse = {
-  campaign: JsonDataCampaign[];
+  campaign: Campaign[];
   cycle: Cycle[];
   pack: Pack[];
   card_encounter_set: EncounterSet[];
-  scenario: JsonDataScenario[];
+  scenario: Scenario[];
   taboo_set: TabooSet[];
 };
 

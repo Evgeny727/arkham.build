@@ -1,7 +1,7 @@
 import { LoaderCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCardLinkTooltip } from "@/components/card-tooltip/use-card-link-tooltip";
-import { Plane } from "@/components/ui/plane";
+import { PlaneContainer } from "@/components/ui/plane-container";
 import { Tag } from "@/components/ui/tag";
 import { useCardFaqQuery } from "@/queries/grimoire";
 import { parseCardTextHtml } from "@/utils/card-utils";
@@ -19,9 +19,7 @@ export function CardFaq(props: Props) {
   const { cardLinkTooltip, referenceProps } = useCardLinkTooltip();
 
   return (
-    <Plane as="section" className={css["container"]}>
-      <h3 className={css["title"]}>{t("card_view.faq.title")}</h3>
-
+    <PlaneContainer as="section" title={t("card_view.faq.title")}>
       {faq.isPending && (
         <output className={css["status"]}>
           <LoaderCircleIcon className="spin" />
@@ -62,6 +60,6 @@ export function CardFaq(props: Props) {
       )}
 
       {cardLinkTooltip}
-    </Plane>
+    </PlaneContainer>
   );
 }

@@ -62,6 +62,11 @@
         }
       }
     },
+    "card_scenarios": {
+      "standalone": "Standalone",
+      "title": "Scenarios using <em>{{name}}</em>",
+      "tooltip": "{{name}} <em>({{campaignName}})</em>"
+    },
     "card_view": {
       "actions": {
         "faq": "View FAQ",
