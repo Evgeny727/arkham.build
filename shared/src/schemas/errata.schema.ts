@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const JsonDataErrataSchema = z.discriminatedUnion("type", [
+export const ErrataSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("campaign_errata"),
     cycles: z.array(z.string()),
@@ -22,4 +22,4 @@ export const JsonDataErrataSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-export type JsonDataErrata = z.infer<typeof JsonDataErrataSchema>;
+export type Errata = z.infer<typeof ErrataSchema>;

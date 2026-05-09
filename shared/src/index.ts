@@ -28,12 +28,15 @@ export {
   type DecklistSearchRequest,
   DecklistSearchRequestSchema,
 } from "./dtos/decklist-search-request.schema.ts";
-
 export {
   type DecklistSearchResponse,
   DecklistSearchResponseSchema,
   type DecklistSearchResult,
 } from "./dtos/decklist-search-response.schema.ts";
+export {
+  type GrimoireResponse,
+  GrimoireResponseSchema,
+} from "./dtos/grimoire-response.schema.ts";
 
 export {
   type RecommendationsRequest,
@@ -116,8 +119,8 @@ export {
 } from "./schemas/encounter-set.schema.ts";
 
 export {
-  type JsonDataErrata,
-  JsonDataErrataSchema,
+  type Errata,
+  ErrataSchema,
 } from "./schemas/errata.schema.ts";
 
 export {
@@ -133,13 +136,13 @@ export {
 } from "./schemas/fan-made-project-info.schema.ts";
 
 export {
-  type JsonDataFaq,
-  JsonDataFaqSchema,
+  type Faq,
+  FaqSchema,
 } from "./schemas/faq.schema.ts";
 
 export {
-  type JsonDataGlossary,
-  JsonDataGlossarySchema,
+  type Glossary,
+  GlossarySchema,
 } from "./schemas/glossary.schema.ts";
 
 export {

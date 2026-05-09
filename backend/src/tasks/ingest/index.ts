@@ -1,14 +1,14 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
+  ErrataSchema,
+  FaqSchema,
+  GlossarySchema,
   JsonDataCampaignSchema,
   type JsonDataCard,
   type JsonDataCycle,
   type JsonDataEncounterSet,
-  JsonDataErrataSchema,
   type JsonDataFaction,
-  JsonDataFaqSchema,
-  JsonDataGlossarySchema,
   type JsonDataPack,
   JsonDataRulesVersionSchema,
   JsonDataScenarioSchema,
@@ -131,35 +131,23 @@ async function ingest() {
       getJsonData(
         metadataDir,
         "errata/campaign_errata.json",
-        JsonDataErrataSchema.array(),
+        ErrataSchema.array(),
       ),
-      getJsonData(
-        metadataDir,
-        "errata/card_errata.json",
-        JsonDataErrataSchema.array(),
-      ),
+      getJsonData(metadataDir, "errata/card_errata.json", ErrataSchema.array()),
       getJsonData(
         metadataDir,
         "errata/rulebook_errata.json",
-        JsonDataErrataSchema.array(),
+        ErrataSchema.array(),
       ),
     ]).then((data) => data.flat()),
     Promise.all([
-      getJsonData(
-        metadataDir,
-        "faqs/campaign_faq.json",
-        JsonDataFaqSchema.array(),
-      ),
-      getJsonData(
-        metadataDir,
-        "faqs/general_faq.json",
-        JsonDataFaqSchema.array(),
-      ),
+      getJsonData(metadataDir, "faqs/campaign_faq.json", FaqSchema.array()),
+      getJsonData(metadataDir, "faqs/general_faq.json", FaqSchema.array()),
     ]).then((data) => data.flat()),
     getJsonData(
       metadataDir,
       "glossary/grimoire_glossary.json",
-      JsonDataGlossarySchema.array(),
+      GlossarySchema.array(),
     ),
     getJsonData(
       metadataDir,

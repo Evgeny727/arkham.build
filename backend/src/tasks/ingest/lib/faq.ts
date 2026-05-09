@@ -1,7 +1,7 @@
-import type { JsonDataFaq } from "@arkham-build/shared";
+import type { Faq } from "@arkham-build/shared";
 import { getInsertedId, uniqueStrings } from "./helpers.ts";
 
-export function resolveFaqRecords(faq: JsonDataFaq[]): FaqRecord[] {
+export function resolveFaqRecords(faq: Faq[]): FaqRecord[] {
   return faq.map((item, index) => ({
     position: index + 1,
     type: item.type,
@@ -12,7 +12,7 @@ export function resolveFaqRecords(faq: JsonDataFaq[]): FaqRecord[] {
 }
 
 export function resolveFaqReferenceRecords(
-  faq: JsonDataFaq[],
+  faq: Faq[],
   idsByPosition: ReadonlyMap<number, number>,
 ) {
   const faqCards: FaqCardRecord[] = [];
@@ -58,7 +58,7 @@ type FaqRecord = {
   position: number;
   question: string;
   ruling: string;
-  type: JsonDataFaq["type"];
+  type: Faq["type"];
 };
 
 type FaqCardRecord = {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const JsonDataFaqSchema = z.object({
+export const FaqSchema = z.object({
   type: z.literal("faq"),
   card_codes: z.array(z.string()).nullish(),
   cycles: z.array(z.string()).nullish(),
@@ -10,4 +10,4 @@ export const JsonDataFaqSchema = z.object({
   citation: z.string(),
 });
 
-export type JsonDataFaq = z.infer<typeof JsonDataFaqSchema>;
+export type Faq = z.infer<typeof FaqSchema>;

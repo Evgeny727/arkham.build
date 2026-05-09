@@ -1,17 +1,20 @@
-import type { JsonDataGlossary } from "@arkham-build/shared";
+import type { Glossary } from "@arkham-build/shared";
 
-export function resolveGlossaryEntries(glossary: JsonDataGlossary[]) {
+export function resolveGlossaryEntries(glossary: Glossary[]) {
   return glossary.map((entry) => ({
-    ...entry,
+    id: entry.id,
+    section: entry.section,
+    ruling: entry.ruling,
     translations: [],
+    citation: entry.citation,
   }));
 }
 
-export function resolveGlossaryEntryReferences(glossary: JsonDataGlossary[]) {
+export function resolveGlossaryEntryReferences(glossary: Glossary[]) {
   return glossary.flatMap((entry) =>
     [...new Set(entry.references ?? [])].map((targetEntryId, index) => ({
-      source_entry_id: entry.entry_id,
-      target_entry_id: targetEntryId,
+      source_id: entry.id,
+      target_id: targetEntryId,
       position: index + 1,
     })),
   );
