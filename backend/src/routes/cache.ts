@@ -119,6 +119,7 @@ async function metadataResponse(db: Database, locale: string) {
     scenarios,
     scenarioEncounterSets,
     scenarioEncounterSetCards,
+    rulesVersions,
   ] = await Promise.all([
     db.selectFrom("pack").selectAll().execute(),
     db.selectFrom("cycle").selectAll().execute(),
@@ -129,6 +130,7 @@ async function metadataResponse(db: Database, locale: string) {
     db.selectFrom("scenario").selectAll().execute(),
     db.selectFrom("scenario_encounter_set").selectAll().execute(),
     db.selectFrom("scenario_encounter_set_card").selectAll().execute(),
+    db.selectFrom("rules_version").selectAll().orderBy("date").execute(),
   ]);
 
   const scenarioCodesByCampaign =
@@ -174,6 +176,10 @@ async function metadataResponse(db: Database, locale: string) {
           locale,
         ),
       ),
+      rules_versions: rulesVersions.map((version) => ({
+        citation: version.citation,
+        date: new Date(version.date).toISOString().slice(0, 10),
+      })),
     },
   };
 }

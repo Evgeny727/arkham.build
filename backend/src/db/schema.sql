@@ -287,7 +287,7 @@ CREATE TABLE public.errata (
     type character varying(36) NOT NULL,
     section character varying(255),
     ruling text NOT NULL,
-    citation text NOT NULL,
+    citation character varying(255) NOT NULL,
     CONSTRAINT errata_rulebook_section_check CHECK (((((type)::text = 'rulebook_errata'::text) AND (section IS NOT NULL)) OR (((type)::text <> 'rulebook_errata'::text) AND (section IS NULL)))),
     CONSTRAINT errata_type_check CHECK (((type)::text = ANY ((ARRAY['campaign_errata'::character varying, 'card_errata'::character varying, 'rulebook_errata'::character varying])::text[])))
 );
@@ -373,7 +373,7 @@ CREATE TABLE public.faq (
     type character varying(36) DEFAULT 'faq'::character varying NOT NULL,
     question text NOT NULL,
     ruling text NOT NULL,
-    citation text NOT NULL,
+    citation character varying(255) NOT NULL,
     CONSTRAINT faq_type_check CHECK (((type)::text = 'faq'::text))
 );
 
@@ -426,6 +426,30 @@ CREATE TABLE public.faq_scenario (
 
 
 --
+-- Name: glossary_entry; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.glossary_entry (
+    id integer NOT NULL,
+    section character varying(255) NOT NULL,
+    ruling text,
+    translations jsonb NOT NULL,
+    citation character varying(255) NOT NULL
+);
+
+
+--
+-- Name: glossary_entry_reference; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.glossary_entry_reference (
+    source_id integer NOT NULL,
+    target_id integer NOT NULL,
+    "position" integer NOT NULL
+);
+
+
+--
 -- Name: pack; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -450,6 +474,16 @@ CREATE TABLE public.pack (
 
 CREATE TABLE public.pack_type (
     pack_type character varying(255) NOT NULL
+);
+
+
+--
+-- Name: rules_version; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.rules_version (
+    citation character varying(255) NOT NULL,
+    date date NOT NULL
 );
 
 
@@ -708,6 +742,30 @@ ALTER TABLE ONLY public.faq_scenario
 
 
 --
+-- Name: glossary_entry glossary_entry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.glossary_entry
+    ADD CONSTRAINT glossary_entry_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: glossary_entry_reference glossary_entry_reference_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.glossary_entry_reference
+    ADD CONSTRAINT glossary_entry_reference_pkey PRIMARY KEY (source_id, target_id);
+
+
+--
+-- Name: glossary_entry_reference glossary_entry_reference_source_id_position_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.glossary_entry_reference
+    ADD CONSTRAINT glossary_entry_reference_source_id_position_key UNIQUE (source_id, "position");
+
+
+--
 -- Name: pack pack_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -721,6 +779,14 @@ ALTER TABLE ONLY public.pack
 
 ALTER TABLE ONLY public.pack_type
     ADD CONSTRAINT pack_type_pkey PRIMARY KEY (pack_type);
+
+
+--
+-- Name: rules_version rules_version_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.rules_version
+    ADD CONSTRAINT rules_version_pkey PRIMARY KEY (citation);
 
 
 --
@@ -1011,6 +1077,20 @@ CREATE INDEX idx_faq_scenario_scenario_code ON public.faq_scenario USING btree (
 
 
 --
+-- Name: idx_glossary_entry_citation; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_glossary_entry_citation ON public.glossary_entry USING btree (citation);
+
+
+--
+-- Name: idx_glossary_entry_reference_target_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_glossary_entry_reference_target_id ON public.glossary_entry_reference USING btree (target_id);
+
+
+--
 -- Name: idx_pack_cycle_code; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1199,6 +1279,14 @@ ALTER TABLE ONLY public.errata_card
 
 
 --
+-- Name: errata errata_citation_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.errata
+    ADD CONSTRAINT errata_citation_fkey FOREIGN KEY (citation) REFERENCES public.rules_version(citation) NOT VALID;
+
+
+--
 -- Name: errata_cycle errata_cycle_cycle_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1247,6 +1335,14 @@ ALTER TABLE ONLY public.faq_card
 
 
 --
+-- Name: faq faq_citation_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.faq
+    ADD CONSTRAINT faq_citation_fkey FOREIGN KEY (citation) REFERENCES public.rules_version(citation) NOT VALID;
+
+
+--
 -- Name: faq_cycle faq_cycle_cycle_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1276,6 +1372,30 @@ ALTER TABLE ONLY public.faq_scenario
 
 ALTER TABLE ONLY public.faq_scenario
     ADD CONSTRAINT faq_scenario_scenario_code_fkey FOREIGN KEY (scenario_code) REFERENCES public.scenario(code) ON DELETE CASCADE;
+
+
+--
+-- Name: glossary_entry glossary_entry_citation_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.glossary_entry
+    ADD CONSTRAINT glossary_entry_citation_fkey FOREIGN KEY (citation) REFERENCES public.rules_version(citation);
+
+
+--
+-- Name: glossary_entry_reference glossary_entry_reference_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.glossary_entry_reference
+    ADD CONSTRAINT glossary_entry_reference_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.glossary_entry(id) ON DELETE CASCADE;
+
+
+--
+-- Name: glossary_entry_reference glossary_entry_reference_target_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.glossary_entry_reference
+    ADD CONSTRAINT glossary_entry_reference_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.glossary_entry(id) ON DELETE CASCADE;
 
 
 --
@@ -1355,4 +1475,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20260206184321'),
     ('20260227194035'),
     ('20260418123000'),
-    ('20260505120000');
+    ('20260505120000'),
+    ('20260508231500');

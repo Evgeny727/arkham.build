@@ -4,6 +4,7 @@ import {
   encodeSearch,
   type FanMadeProject,
   type FanMadeProjectInfo,
+  type JsonDataRulesVersion,
   type RecommendationsRequest,
   type RecommendationsResponse,
   RecommendationsResponseSchema,
@@ -32,6 +33,7 @@ export type MetadataResponse = {
   card_encounter_set: EncounterSet[];
   scenario: Scenario[];
   taboo_set: TabooSet[];
+  rules_versions: JsonDataRulesVersion[];
 };
 
 export type DataVersionApiResponse = {

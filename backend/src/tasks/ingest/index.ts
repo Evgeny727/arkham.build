@@ -8,7 +8,9 @@ import {
   JsonDataErrataSchema,
   type JsonDataFaction,
   JsonDataFaqSchema,
+  JsonDataGlossarySchema,
   type JsonDataPack,
+  JsonDataRulesVersionSchema,
   JsonDataScenarioSchema,
   type JsonDataSubtype,
   type JsonDataType,
@@ -29,6 +31,10 @@ import {
 import { resolveFactions } from "./lib/factions.ts";
 import { resolveFaqRecords, resolveFaqReferenceRecords } from "./lib/faq.ts";
 import {
+  resolveGlossaryEntries,
+  resolveGlossaryEntryReferences,
+} from "./lib/glossary.ts";
+import {
   downloadJsonDataRepo,
   downloadMetadataRepo,
   getJsonData,
@@ -37,6 +43,7 @@ import {
 } from "./lib/json-data.ts";
 import { applyLocalData } from "./lib/local-data.ts";
 import { resolvePacks } from "./lib/packs.ts";
+import { resolveRulesVersions } from "./lib/rules-versions.ts";
 import { resolveScenarioRecords } from "./lib/scenario.ts";
 import {
   downloadTabooRepo,
@@ -72,6 +79,9 @@ async function ingest() {
     campaignRecords,
     errataRecords,
     faqRecords,
+    glossaryEntries,
+    glossaryEntryReferences,
+    rulesVersions,
     scenarioRecords,
     sourceErrata,
     sourceFaq,
@@ -146,6 +156,16 @@ async function ingest() {
         JsonDataFaqSchema.array(),
       ),
     ]).then((data) => data.flat()),
+    getJsonData(
+      metadataDir,
+      "glossary/grimoire_glossary.json",
+      JsonDataGlossarySchema.array(),
+    ),
+    getJsonData(
+      metadataDir,
+      "versions.json",
+      JsonDataRulesVersionSchema.array(),
+    ),
     ...packFiles.map((file) =>
       getMetadataWithTranslations<JsonDataCard>(dir, {
         locales: config.METADATA_LOCALES,
@@ -165,6 +185,8 @@ async function ingest() {
       scenarios,
       errata,
       faq,
+      glossary,
+      rulesVersions,
       ...cardPacks
     ]) => {
       const allCardTranslations = mergeTranslations(cardPacks);
@@ -196,6 +218,9 @@ async function ingest() {
         campaignRecords: resolveCampaignRecords(campaigns),
         errataRecords: resolveErrataRecords(errata),
         faqRecords: resolveFaqRecords(faq),
+        glossaryEntries: resolveGlossaryEntries(glossary),
+        glossaryEntryReferences: resolveGlossaryEntryReferences(glossary),
+        rulesVersions: resolveRulesVersions(rulesVersions),
         scenarioRecords: resolveScenarioRecords(scenarios),
         sourceErrata: errata,
         sourceFaq: faq,
@@ -208,6 +233,14 @@ async function ingest() {
     },
   );
 
+  if (!rulesVersions.length) {
+    throw new Error("No rules versions found in metadata repository");
+  }
+
+  if (!glossaryEntries.length) {
+    throw new Error("No glossary entries found in metadata repository");
+  }
+
   await db.transaction().execute(async (tx) => {
     await tx.deleteFrom("faq_card").execute();
     await tx.deleteFrom("faq_cycle").execute();
@@ -217,6 +250,9 @@ async function ingest() {
     await tx.deleteFrom("errata_cycle").execute();
     await tx.deleteFrom("errata_scenario").execute();
     await tx.deleteFrom("errata").execute();
+    await tx.deleteFrom("glossary_entry_reference").execute();
+    await tx.deleteFrom("glossary_entry").execute();
+    await tx.deleteFrom("rules_version").execute();
     await tx.deleteFrom("scenario_encounter_set_card").execute();
     await tx.deleteFrom("scenario_encounter_set").execute();
     await tx.deleteFrom("campaign_scenario").execute();
@@ -239,6 +275,11 @@ async function ingest() {
     await tx
       .insertInto("taboo_set")
       .values(serializeRecords(tabooSets))
+      .execute();
+
+    await tx
+      .insertInto("rules_version")
+      .values(serializeRecords(rulesVersions))
       .execute();
 
     await tx.insertInto("cycle").values(serializeRecords(cycles)).execute();
@@ -291,6 +332,20 @@ async function ingest() {
       await tx
         .insertInto("scenario_encounter_set_card")
         .values(serializeRecords(scenarioRecords.scenarioEncounterSetCards))
+        .execute();
+    }
+
+    if (glossaryEntries.length) {
+      await tx
+        .insertInto("glossary_entry")
+        .values(serializeRecords(glossaryEntries))
+        .execute();
+    }
+
+    if (glossaryEntryReferences.length) {
+      await tx
+        .insertInto("glossary_entry_reference")
+        .values(serializeRecords(glossaryEntryReferences))
         .execute();
     }
 

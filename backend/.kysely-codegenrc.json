@@ -6,6 +6,7 @@
       "encounter_set.translations": "{ locale: string; name: string }[]",
       "campaign.translations": "{ locale: string; name: string }[]",
       "scenario.translations": "{ locale: string; name: string }[]",
+      "glossary_entry.translations": "{ locale: string; section?: string; ruling?: string }[]",
       "card.translations": "{ locale: string; [key: string]: string }[]",
       "pack.reprint_packs": "string[] | null",
       "arkhamdb_decklist.slots": "Record<string, number>",

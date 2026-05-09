@@ -138,9 +138,19 @@ export {
 } from "./schemas/faq.schema.ts";
 
 export {
+  type JsonDataGlossary,
+  JsonDataGlossarySchema,
+} from "./schemas/glossary.schema.ts";
+
+export {
   type JsonDataPack,
   JsonDataPackSchema,
 } from "./schemas/pack.schema.ts";
+
+export {
+  type JsonDataRulesVersion,
+  JsonDataRulesVersionSchema,
+} from "./schemas/rules-version.schema.ts";
 
 export {
   type JsonDataScenario,

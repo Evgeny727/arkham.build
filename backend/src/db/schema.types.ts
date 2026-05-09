@@ -263,6 +263,20 @@ export interface FaqScenario {
   scenario_code: string;
 }
 
+export interface GlossaryEntry {
+  citation: string;
+  id: number;
+  ruling: string | null;
+  section: string;
+  translations: { locale: string; section?: string; ruling?: string }[];
+}
+
+export interface GlossaryEntryReference {
+  position: number;
+  source_id: number;
+  target_id: number;
+}
+
 export interface Pack {
   chapter: number | null;
   code: string;
@@ -279,6 +293,11 @@ export interface Pack {
 
 export interface PackType {
   pack_type: string;
+}
+
+export interface RulesVersion {
+  citation: string;
+  date: Timestamp;
 }
 
 export interface Scenario {
@@ -346,8 +365,11 @@ export interface DB {
   faq_card: FaqCard;
   faq_cycle: FaqCycle;
   faq_scenario: FaqScenario;
+  glossary_entry: GlossaryEntry;
+  glossary_entry_reference: GlossaryEntryReference;
   pack: Pack;
   pack_type: PackType;
+  rules_version: RulesVersion;
   scenario: Scenario;
   scenario_encounter_set: ScenarioEncounterSet;
   scenario_encounter_set_card: ScenarioEncounterSetCard;
