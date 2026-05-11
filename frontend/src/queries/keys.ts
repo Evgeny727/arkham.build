@@ -1,5 +1,6 @@
 export const grimoireKeys = {
   all: ["grimoire"] as const,
+  grimoire: () => [...grimoireKeys.all, "all"] as const,
   cardFaq: (code: string) =>
     [...grimoireKeys.all, "faq", "card", code] as const,
   cardErrata: (code: string) =>

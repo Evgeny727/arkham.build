@@ -75,6 +75,8 @@ const selectScenariosForEncounterCode = createSelector(
     const scenarioTable =
       lookupTables.scenarioCodesByEncounterSet[card.encounter_code];
 
+    if (!scenarioTable) return [];
+
     const scenarios = Object.keys(scenarioTable)
       .map((code) => {
         const scenario = metadata.scenarios[code];

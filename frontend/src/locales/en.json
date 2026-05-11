@@ -1421,6 +1421,16 @@
     },
     "rules": {
       "back_to_top": "Back to top",
+      "grimoire": {
+        "empty": "No grimoire content found.",
+        "error": "Failed to load grimoire content.",
+        "intro_description": "The Arkham Grimoire is a comprehensive collection of rulings covering all known situations in the game. As a living document, it is maintained online and updated as new cards, rules, and interactions are introduced or discovered. This document contains information pertaining to more advanced topics such as the interpretation of card text, the resolution of timing conflicts, frequently asked questions, and a list of all keywords and other rules text.",
+        "intro_title": "The Arkham Grimoire",
+        "loading": "Loading grimoire content...",
+        "open_link": "Open the Grimoire",
+        "references": "References",
+        "title": "Grimoire"
+      },
       "search_placeholder": "Search keywords...",
       "title": "Rules reference",
       "toc": "Table of contents"

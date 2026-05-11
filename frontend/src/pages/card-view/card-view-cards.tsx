@@ -78,7 +78,7 @@ function CardSetNav(props: { currentCard: CardWithRelations }) {
       if (reprintPackCodes) {
         const targetType = currentCard.card.encounter_code
           ? "campaign"
-          : "investigator";
+          : "player";
 
         const reprint = Object.keys(reprintPackCodes).reduce(
           (acc, curr) => {
@@ -143,7 +143,7 @@ function CardSetNav(props: { currentCard: CardWithRelations }) {
     <div>
       <div className={css["card-set-nav-title"]}>
         <h3>
-          {<PackIcon code={targetPack.code} />}
+          <PackIcon code={targetPack.code} />
           {displayPackName(targetPack)}
         </h3>
       </div>
@@ -174,31 +174,30 @@ function CardSetLink(props: {
   const { shift, cardListIndex, filteredCards, oldFormat } = props;
 
   const targetCard = filteredCards[cardListIndex + shift];
+  if (!targetCard) return null;
 
-  if (targetCard) {
-    const url = oldFormat ? oldFormatCardUrl(targetCard) : cardUrl(targetCard);
+  const url = oldFormat ? oldFormatCardUrl(targetCard) : cardUrl(targetCard);
 
-    return (
-      <Link to={url} asChild>
-        <Button
-          className={cx(
-            css["card-set-button"],
-            shift < 0 ? css["prev"] : css["next"],
-          )}
-          as="a"
-        >
-          {shift < 0 && <ChevronsLeftIcon />}
-          <span
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted origin.
-            dangerouslySetInnerHTML={{
-              __html: parseCardTitle(displayAttribute(targetCard, "name")),
-            }}
-          />
-          {shift > 0 && <ChevronsRightIcon />}
-        </Button>
-      </Link>
-    );
-  }
+  return (
+    <Link to={url} asChild>
+      <Button
+        className={cx(
+          css["card-set-button"],
+          shift < 0 ? css["prev"] : css["next"],
+        )}
+        as="a"
+      >
+        {shift < 0 && <ChevronsLeftIcon />}
+        <span
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted origin.
+          dangerouslySetInnerHTML={{
+            __html: parseCardTitle(displayAttribute(targetCard, "name")),
+          }}
+        />
+        {shift > 0 && <ChevronsRightIcon />}
+      </Button>
+    </Link>
+  );
 }
 
 export function CardViewCards({

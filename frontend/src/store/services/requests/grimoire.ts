@@ -3,8 +3,16 @@ import {
   CardErrataResponseSchema,
   type CardFaqResponse,
   CardFaqResponseSchema,
+  type GrimoireResponse,
+  GrimoireResponseSchema,
 } from "@arkham-build/shared";
 import { apiV2Request } from "./shared";
+
+export async function queryGrimoire(): Promise<GrimoireResponse> {
+  const res = await apiV2Request("/v2/public/grimoire");
+  const data = await res.json();
+  return GrimoireResponseSchema.parse(data);
+}
 
 export async function queryCardFaq(cardCode: string): Promise<CardFaqResponse> {
   const res = await apiV2Request(`/v2/public/faq/card/${cardCode}`);

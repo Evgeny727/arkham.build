@@ -426,26 +426,41 @@ CREATE TABLE public.faq_scenario (
 
 
 --
--- Name: glossary_entry; Type: TABLE; Schema: public; Owner: -
+-- Name: grimoire_entry; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.glossary_entry (
-    id integer NOT NULL,
+CREATE TABLE public.grimoire_entry (
+    id character varying(255) NOT NULL,
     section character varying(255) NOT NULL,
-    ruling text,
+    title text NOT NULL,
+    text text,
     translations jsonb NOT NULL,
     citation character varying(255) NOT NULL
 );
 
 
 --
--- Name: glossary_entry_reference; Type: TABLE; Schema: public; Owner: -
+-- Name: grimoire_entry_reference; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.glossary_entry_reference (
-    source_id integer NOT NULL,
-    target_id integer NOT NULL,
+CREATE TABLE public.grimoire_entry_reference (
+    source_id character varying(255) NOT NULL,
+    target_id character varying(255) NOT NULL,
     "position" integer NOT NULL
+);
+
+
+--
+-- Name: grimoire_section; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.grimoire_section (
+    id character varying(255) NOT NULL,
+    title text NOT NULL,
+    "position" integer NOT NULL,
+    text text,
+    translations jsonb NOT NULL,
+    citation character varying(255)
 );
 
 
@@ -742,27 +757,35 @@ ALTER TABLE ONLY public.faq_scenario
 
 
 --
--- Name: glossary_entry glossary_entry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: grimoire_entry grimoire_entry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.glossary_entry
-    ADD CONSTRAINT glossary_entry_pkey PRIMARY KEY (id);
-
-
---
--- Name: glossary_entry_reference glossary_entry_reference_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.glossary_entry_reference
-    ADD CONSTRAINT glossary_entry_reference_pkey PRIMARY KEY (source_id, target_id);
+ALTER TABLE ONLY public.grimoire_entry
+    ADD CONSTRAINT grimoire_entry_pkey PRIMARY KEY (id);
 
 
 --
--- Name: glossary_entry_reference glossary_entry_reference_source_id_position_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: grimoire_entry_reference grimoire_entry_reference_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.glossary_entry_reference
-    ADD CONSTRAINT glossary_entry_reference_source_id_position_key UNIQUE (source_id, "position");
+ALTER TABLE ONLY public.grimoire_entry_reference
+    ADD CONSTRAINT grimoire_entry_reference_pkey PRIMARY KEY (source_id, target_id);
+
+
+--
+-- Name: grimoire_entry_reference grimoire_entry_reference_source_id_position_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.grimoire_entry_reference
+    ADD CONSTRAINT grimoire_entry_reference_source_id_position_key UNIQUE (source_id, "position");
+
+
+--
+-- Name: grimoire_section grimoire_section_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.grimoire_section
+    ADD CONSTRAINT grimoire_section_pkey PRIMARY KEY (id);
 
 
 --
@@ -1077,17 +1100,24 @@ CREATE INDEX idx_faq_scenario_scenario_code ON public.faq_scenario USING btree (
 
 
 --
--- Name: idx_glossary_entry_citation; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_grimoire_entry_citation; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_glossary_entry_citation ON public.glossary_entry USING btree (citation);
+CREATE INDEX idx_grimoire_entry_citation ON public.grimoire_entry USING btree (citation);
 
 
 --
--- Name: idx_glossary_entry_reference_target_id; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_grimoire_entry_reference_target_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_glossary_entry_reference_target_id ON public.glossary_entry_reference USING btree (target_id);
+CREATE INDEX idx_grimoire_entry_reference_target_id ON public.grimoire_entry_reference USING btree (target_id);
+
+
+--
+-- Name: idx_grimoire_entry_section; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_grimoire_entry_section ON public.grimoire_entry USING btree (section);
 
 
 --
@@ -1375,27 +1405,43 @@ ALTER TABLE ONLY public.faq_scenario
 
 
 --
--- Name: glossary_entry glossary_entry_citation_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: grimoire_entry grimoire_entry_citation_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.glossary_entry
-    ADD CONSTRAINT glossary_entry_citation_fkey FOREIGN KEY (citation) REFERENCES public.rules_version(citation);
-
-
---
--- Name: glossary_entry_reference glossary_entry_reference_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.glossary_entry_reference
-    ADD CONSTRAINT glossary_entry_reference_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.glossary_entry(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.grimoire_entry
+    ADD CONSTRAINT grimoire_entry_citation_fkey FOREIGN KEY (citation) REFERENCES public.rules_version(citation);
 
 
 --
--- Name: glossary_entry_reference glossary_entry_reference_target_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: grimoire_entry_reference grimoire_entry_reference_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.glossary_entry_reference
-    ADD CONSTRAINT glossary_entry_reference_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.glossary_entry(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.grimoire_entry_reference
+    ADD CONSTRAINT grimoire_entry_reference_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.grimoire_entry(id) ON DELETE CASCADE;
+
+
+--
+-- Name: grimoire_entry_reference grimoire_entry_reference_target_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.grimoire_entry_reference
+    ADD CONSTRAINT grimoire_entry_reference_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.grimoire_entry(id) ON DELETE CASCADE;
+
+
+--
+-- Name: grimoire_entry grimoire_entry_section_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.grimoire_entry
+    ADD CONSTRAINT grimoire_entry_section_fkey FOREIGN KEY (section) REFERENCES public.grimoire_section(id) ON DELETE CASCADE;
+
+
+--
+-- Name: grimoire_section grimoire_section_citation_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.grimoire_section
+    ADD CONSTRAINT grimoire_section_citation_fkey FOREIGN KEY (citation) REFERENCES public.rules_version(citation);
 
 
 --

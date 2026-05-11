@@ -1,14 +1,15 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import {
-  ErrataSchema,
-  FaqSchema,
-  GlossarySchema,
+  GrimoireEntrySchema,
+  GrimoireSectionSchema,
   JsonDataCampaignSchema,
   type JsonDataCard,
   type JsonDataCycle,
   type JsonDataEncounterSet,
+  JsonDataErrataSchema,
   type JsonDataFaction,
+  JsonDataFaqSchema,
   type JsonDataPack,
   JsonDataRulesVersionSchema,
   JsonDataScenarioSchema,
@@ -31,9 +32,10 @@ import {
 import { resolveFactions } from "./lib/factions.ts";
 import { resolveFaqRecords, resolveFaqReferenceRecords } from "./lib/faq.ts";
 import {
-  resolveGlossaryEntries,
-  resolveGlossaryEntryReferences,
-} from "./lib/glossary.ts";
+  resolveGrimoireEntries,
+  resolveGrimoireEntryReferences,
+  resolveGrimoireSections,
+} from "./lib/grimoire.ts";
 import {
   downloadJsonDataRepo,
   downloadMetadataRepo,
@@ -65,9 +67,23 @@ async function ingest() {
     downloadTabooRepo(config),
   ]);
 
-  const packFiles = await readdir(path.join(dir, "pack"), {
-    recursive: true,
-  }).then((files) => files.filter((file) => file.endsWith(".json")));
+  const [packFiles, grimoireFiles] = await Promise.all([
+    readdir(path.join(dir, "pack"), {
+      recursive: true,
+    }).then((files) => files.filter((file) => file.endsWith(".json"))),
+    readdir(path.join(metadataDir, "grimoire"), {
+      recursive: true,
+    })
+      .then((files) => files.filter((file) => file.endsWith(".json")))
+      .catch(() => []),
+  ]);
+
+  const grimoireSectionFiles = grimoireFiles.filter(
+    (file) => path.parse(file).name === "sections",
+  );
+  const grimoireEntryFiles = grimoireFiles.filter(
+    (file) => path.parse(file).name !== "sections",
+  );
 
   const {
     cardResolutions,
@@ -79,8 +95,9 @@ async function ingest() {
     campaignRecords,
     errataRecords,
     faqRecords,
-    glossaryEntries,
-    glossaryEntryReferences,
+    grimoireEntries,
+    grimoireEntryReferences,
+    grimoireSections,
     rulesVersions,
     scenarioRecords,
     sourceErrata,
@@ -131,24 +148,49 @@ async function ingest() {
       getJsonData(
         metadataDir,
         "errata/campaign_errata.json",
-        ErrataSchema.array(),
+        JsonDataErrataSchema.array(),
       ),
-      getJsonData(metadataDir, "errata/card_errata.json", ErrataSchema.array()),
+      getJsonData(
+        metadataDir,
+        "errata/card_errata.json",
+        JsonDataErrataSchema.array(),
+      ),
       getJsonData(
         metadataDir,
         "errata/rulebook_errata.json",
-        ErrataSchema.array(),
+        JsonDataErrataSchema.array(),
       ),
     ]).then((data) => data.flat()),
     Promise.all([
-      getJsonData(metadataDir, "faqs/campaign_faq.json", FaqSchema.array()),
-      getJsonData(metadataDir, "faqs/general_faq.json", FaqSchema.array()),
+      getJsonData(
+        metadataDir,
+        "faqs/campaign_faq.json",
+        JsonDataFaqSchema.array(),
+      ),
+      getJsonData(
+        metadataDir,
+        "faqs/general_faq.json",
+        JsonDataFaqSchema.array(),
+      ),
     ]).then((data) => data.flat()),
-    getJsonData(
-      metadataDir,
-      "glossary/grimoire_glossary.json",
-      GlossarySchema.array(),
-    ),
+    Promise.all(
+      grimoireSectionFiles.map((file) =>
+        getJsonData(
+          metadataDir,
+          `grimoire/${file}`,
+          GrimoireSectionSchema.array(),
+        ),
+      ),
+    ).then((data) => data.flat()),
+    Promise.all(
+      grimoireEntryFiles.map((file) =>
+        getJsonData(
+          metadataDir,
+          `grimoire/${file}`,
+          GrimoireEntrySchema.array(),
+        ),
+      ),
+    ).then((data) => data.flat()),
     getJsonData(
       metadataDir,
       "versions.json",
@@ -173,7 +215,8 @@ async function ingest() {
       scenarios,
       errata,
       faq,
-      glossary,
+      sourceGrimoireSections,
+      sourceGrimoireEntries,
       rulesVersions,
       ...cardPacks
     ]) => {
@@ -206,8 +249,11 @@ async function ingest() {
         campaignRecords: resolveCampaignRecords(campaigns),
         errataRecords: resolveErrataRecords(errata),
         faqRecords: resolveFaqRecords(faq),
-        glossaryEntries: resolveGlossaryEntries(glossary),
-        glossaryEntryReferences: resolveGlossaryEntryReferences(glossary),
+        grimoireEntries: resolveGrimoireEntries(sourceGrimoireEntries),
+        grimoireEntryReferences: resolveGrimoireEntryReferences(
+          sourceGrimoireEntries,
+        ),
+        grimoireSections: resolveGrimoireSections(sourceGrimoireSections),
         rulesVersions: resolveRulesVersions(rulesVersions),
         scenarioRecords: resolveScenarioRecords(scenarios),
         sourceErrata: errata,
@@ -225,8 +271,12 @@ async function ingest() {
     throw new Error("No rules versions found in metadata repository");
   }
 
-  if (!glossaryEntries.length) {
-    throw new Error("No glossary entries found in metadata repository");
+  if (!grimoireSections.length) {
+    throw new Error("No grimoire sections found in metadata repository");
+  }
+
+  if (!grimoireEntries.length) {
+    throw new Error("No grimoire entries found in metadata repository");
   }
 
   await db.transaction().execute(async (tx) => {
@@ -238,8 +288,9 @@ async function ingest() {
     await tx.deleteFrom("errata_cycle").execute();
     await tx.deleteFrom("errata_scenario").execute();
     await tx.deleteFrom("errata").execute();
-    await tx.deleteFrom("glossary_entry_reference").execute();
-    await tx.deleteFrom("glossary_entry").execute();
+    await tx.deleteFrom("grimoire_entry_reference").execute();
+    await tx.deleteFrom("grimoire_entry").execute();
+    await tx.deleteFrom("grimoire_section").execute();
     await tx.deleteFrom("rules_version").execute();
     await tx.deleteFrom("scenario_encounter_set_card").execute();
     await tx.deleteFrom("scenario_encounter_set").execute();
@@ -323,17 +374,24 @@ async function ingest() {
         .execute();
     }
 
-    if (glossaryEntries.length) {
+    if (grimoireSections.length) {
       await tx
-        .insertInto("glossary_entry")
-        .values(serializeRecords(glossaryEntries))
+        .insertInto("grimoire_section")
+        .values(serializeRecords(grimoireSections))
         .execute();
     }
 
-    if (glossaryEntryReferences.length) {
+    if (grimoireEntries.length) {
       await tx
-        .insertInto("glossary_entry_reference")
-        .values(serializeRecords(glossaryEntryReferences))
+        .insertInto("grimoire_entry")
+        .values(serializeRecords(grimoireEntries))
+        .execute();
+    }
+
+    if (grimoireEntryReferences.length) {
+      await tx
+        .insertInto("grimoire_entry_reference")
+        .values(serializeRecords(grimoireEntryReferences))
         .execute();
     }
 

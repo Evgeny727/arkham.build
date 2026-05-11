@@ -36,11 +36,11 @@ export function getErrataForCard(db: Database, cardCode: string) {
     .execute();
 }
 
-export async function getAllGlossary(db: Database) {
-  const [glossary, glossaryReferences] = await Promise.all([
-    db.selectFrom("glossary_entry").selectAll().orderBy("id").execute(),
+export async function getAllGrimoireEntries(db: Database) {
+  const [entries, references] = await Promise.all([
+    db.selectFrom("grimoire_entry").selectAll().orderBy("id").execute(),
     db
-      .selectFrom("glossary_entry_reference")
+      .selectFrom("grimoire_entry_reference")
       .selectAll()
       .orderBy("source_id")
       .orderBy("position")
@@ -48,16 +48,23 @@ export async function getAllGlossary(db: Database) {
   ]);
 
   const referencesByEntryId = groupValuesById(
-    glossaryReferences,
+    references,
     "source_id",
     "target_id",
   );
 
-  return glossary.map((entry) => ({
+  return entries.map((entry) => ({
     ...entry,
-    type: "glossary",
     ...withOptionalArray("references", referencesByEntryId.get(entry.id)),
   }));
+}
+
+export function getAllGrimoireSections(db: Database) {
+  return db
+    .selectFrom("grimoire_section")
+    .selectAll()
+    .orderBy("position")
+    .execute();
 }
 
 export async function getAllFaq(db: Database) {
@@ -154,16 +161,14 @@ function groupValuesById<
   T extends { [K in IdKey | ValKey]: number | string },
   IdKey extends keyof T,
   ValKey extends keyof T,
->(rows: T[], idKey: IdKey, valKey: ValKey): Map<number, (string | number)[]> {
-  const grouped = new Map<number, (string | number)[]>();
+>(rows: T[], idKey: IdKey, valKey: ValKey): Map<T[IdKey], T[ValKey][]> {
+  const grouped = new Map<T[IdKey], T[ValKey][]>();
 
   for (const row of rows) {
     const id = row[idKey];
     const value = row[valKey];
-
-    if (typeof id !== "number") continue;
-
     const values = grouped.get(id) ?? [];
+
     values.push(value);
     grouped.set(id, values);
   }

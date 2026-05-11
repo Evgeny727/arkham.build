@@ -1,13 +1,14 @@
 import {
-  ErrataSchema,
-  FaqSchema,
+  CardErrataResponseSchema,
+  CardFaqResponseSchema,
   GrimoireResponseSchema,
 } from "@arkham-build/shared";
 import { Hono } from "hono";
 import {
   getAllErrata,
   getAllFaq,
-  getAllGlossary,
+  getAllGrimoireEntries,
+  getAllGrimoireSections,
   getErrataForCard,
   getFaqForCard,
 } from "../db/queries/grimoire.ts";
@@ -17,33 +18,35 @@ const router = new Hono<HonoEnv>();
 
 router.get("/faq/card/:code", async (c) => {
   const data = await getFaqForCard(c.get("db"), c.req.param("code"));
-  const faqs = data.map((entry) => FaqSchema.parse(entry));
+  const faqs = CardFaqResponseSchema.parse(data);
   c.header("Cache-Control", "public, max-age=86400");
   return c.json(faqs);
 });
 
 router.get("/errata/card/:code", async (c) => {
   const data = await getErrataForCard(c.get("db"), c.req.param("code"));
-  const errata = data.map((entry) => ErrataSchema.parse(entry));
+  const errata = CardErrataResponseSchema.parse(data);
   c.header("Cache-Control", "public, max-age=86400");
   return c.json(errata);
 });
 
-export default router;
-
 router.get("/grimoire", async (c) => {
-  const [errata, faq, glossary] = await Promise.all([
+  const [entries, errata, faq, sections] = await Promise.all([
+    getAllGrimoireEntries(c.get("db")),
     getAllErrata(c.get("db")),
     getAllFaq(c.get("db")),
-    getAllGlossary(c.get("db")),
+    getAllGrimoireSections(c.get("db")),
   ]);
 
   const data = GrimoireResponseSchema.parse({
+    entries,
     errata,
     faq,
-    glossary,
+    sections,
   });
 
   c.header("Cache-Control", "public, max-age=86400");
   return c.json(data);
 });
+
+export default router;

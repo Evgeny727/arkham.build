@@ -1,7 +1,7 @@
-import type { Errata } from "@arkham-build/shared";
+import type { JsonDataErrata } from "@arkham-build/shared";
 import { getInsertedId, uniqueStrings } from "./helpers.ts";
 
-export function resolveErrataRecords(errata: Errata[]): ErrataRecord[] {
+export function resolveErrataRecords(errata: JsonDataErrata[]): ErrataRecord[] {
   return errata.map((item, index) => ({
     position: index + 1,
     type: item.type,
@@ -12,7 +12,7 @@ export function resolveErrataRecords(errata: Errata[]): ErrataRecord[] {
 }
 
 export function resolveErrataReferenceRecords(
-  errata: Errata[],
+  errata: JsonDataErrata[],
   idsByPosition: ReadonlyMap<number, number>,
 ) {
   const errataCards: ErrataCardRecord[] = [];
@@ -61,7 +61,7 @@ export function resolveErrataReferenceRecords(
 
 type ErrataRecord = {
   position: number;
-  type: Errata["type"];
+  type: JsonDataErrata["type"];
   section: string | null;
   ruling: string;
   citation: string;

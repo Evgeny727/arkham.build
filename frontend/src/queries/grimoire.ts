@@ -3,7 +3,16 @@ import { grimoireKeys } from "@/queries/keys";
 import {
   queryCardErrata,
   queryCardFaq,
+  queryGrimoire,
 } from "@/store/services/requests/grimoire";
+
+export function useGrimoireQuery(enabled = true) {
+  return useQuery({
+    queryKey: grimoireKeys.grimoire(),
+    queryFn: queryGrimoire,
+    enabled,
+  });
+}
 
 export function useCardFaqQuery(code: string, enabled = true) {
   return useQuery({

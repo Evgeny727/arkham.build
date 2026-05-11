@@ -1,20 +1,6 @@
 /** biome-ignore-all lint/performance/noBarrelFile: TECH DEBT: look into `exports` */
 
 export {
-  type CardErrata,
-  type CardErrataResponse,
-  CardErrataResponseSchema,
-  CardErrataSchema,
-} from "./dtos/card-errata-response.schema.ts";
-
-export {
-  type CardFaq,
-  type CardFaqResponse,
-  CardFaqResponseSchema,
-  CardFaqSchema,
-} from "./dtos/card-faq-response.schema.ts";
-
-export {
   type DateRange,
   DateRangeSchema,
 } from "./dtos/date-range.schema.ts";
@@ -34,6 +20,10 @@ export {
   type DecklistSearchResult,
 } from "./dtos/decklist-search-response.schema.ts";
 export {
+  type CardErrataResponse,
+  CardErrataResponseSchema,
+  type CardFaqResponse,
+  CardFaqResponseSchema,
   type GrimoireResponse,
   GrimoireResponseSchema,
 } from "./dtos/grimoire-response.schema.ts";
@@ -121,6 +111,8 @@ export {
 export {
   type Errata,
   ErrataSchema,
+  type JsonDataErrata,
+  JsonDataErrataSchema,
 } from "./schemas/errata.schema.ts";
 
 export {
@@ -138,12 +130,16 @@ export {
 export {
   type Faq,
   FaqSchema,
+  type JsonDataFaq,
+  JsonDataFaqSchema,
 } from "./schemas/faq.schema.ts";
 
 export {
-  type Glossary,
-  GlossarySchema,
-} from "./schemas/glossary.schema.ts";
+  type GrimoireEntry,
+  GrimoireEntrySchema,
+  type GrimoireSection,
+  GrimoireSectionSchema,
+} from "./schemas/grimoire.schema.ts";
 
 export {
   type JsonDataPack,

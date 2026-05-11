@@ -2,7 +2,7 @@ import { describe, expect } from "vitest";
 import type { Database } from "../db/db.ts";
 import { test } from "./test-utils.ts";
 
-describe("GET /v2/public/", () => {
+describe("GET /v2/public/grimoire", () => {
   test("responds with grimoire data", async ({ dependencies }) => {
     await insertRulesVersions(dependencies.db, [
       "test faq 1",
@@ -167,34 +167,75 @@ describe("GET /v2/public/", () => {
       .execute();
 
     await dependencies.db
-      .insertInto("glossary_entry")
+      .insertInto("grimoire_section")
       .values([
         {
           citation: "test rr 1",
-          id: 990001,
-          ruling: "Enemies with aloof do not engage investigators.",
-          section: "Alert",
+          id: "keywords",
+          position: 1,
+          text: "Keyword glossary.",
+          title: "Keywords",
           translations: [],
         },
         {
-          citation: "test rr 1",
-          id: 990002,
-          ruling: null,
-          section: "Aloof",
+          citation: null,
+          id: "timing",
+          position: 2,
+          text: null,
+          title: "Timing",
           translations: [],
         },
       ])
       .execute();
 
     await dependencies.db
-      .insertInto("glossary_entry_reference")
-      .values({ source_id: 990001, target_id: 990002, position: 1 })
+      .insertInto("grimoire_entry")
+      .values([
+        {
+          citation: "test rr 1",
+          id: "1.1",
+          section: "keywords",
+          text: "Enemies with aloof do not engage investigators.",
+          title: "Alert",
+          translations: [],
+        },
+        {
+          citation: "test rr 1",
+          id: "1.2",
+          section: "keywords",
+          text: null,
+          title: "Aloof",
+          translations: [],
+        },
+      ])
       .execute();
 
-    const res = await dependencies.app.request("/v2/public");
+    await dependencies.db
+      .insertInto("grimoire_entry_reference")
+      .values({ source_id: "1.1", target_id: "1.2", position: 1 })
+      .execute();
+
+    const res = await dependencies.app.request("/v2/public/grimoire");
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
+      entries: [
+        {
+          citation: "test rr 1",
+          id: "1.1",
+          references: ["1.2"],
+          section: "keywords",
+          text: "Enemies with aloof do not engage investigators.",
+          title: "Alert",
+        },
+        {
+          citation: "test rr 1",
+          id: "1.2",
+          section: "keywords",
+          text: null,
+          title: "Aloof",
+        },
+      ],
       errata: [
         {
           citation: "test errata 1",
@@ -220,6 +261,8 @@ describe("GET /v2/public/", () => {
         {
           citation: "test faq 1",
           cycles: ["test-grimoire-cycle-a"],
+          id: firstFaq.id,
+          position: 1,
           question: "First question?",
           ruling: "First ruling.",
           type: "faq",
@@ -228,37 +271,43 @@ describe("GET /v2/public/", () => {
           card_codes: ["01001"],
           citation: "test faq 2",
           cycles: ["test-grimoire-cycle-a", "test-grimoire-cycle-b"],
+          id: secondFaq.id,
+          position: 2,
           question: "Second question?",
           ruling: "Second ruling.",
           scenario_codes: ["test-grimoire-scenario-a"],
           type: "faq",
         },
       ],
-      glossary: [
+      sections: [
         {
           citation: "test rr 1",
-          id: 990001,
-          references: [990002],
-          ruling: "Enemies with aloof do not engage investigators.",
-          section: "Alert",
-          type: "glossary",
+          id: "keywords",
+          position: 1,
+          text: "Keyword glossary.",
+          title: "Keywords",
         },
         {
-          citation: "test rr 1",
-          id: 990002,
-          ruling: null,
-          section: "Aloof",
-          type: "glossary",
+          citation: null,
+          id: "timing",
+          position: 2,
+          text: null,
+          title: "Timing",
         },
       ],
     });
   });
 
   test("responds with empty grimoire collections", async ({ dependencies }) => {
-    const res = await dependencies.app.request("/v2/public");
+    const res = await dependencies.app.request("/v2/public/grimoire");
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ errata: [], faq: [], glossary: [] });
+    expect(await res.json()).toEqual({
+      entries: [],
+      errata: [],
+      faq: [],
+      sections: [],
+    });
   });
 });
 
@@ -362,7 +411,6 @@ describe("GET /v2/public/errata/card", () => {
         id: errata.id,
         position: 1,
         ruling: "Updated text.",
-        section: null,
         type: "card_errata",
       },
     ]);

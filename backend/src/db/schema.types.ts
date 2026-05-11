@@ -263,18 +263,28 @@ export interface FaqScenario {
   scenario_code: string;
 }
 
-export interface GlossaryEntry {
+export interface GrimoireEntry {
   citation: string;
-  id: number;
-  ruling: string | null;
+  id: string;
   section: string;
-  translations: { locale: string; section?: string; ruling?: string }[];
+  text: string | null;
+  title: string;
+  translations: { locale: string; title?: string; text?: string }[];
 }
 
-export interface GlossaryEntryReference {
+export interface GrimoireEntryReference {
   position: number;
-  source_id: number;
-  target_id: number;
+  source_id: string;
+  target_id: string;
+}
+
+export interface GrimoireSection {
+  citation: string | null;
+  id: string;
+  position: number;
+  text: string | null;
+  title: string;
+  translations: { locale: string; title?: string; text?: string }[];
 }
 
 export interface Pack {
@@ -365,8 +375,9 @@ export interface DB {
   faq_card: FaqCard;
   faq_cycle: FaqCycle;
   faq_scenario: FaqScenario;
-  glossary_entry: GlossaryEntry;
-  glossary_entry_reference: GlossaryEntryReference;
+  grimoire_entry: GrimoireEntry;
+  grimoire_entry_reference: GrimoireEntryReference;
+  grimoire_section: GrimoireSection;
   pack: Pack;
   pack_type: PackType;
   rules_version: RulesVersion;
