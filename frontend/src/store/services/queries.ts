@@ -1,21 +1,22 @@
-import type {
-  ApiCard,
-  FanMadeProject,
-  FanMadeProjectInfo,
-  SealedDeckResponse,
-} from "@arkham-build/shared";
 import {
+  type ApiCard,
+  type DataVersion,
   encodeSearch,
+  type FanMadeProject,
+  type FanMadeProjectInfo,
+  type JsonDataRulesVersion,
   type RecommendationsRequest,
   type RecommendationsResponse,
   RecommendationsResponseSchema,
+  type SealedDeckResponse,
 } from "@arkham-build/shared";
 import { assert } from "@/utils/assert";
-import type { DataVersion } from "../../../../shared/src/schemas/data-version.schema";
+import type { Campaign } from "../schemas/campaign.schema";
 import type { Cycle } from "../schemas/cycle.schema";
 import { type Deck, type Id, isDeck } from "../schemas/deck.schema";
 import type { EncounterSet } from "../schemas/encounter-set.schema";
 import type { Pack } from "../schemas/pack.schema";
+import type { Scenario } from "../schemas/scenario.schema";
 import type { TabooSet } from "../schemas/taboo-set.schema";
 import type { History } from "../selectors/decks";
 import type { Locale } from "../slices/settings.types";
@@ -26,10 +27,13 @@ export type MetadataApiResponse = {
 };
 
 export type MetadataResponse = {
+  campaign: Campaign[];
   cycle: Cycle[];
   pack: Pack[];
   card_encounter_set: EncounterSet[];
+  scenario: Scenario[];
   taboo_set: TabooSet[];
+  rules_versions: JsonDataRulesVersion[];
 };
 
 export type DataVersionApiResponse = {
@@ -47,14 +51,6 @@ export type AllCardApiResponse = {
 };
 
 export type AllCardResponse = ApiCard[];
-
-type FaqResponse = {
-  code: string;
-  html: string;
-  updated: {
-    date: string;
-  };
-}[];
 
 async function request(
   path: string,
@@ -107,16 +103,6 @@ export async function queryCards(locale: Locale = "en"): Promise<ApiCard[]> {
 /**
  * Public API
  */
-
-export async function queryFaq(clientId: string, code: string) {
-  const res = await request(`/public/faq/${code}`, {
-    headers: {
-      "X-Client-Id": clientId,
-    },
-  });
-  const data: FaqResponse = await res.json();
-  return data;
-}
 
 export async function queryDeck(clientId: string, type: string, id: number) {
   const res = await request(`/public/arkhamdb/${type}/${id}`, {

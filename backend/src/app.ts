@@ -14,6 +14,7 @@ import arkhamDbDecklistsRouter from "./routes/arkhamdb-decklists.ts";
 import cacheRouter from "./routes/cache.ts";
 import customizationSheetRouter from "./routes/customization-sheet.ts";
 import fanMadeProjectInfoRouter from "./routes/fan-made-project-info.ts";
+import grimoireRouter from "./routes/grimoire.ts";
 import recommendationsRouter from "./routes/recommendations.ts";
 import sealedDeckRouter from "./routes/sealed-deck.ts";
 
@@ -42,6 +43,7 @@ export function appFactory(config: Config, database: Database) {
   pub.route("/arkhamdb-decklists", arkhamDbDecklistsRouter);
   pub.route("/customization_sheet", customizationSheetRouter);
   pub.route("/fan-made-project-info", fanMadeProjectInfoRouter);
+  pub.route("/", grimoireRouter);
   pub.route("/recommendations", recommendationsRouter);
   pub.route("/sealed-deck", sealedDeckRouter);
 

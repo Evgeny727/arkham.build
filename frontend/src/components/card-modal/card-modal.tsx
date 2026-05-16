@@ -29,6 +29,7 @@ import { useMedia } from "@/utils/use-media";
 import { Annotation } from "../annotations/annotation";
 import { PopularDecks } from "../arkhamdb-decklists/popular-decks";
 import { Card } from "../card/card";
+import { CardScenarios } from "../card-scenarios/card-scenarios";
 import { CardSet } from "../cardset";
 import { Customizations } from "../customizations/customizations";
 import { CustomizationsEditor } from "../customizations/customizations-editor";
@@ -182,6 +183,11 @@ export function CardModal(props: Props) {
           )
         ) : undefined}
       </Card>
+      {cardWithRelations.card.encounter_code && (
+        <div className={css["related"]}>
+          <CardScenarios card={cardWithRelations.card} />
+        </div>
+      )}
       {!isEmpty(related) && (
         <div className={css["related"]}>
           {related.map(([key, value]) => {

@@ -14,12 +14,19 @@ export {
   type DecklistSearchRequest,
   DecklistSearchRequestSchema,
 } from "./dtos/decklist-search-request.schema.ts";
-
 export {
   type DecklistSearchResponse,
   DecklistSearchResponseSchema,
   type DecklistSearchResult,
 } from "./dtos/decklist-search-response.schema.ts";
+export {
+  type CardErrataResponse,
+  CardErrataResponseSchema,
+  type CardFaqResponse,
+  CardFaqResponseSchema,
+  type GrimoireResponse,
+  GrimoireResponseSchema,
+} from "./dtos/grimoire-response.schema.ts";
 
 export {
   type RecommendationsRequest,
@@ -56,6 +63,7 @@ export {
   decodeSearch,
   encodeSearch,
 } from "./lib/search-params.ts";
+
 export {
   type JsonDataFaction,
   JsonDataFactionSchema,
@@ -64,6 +72,10 @@ export {
   type JsonDataType,
   JsonDataTypeSchema,
 } from "./schemas/base.schema.ts";
+export {
+  type JsonDataCampaign,
+  JsonDataCampaignSchema,
+} from "./schemas/campaign.schema.ts";
 export {
   type ApiCard,
   ApiCardSchema,
@@ -80,32 +92,70 @@ export {
   JsonDataCardSchema,
   type OptionSelect,
 } from "./schemas/card.schema.ts";
+
 export {
   type JsonDataCycle,
   JsonDataCycleSchema,
 } from "./schemas/cycle.schema.ts";
+
 export {
   type DataVersion,
   DataVersionSchema,
 } from "./schemas/data-version.schema.ts";
+
 export {
   type JsonDataEncounterSet,
   JsonDataEncounterSetSchema,
 } from "./schemas/encounter-set.schema.ts";
+
+export {
+  type Errata,
+  ErrataSchema,
+  type JsonDataErrata,
+  JsonDataErrataSchema,
+} from "./schemas/errata.schema.ts";
+
 export {
   type FanMadeCard,
   FanMadeCardSchema,
   type FanMadeProject,
   FanMadeProjectSchema,
 } from "./schemas/fan-made-project.schema.ts";
+
 export {
   type FanMadeProjectInfo,
   FanMadeProjectInfoSchema,
 } from "./schemas/fan-made-project-info.schema.ts";
+
+export {
+  type Faq,
+  FaqSchema,
+  type JsonDataFaq,
+  JsonDataFaqSchema,
+} from "./schemas/faq.schema.ts";
+
+export {
+  type GrimoireEntry,
+  GrimoireEntrySchema,
+  type GrimoireSection,
+  GrimoireSectionSchema,
+} from "./schemas/grimoire.schema.ts";
+
 export {
   type JsonDataPack,
   JsonDataPackSchema,
 } from "./schemas/pack.schema.ts";
+
+export {
+  type JsonDataRulesVersion,
+  JsonDataRulesVersionSchema,
+} from "./schemas/rules-version.schema.ts";
+
+export {
+  type JsonDataScenario,
+  JsonDataScenarioSchema,
+} from "./schemas/scenario.schema.ts";
+
 export {
   type JsonDataTabooSet,
   JsonDataTabooSetSchema,
