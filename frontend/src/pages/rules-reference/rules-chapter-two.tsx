@@ -27,6 +27,7 @@ type GrimoireHtmlMaps = {
 export function RulesChapterTwo() {
   const { t } = useTranslation();
   const grimoire = useGrimoireQuery();
+
   const { cardLinkTooltip, referenceProps } = useCardLinkTooltip();
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export function RulesChapterTwo() {
   }, [grimoire.error, grimoire.isPending]);
 
   const entries = useMemo(() => grimoire.data?.entries ?? [], [grimoire.data]);
+
   const sections = useMemo(
     () => grimoire.data?.sections ?? [],
     [grimoire.data],
@@ -84,19 +86,16 @@ export function RulesChapterTwo() {
                 <ExternalLinkIcon />
                 {t("rules.grimoire.open_link")}
               </Button>
-              <h2>{t("rules.grimoire.title")}</h2>
             </div>
             {grimoire.isPending && (
-              <GrimoireStatus centered>
+              <GrimoireStatus>
                 <LoaderCircleIcon className="spin" />
                 {t("rules.grimoire.loading")}
               </GrimoireStatus>
             )}
 
             {grimoire.error && (
-              <GrimoireStatus centered>
-                {t("rules.grimoire.error")}
-              </GrimoireStatus>
+              <GrimoireStatus>{t("rules.grimoire.error")}</GrimoireStatus>
             )}
 
             {hasContent && (
@@ -118,9 +117,7 @@ export function RulesChapterTwo() {
             )}
 
             {!hasContent && !grimoire.isPending && !grimoire.error && (
-              <GrimoireStatus centered>
-                {t("rules.grimoire.empty")}
-              </GrimoireStatus>
+              <GrimoireStatus>{t("rules.grimoire.empty")}</GrimoireStatus>
             )}
 
             {cardLinkTooltip}
@@ -157,23 +154,9 @@ export function RulesChapterTwo() {
   );
 }
 
-function GrimoireStatus(props: {
-  centered?: boolean;
-  children: React.ReactNode;
-}) {
-  const { centered = false, children } = props;
-
-  return (
-    <output
-      className={
-        centered
-          ? "grimoire-status grimoire-status-centered"
-          : "grimoire-status"
-      }
-    >
-      {children}
-    </output>
-  );
+function GrimoireStatus(props: { children: React.ReactNode }) {
+  const { children } = props;
+  return <output className="grimoire-status">{children}</output>;
 }
 
 function GrimoireTocItem(props: {
@@ -226,8 +209,7 @@ function GrimoireSectionBlock(props: {
     grimoireHtmlMaps.sectionTextById.get(section.id) ?? "";
 
   return (
-    <Plane
-      as="section"
+    <section
       className="grimoire-entry"
       id={getGrimoireSectionAnchorId(section.id)}
     >
@@ -260,7 +242,7 @@ function GrimoireSectionBlock(props: {
           />
         ))}
       </div>
-    </Plane>
+    </section>
   );
 }
 
@@ -286,8 +268,9 @@ function GrimoireEntryBlock(props: {
   const entryTextHtml = grimoireHtmlMaps.entryTextById.get(entry.id) ?? "";
 
   return (
-    <article
-      className="grimoire-entry grimoire-entry-nested"
+    <Plane
+      as="article"
+      className="grimoire-entry"
       id={getGrimoireEntryAnchorId(entry.id)}
     >
       <h3 className="grimoire-entry-title">
@@ -331,7 +314,7 @@ function GrimoireEntryBlock(props: {
           <Tag size="xs">{entry.citation}</Tag>
         </p>
       </div>
-    </article>
+    </Plane>
   );
 }
 

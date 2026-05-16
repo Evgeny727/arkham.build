@@ -165,7 +165,7 @@ html[data-theme="light"] .toc a {
 .grimoire-header,
 .grimoire-list,
 .grimoire-status {
-  max-width: 85ch;
+  max-width: 90ch;
   margin-inline: auto;
 }
 
@@ -188,16 +188,11 @@ html[data-theme="light"] .toc a {
   text-wrap: balance;
 }
 
-.grimoire-entry-nested {
-  border-left: 1px solid var(--palette-2);
-  padding-left: 1rem;
-}
-
 .grimoire-references {
   flex-wrap: wrap;
 }
 
-.grimoire-status-centered {
+.grimoire-status {
   align-items: center;
   display: flex;
   gap: 0.75rem;
