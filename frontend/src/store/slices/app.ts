@@ -73,7 +73,11 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
   ) {
     const persistedState = await hydrate();
 
-    if (!refresh && persistedState?.metadata?.dataVersion?.cards_updated_at) {
+    if (
+      !refresh &&
+      persistedState?.metadata?.dataVersion?.cards_updated_at &&
+      persistedState.metadata.dataVersion.metadata_version != null
+    ) {
       const metadata = {
         ...getInitialMetadata(),
         ...persistedState.metadata,

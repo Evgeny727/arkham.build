@@ -21,6 +21,8 @@ import {
 
 const router = new Hono<HonoEnv>();
 
+const METADATA_VERSION = 2;
+
 router.get("/cards", (c) =>
   cachedResponse(c, {
     locale: "en",
@@ -89,7 +91,18 @@ async function cachedResponse<T>(
 ) {
   const db = c.get("db");
   const version = await getVersionForLocale(db, options.locale);
-  const etag = `${options.resource}:${options.locale}:${version.cards_updated_at.valueOf()}:${version.translation_updated_at.valueOf()}`;
+  const etagParts = [
+    options.resource,
+    options.locale,
+    version.cards_updated_at.valueOf(),
+    version.translation_updated_at.valueOf(),
+  ];
+
+  if (options.resource !== "cards") {
+    etagParts.push(METADATA_VERSION);
+  }
+
+  const etag = etagParts.join(":");
 
   applyCacheHeaders(c, { etag, resource: options.resource });
 
@@ -187,7 +200,12 @@ async function metadataResponse(db: Database, locale: string) {
 function versionResponse(_db: Database, _locale: string, version: DataVersion) {
   return Promise.resolve({
     data: {
-      all_card_updated: [version],
+      all_card_updated: [
+        {
+          ...version,
+          metadata_version: METADATA_VERSION,
+        },
+      ],
     },
   });
 }
