@@ -96,6 +96,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
             ...list.initialState,
             display: getDisplaySettings(initialValues, state.settings),
             initialState: list.initialState,
+            search: list.search,
           },
         },
       };
