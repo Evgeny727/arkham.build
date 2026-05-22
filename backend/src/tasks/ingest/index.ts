@@ -222,18 +222,27 @@ async function ingest() {
     ]) => {
       const allCardTranslations = mergeTranslations(cardPacks);
 
-      const data = applyLocalData({
-        cards: cardPacks.flatMap((pack) =>
-          pack.data.map((c) => withTranslations(c, allCardTranslations)),
-        ),
-        cycles: cycles.data.map((c) =>
-          withTranslations(c, cycles.translations),
-        ),
-        encounterSets: encounterSets.data.map((e) =>
-          withTranslations(e, encounterSets.translations),
-        ),
-        packs: packs.data.map((p) => withTranslations(p, packs.translations)),
+      const localData = applyLocalData({
+        cards: cardPacks.flatMap((pack) => pack.data),
+        cycles: cycles.data,
+        encounterSets: encounterSets.data,
+        packs: packs.data,
       });
+
+      const data = {
+        cards: localData.cards.map((card) =>
+          withTranslations(card, allCardTranslations),
+        ),
+        cycles: localData.cycles.map((cycle) =>
+          withTranslations(cycle, cycles.translations),
+        ),
+        encounterSets: localData.encounterSets.map((encounterSet) =>
+          withTranslations(encounterSet, encounterSets.translations),
+        ),
+        packs: localData.packs.map((pack) =>
+          withTranslations(pack, packs.translations),
+        ),
+      };
 
       const { cardResolutions, cards } = resolveCards(data.cards, tabooSets);
 
