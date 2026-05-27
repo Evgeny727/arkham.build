@@ -429,7 +429,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
     }
   },
 
-  setSearchValue(value, deck) {
+  setSearchValue(value, deck, { clearMode } = { clearMode: false }) {
     set((state) => {
       assert(state.activeList, "no active list is defined.");
 
@@ -442,9 +442,9 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
         deck,
       );
 
-      const isBuildQl =
-        value && (list.search.mode === "buildql" || !!buildQlSearch);
+      const inBuildQlMode = clearMode ? false : list.search.mode === "buildql";
 
+      const isBuildQl = value && (inBuildQlMode || !!buildQlSearch);
       const mode = isBuildQl ? "buildql" : "simple";
 
       return {
