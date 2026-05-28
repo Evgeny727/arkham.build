@@ -295,20 +295,17 @@ export function getDeckLimitOverride(
     return deckLimit;
   }
 
-  if (sealed[code] != null) {
-    return Math.min(sealed[code], deckLimit);
-  }
+  let sealedTotal = sealed[code] ?? 0;
 
-  const duplicates = lookupTables.relations.duplicates[code];
-  if (!duplicates) return undefined;
-
-  for (const duplicateCode of Object.keys(duplicates)) {
+  for (const duplicateCode of Object.keys(
+    lookupTables.relations.duplicates[code] ?? {},
+  )) {
     if (sealed[duplicateCode] != null) {
-      return Math.min(sealed[duplicateCode], deckLimit);
+      sealedTotal += sealed[duplicateCode];
     }
   }
 
-  return undefined;
+  return Math.min(sealedTotal, deckLimit);
 }
 
 /**
