@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon, ExternalLinkIcon } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "wouter";
+import { useStore } from "@/store";
+import { selectLookupTables } from "@/store/selectors/shared";
 import {
   deckSearchQuery,
   searchDecklists,
@@ -24,7 +26,10 @@ export function PopularDecks(props: Props) {
   const { scope } = props;
   const { t } = useTranslation();
 
-  const enabled = !scope.encounter_code;
+  const lookupTables = useStore(selectLookupTables);
+
+  const enabled =
+    !scope.encounter_code && !lookupTables.relations.bonded[scope.code];
 
   const scopeParams = {
     filters: {
