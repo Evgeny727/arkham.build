@@ -806,11 +806,13 @@
         "upload_loading": "Uploading deck to {{provider}}..."
       },
       "tools": {
+        "average_cost": "Average cost: {{cost}}",
         "cards": "Cards",
         "count": "Count",
         "factions": "Classes",
         "factions_tooltip": "{{count}} {{faction}} {{cards}}",
         "loading": "Loading deck tools...",
+        "median_cost": "Median cost: {{cost}}",
         "resource_cost": "Resource cost",
         "resource_cost_tooltip": "{{count}} {{cards}} of cost {{cost}}",
         "resource_costs": "Resource costs",

@@ -144,6 +144,7 @@ export type Selections = Record<string, Selection>;
 
 export type DeckCharts = {
   costCurve: Map<number, number>;
+  costs: number[];
   skillIcons: Map<SkillIcon, number>;
   factions: Map<FactionName, number>;
   traits: Map<string, number>;
