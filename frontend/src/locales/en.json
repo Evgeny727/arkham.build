@@ -1070,12 +1070,14 @@
       },
       "history": {
         "added": "Added",
+        "created": "Created",
         "current_upgrade": "Current upgrade",
         "discounts": "Discounts",
         "initial_deck": "Initial deck",
         "no_changes": "No changes",
         "removed": "Removed",
         "slot_changes": "{{slot}} changes",
+        "updated": "Updated",
         "upgrade": "Upgrade #{{index}}",
         "upgrade_xp": "XP available: {{xp}}{{adjustment}} (spent: {{spent}})"
       },
