@@ -1402,6 +1402,7 @@
         "include_game_text": "Game text",
         "include_name": "Name",
         "placeholder": "Search cards...",
+        "share": "Share query",
         "title": "Search"
       },
       "sort_by": "Sort by"
