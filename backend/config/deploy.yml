@@ -123,6 +123,7 @@ logging:
     max-file: "3"
 
 aliases:
+  backup-db: server exec --primary "sudo /usr/local/bin/backup-api-arkham-build-postgres"
   console: app exec --interactive --reuse -r web "sh"
   ingest: app exec --primary --reuse -r web "npm run ingest -w backend"
   ingest-json-data: app exec --primary --reuse -r web "sh -lc 'npm run ingest:json-data -w backend && npm run purge:cloudflare-cache -w backend'"
