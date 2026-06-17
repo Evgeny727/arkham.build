@@ -1,7 +1,7 @@
-import type { Card } from "@arkham-build/shared";
+import { type Card, SPECIAL_CARD_CODES } from "@arkham-build/shared";
 import type { StateCreator } from "zustand";
 import { assert } from "@/utils/assert";
-import { DEFAULT_LIST_SORT_ID, SPECIAL_CARD_CODES } from "@/utils/constants";
+import { DEFAULT_LIST_SORT_ID } from "@/utils/constants";
 import type { Filter } from "@/utils/fp";
 import { and, not } from "@/utils/fp";
 import { parse as parseBuildQl } from "../lib/buildql/parser";

@@ -1,4 +1,4 @@
-import type { Card } from "@arkham-build/shared";
+import { type Card, SPECIAL_CARD_CODES } from "@arkham-build/shared";
 import type { StateCreator } from "zustand";
 import { applyDeckEdits, getChangeRecord } from "@/store/lib/deck-edits";
 import { createDeck } from "@/store/lib/deck-factory";
@@ -10,7 +10,6 @@ import { assertCanPublishDeck, incrementVersion } from "@/utils/arkhamdb";
 import { assert } from "@/utils/assert";
 import { decodeExileSlots } from "@/utils/card-utils";
 import { inferChapterNumber } from "@/utils/chapters";
-import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import { randomId } from "@/utils/crypto";
 import { download } from "@/utils/download";
 import { time, timeEnd } from "@/utils/time";

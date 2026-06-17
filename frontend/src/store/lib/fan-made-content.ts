@@ -3,6 +3,7 @@ import {
   type FanMadeCard,
   type FanMadeProject,
   FanMadeProjectSchema,
+  SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
 import { z } from "zod";
 import type { Deck } from "@/store/schemas/deck.schema";
@@ -11,7 +12,6 @@ import {
   cycleToApiFormat,
   packToApiFormat,
 } from "@/utils/arkhamdb-json-format";
-import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import type { EncounterSet } from "../schemas/encounter-set.schema";
 import type { StoreState } from "../slices";
 import type { Metadata } from "../slices/metadata.types";

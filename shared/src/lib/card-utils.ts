@@ -1,5 +1,5 @@
-import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import type { Card } from "../schemas/card.schema.ts";
+import { SPECIAL_CARD_CODES } from "./constants.ts";
 
 export function countExperience(card: Card, quantity: number) {
   if (card.customization_xp) return card.customization_xp;

@@ -1,3 +1,4 @@
+import { SPECIAL_CARD_CODES } from "@arkham-build/shared";
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
@@ -35,7 +36,6 @@ import {
   selectConnectionLockForDeck,
 } from "@/store/selectors/shared";
 import { localizeArkhamDBBaseUrl } from "@/utils/arkhamdb";
-import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import { cx } from "@/utils/cx";
 import { isEmpty } from "@/utils/is-empty";
 import { useHotkey } from "@/utils/use-hotkey";

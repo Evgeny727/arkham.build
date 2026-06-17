@@ -1,13 +1,13 @@
 import {
   type Card,
+  canonicalCardName,
   countExperience,
   realCardLevel,
+  SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
 import { splitMultiValue } from "@/utils/card-utils";
-import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import { isEmpty } from "@/utils/is-empty";
 import { range } from "@/utils/range";
-import { canonicalCardName } from "../../../../shared/src/lib/card-utils";
 import type { Customization, ResolvedDeck } from "./types";
 
 type DeckChanges = {

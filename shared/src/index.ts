@@ -45,7 +45,12 @@ export {
   SealedDeckResponseSchema,
 } from "./dtos/sealed-deck-response.schema.ts";
 
-export { cardLevel, countExperience, realCardLevel } from "./lib/card-utils.ts";
+export {
+  canonicalCardName,
+  cardLevel,
+  countExperience,
+  realCardLevel,
+} from "./lib/card-utils.ts";
 
 export {
   ASSET_SLOT_ORDER,
@@ -57,6 +62,7 @@ export {
   SKILL_KEYS,
   type SkillIcon,
   type SkillKey,
+  SPECIAL_CARD_CODES,
 } from "./lib/constants.ts";
 
 export {

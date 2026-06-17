@@ -3,6 +3,7 @@ import {
   type Card,
   cardLevel,
   type DeckOption,
+  SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
 import {
   cardLimit,
@@ -10,7 +11,6 @@ import {
   isStaticInvestigator,
   splitMultiValue,
 } from "@/utils/card-utils";
-import { SPECIAL_CARD_CODES } from "@/utils/constants";
 import { range } from "@/utils/range";
 import { time, timeEnd } from "@/utils/time";
 import type { Metadata } from "../slices/metadata.types";
