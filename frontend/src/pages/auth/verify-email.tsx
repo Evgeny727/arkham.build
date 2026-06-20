@@ -78,7 +78,7 @@ function VerifyEmail() {
           variant="primary"
           size="full"
         >
-          {t("auth.verify_email.title")}
+          {t("auth.verify_email.action")}
         </Button>
       </AuthForm>
     </AuthLayout>
@@ -150,7 +150,7 @@ function ResendVerificationDialog() {
                   variant="primary"
                   size="full"
                 >
-                  {t("auth.verify_email.resend")}
+                  {t("auth.verify_email.resend_action")}
                 </Button>
               </AuthForm>
             </DefaultModalContent>

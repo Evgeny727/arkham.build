@@ -71,6 +71,7 @@
         "forgot_password": "Forgot password?",
         "no_account": "Don't have an account?",
         "title": "Log in",
+        "action": "Log in",
         "with_arkhamdb": "Log in with ArkhamDB"
       },
       "logout": "Logout",
@@ -78,16 +79,16 @@
         "logged_in_as": "Logged in as {{name}}",
         "sync_account": "Sync data",
         "sync_error": "Failed to sync data: {{error}}",
-        "syncing": "Syncing account data...",
         "sync_status": {
-          "idle": "Account sync idle",
-          "synced": "Account sync complete",
-          "loading": "Account sync loading",
-          "saving": "Account sync saving",
-          "partial": "Account sync partially failed",
+          "conflict": "Account sync conflict",
           "error": "Account sync error",
-          "conflict": "Account sync conflict"
-        }
+          "idle": "Account sync idle",
+          "loading": "Account sync loading",
+          "partial": "Account sync partially failed",
+          "saving": "Account sync saving",
+          "synced": "Account sync complete"
+        },
+        "syncing": "Syncing account data..."
       },
       "oauth_errors": {
         "arkhamdb_invalid_response": "ArkhamDB sign-in failed. Please try again.",
@@ -122,15 +123,18 @@
           }
         },
         "has_account": "Already have an account?",
+        "legal_acceptance": "By creating an account, you agree to the <terms>Terms of Service</terms> and acknowledge the <privacy>Privacy Policy</privacy>.",
         "success": "Signed up successfully! Please check your email to verify your account. You'll choose a username after your first login.",
+        "action": "Sign up",
         "title": "Sign up",
         "verifying": "Verifying...",
-        "with_arkhamdb": "Sign up with ArkhamDB",
-        "legal_acceptance": "By creating an account, you agree to the <terms>Terms of Service</terms> and acknowledge the <privacy>Privacy Policy</privacy>."
+        "with_arkhamdb": "Sign up with ArkhamDB"
       },
       "username": "Username",
       "username_validation": "Letters, numbers, underscores, and hyphens only",
       "verify_email": {
+        "action": "Verify email",
+        "resend_action": "Resend verification email",
         "resend": "Resend verification email",
         "resend_success": "Verification email sent successfully. Please check your inbox.",
         "success": "Email verified! You can now log in.",
@@ -1157,7 +1161,7 @@
         "save_upgrade_close_short": "Save and close",
         "save_upgrade_short": "Upgrade",
         "upload": "Upload to {{provider}}",
-        "upload_account": "Upload to your account"
+        "upload_account": "Upload"
       },
       "discounts": {
         "adaptable": "Adaptable",
@@ -1257,6 +1261,11 @@
       "home": "Return home",
       "preview_publish": "Deck contains cards not supported by {{provider}}: {{names}}. Please remove them before uploading.",
       "report": "Report issue"
+    },
+    "external_embed": {
+      "load": "Load external content",
+      "notice": "This external content is blocked until you choose to load it. Loading it may allow the provider to process your data and set cookies.",
+      "title": "External content"
     },
     "fan_made_content": {
       "actions": {
@@ -1411,6 +1420,15 @@
         "title": "Uses"
       }
     },
+    "footer": {
+      "arkham_title": "Arkham Horror: The Card Game™",
+      "disclaimer": "<arkham>Arkham Horror: The Card Game™</arkham> and all related content © <ffg>Fantasy Flight Games (FFG)</ffg>. This site is not produced, endorsed by, or affiliated with FFG.",
+      "ffg": "Fantasy Flight Games (FFG)",
+      "legal": "Legal",
+      "legal_notice": "Legal Notice",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
     "help": {
       "about": "About this site",
       "changelog": "Changelog",
@@ -1469,7 +1487,6 @@
         "card_count_hidden": "({{count}} filtered)",
         "card_count_one": "{{count}} card",
         "card_count_other": "{{count}} cards",
-        "max_columns": "Max. scans per columns",
         "display": "Display",
         "display_as_detailed": "Detailed cards",
         "display_as_list": "List",
@@ -1479,6 +1496,7 @@
         "export": "Export",
         "jump_to": "Jump to...",
         "list_settings": "List settings",
+        "max_columns": "Max. scans per columns",
         "sort": "Sort",
         "sort_default": "User default"
       },
@@ -1534,6 +1552,15 @@
     },
     "settings": {
       "account": {
+        "danger_zone": "Danger zone",
+        "delete": {
+          "confirm_help": "Type {{username}} to confirm account deletion.",
+          "confirm_label": "Confirmation",
+          "deleting": "Deleting account...",
+          "help": "Permanently delete your arkham.build account and associated data. This deletes server-side credentials, sessions, account-synced decks, settings, and OAuth connections. Account-linked decks are removed from this device. Device-only decks, settings, and other browser data is not deleted. Content synced to ArkhamDB is not deleted from ArkhamDB.",
+          "submit": "Delete account",
+          "title": "Delete account"
+        },
         "email": {
           "add": "Add email",
           "add_help": "Add an email address and password as an alternative way to sign in.",
@@ -1577,6 +1604,10 @@
           "title": "Connections",
           "user_id": "User ID"
         },
+        "privacy_rights": {
+          "body": "You can export your data from the Support tab and delete your account below. For GDPR requests that are not self-service, such as restriction or objection requests, contact <privacyEmail>{{adminEmail}}</privacyEmail>.",
+          "title": "Privacy and data rights"
+        },
         "profile": {
           "save": "Save profile",
           "saving": "Saving profile...",
@@ -1584,20 +1615,7 @@
           "username": "Username",
           "username_help": "Letters, numbers, underscores, and hyphens only"
         },
-        "title": "Account",
-        "danger_zone": "Danger zone",
-        "delete": {
-          "confirm_help": "Type {{username}} to confirm account deletion.",
-          "confirm_label": "Confirmation",
-          "deleting": "Deleting account...",
-          "help": "Permanently delete your arkham.build account and associated data. This deletes server-side credentials, sessions, account-synced decks, settings, and OAuth connections. Account-linked decks are removed from this device. Device-only decks, settings, and other browser data is not deleted. Content synced to ArkhamDB is not deleted from ArkhamDB.",
-          "submit": "Delete account",
-          "title": "Delete account"
-        },
-        "privacy_rights": {
-          "body": "You can export your data from the Support tab and delete your account below. For GDPR requests that are not self-service, such as restriction or objection requests, contact <privacyEmail>{{adminEmail}}</privacyEmail>.",
-          "title": "Privacy and data rights"
-        }
+        "title": "Account"
       },
       "card_data": {
         "card_count": "Card count",
@@ -1724,20 +1742,6 @@
         "next": "Next",
         "previous": "Previous"
       }
-    },
-    "footer": {
-      "disclaimer": "<arkham>Arkham Horror: The Card Game™</arkham> and all related content © <ffg>Fantasy Flight Games (FFG)</ffg>. This site is not produced, endorsed by, or affiliated with FFG.",
-      "legal": "Legal",
-      "arkham_title": "Arkham Horror: The Card Game™",
-      "ffg": "Fantasy Flight Games (FFG)",
-      "terms": "Terms of Service",
-      "privacy": "Privacy Policy",
-      "legal_notice": "Legal Notice"
-    },
-    "external_embed": {
-      "load": "Load external content",
-      "notice": "This external content is blocked until you choose to load it. Loading it may allow the provider to process your data and set cookies.",
-      "title": "External content"
     }
   }
 }

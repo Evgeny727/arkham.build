@@ -37,7 +37,7 @@ function Login() {
       footer={
         <>
           {t("auth.login.no_account")}{" "}
-          <Link href="/auth/signup">{t("auth.signup.title")}</Link>
+          <Link href="/auth/signup">{t("auth.signup.action")}</Link>
         </>
       }
     >
@@ -94,7 +94,7 @@ function Login() {
           variant="primary"
           size="full"
         >
-          {t("auth.login.title")}
+          {t("auth.login.action")}
         </Button>
 
         <OAuthSeparator />

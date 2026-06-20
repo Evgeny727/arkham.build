@@ -72,7 +72,7 @@ export function Masthead(props: Props) {
             {!session && (
               <Link asChild href="~/auth/login">
                 <Button as="a" size="sm" variant="primary">
-                  {t("auth.login.title")}
+                  {t("auth.login.action")}
                 </Button>
               </Link>
             )}

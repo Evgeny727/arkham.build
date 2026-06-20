@@ -52,7 +52,7 @@ function Signup() {
       footer={
         <>
           {t("auth.signup.has_account")}{" "}
-          <Link href="/auth/login">{t("auth.login.title")}</Link>
+          <Link href="/auth/login">{t("auth.login.action")}</Link>
         </>
       }
     >
@@ -131,7 +131,7 @@ function Signup() {
         >
           {turnstileSiteKey && !captchaToken
             ? t("auth.signup.verifying")
-            : t("auth.signup.title")}
+            : t("auth.signup.action")}
         </Button>
 
         <OAuthSeparator />
