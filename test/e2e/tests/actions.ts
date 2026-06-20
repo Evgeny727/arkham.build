@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, type Locator, type Page } from "@playwright/test";
 import { assert } from "./assert";
@@ -50,45 +51,22 @@ export async function importDeckFromFile(
   const fileChooser = await fileChooserPromise;
 
   const directory = import.meta.dirname;
+  const filePath = path.join(directory, "../../fixtures/decks", deckPath);
+  const deckName = await readDeckName(filePath);
 
-  await fileChooser.setFiles([
-    path.join(directory, "../../fixtures/decks", deckPath),
-  ]);
+  await fileChooser.setFiles([filePath]);
 
   if (navigate) {
-    await page.getByTestId("collection-deck").hover({
+    const deck = page.getByTestId(`collection-deck-${deckName}`);
+    await deck.getByTestId("collection-deck").hover({
       force: true,
     });
-    await page.getByTestId("collection-deck").click();
+    await deck.getByTestId("collection-deck").click();
   }
 
   if (navigate === "edit") {
     await page.getByTestId("view-edit").click();
   }
-}
-
-export async function shareDeck(page: Page, navigate = true) {
-  await page.getByTestId("share-create").click();
-
-  await expect(page.getByTestId("share-link")).toBeVisible({
-    timeout: 15000,
-  });
-
-  if (navigate) {
-    await page.$$eval("a[target=_blank]", (nodes) => {
-      nodes.forEach((el) => {
-        el.removeAttribute("target");
-      });
-    });
-
-    await page.getByTestId("share-link").click();
-    await expect(page).toHaveURL(/\/share/);
-  }
-}
-
-export async function unshareDeck(page: Page) {
-  await page.getByTestId("share-delete").click();
-  await expect(page.getByTestId("share-link")).not.toBeVisible();
 }
 
 export function adjustDeckCardQuantity(
@@ -172,4 +150,19 @@ export async function importPackFromFile(page: Page, packPath: string) {
   ]);
 
   await page.waitForTimeout(300);
+}
+
+async function readDeckName(filePath: string) {
+  const value: unknown = JSON.parse(await readFile(filePath, "utf8"));
+
+  if (!value || typeof value !== "object") {
+    throw new Error(`Invalid deck file: ${filePath}`);
+  }
+
+  const { name } = value as { name?: unknown };
+  if (typeof name !== "string") {
+    throw new Error(`Invalid deck file: ${filePath}`);
+  }
+
+  return name;
 }

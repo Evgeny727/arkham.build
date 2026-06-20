@@ -1,3 +1,4 @@
+import type { Settings as SettingsState } from "@arkham-build/shared";
 import { BarChart3Icon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,7 +11,6 @@ import {
   groupCyclesByChapter,
   selectCyclesAndPacks,
 } from "@/store/selectors/lists";
-import type { SettingsState } from "@/store/slices/settings.types";
 import { official } from "@/utils/card-utils";
 import { CYCLES_WITH_STANDALONE_PACKS } from "@/utils/constants";
 import { displayPackName } from "@/utils/formatting";
@@ -131,7 +131,7 @@ export function CollectionSettings(props: Props) {
   );
 
   return (
-    <Field bordered>
+    <Field>
       <FieldLabel className={css["collection-label"]} htmlFor="collection">
         <strong>{t("settings.collection.card_collection")}</strong>
         {!canShowCounts && (

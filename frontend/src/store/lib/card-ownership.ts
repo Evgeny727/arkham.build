@@ -1,4 +1,8 @@
-import { type Card, SPECIAL_CARD_CODES } from "@arkham-build/shared";
+import {
+  type Card,
+  type Collection,
+  SPECIAL_CARD_CODES,
+} from "@arkham-build/shared";
 import type { Metadata } from "../slices/metadata.types";
 import type { LookupTables } from "./lookup-tables.types";
 
@@ -6,7 +10,7 @@ export type CardOwnershipOptions = {
   card: Card;
   metadata: Metadata;
   lookupTables: LookupTables;
-  collection: Record<string, number | boolean>;
+  collection: Collection;
   showAllCards?: boolean;
   strict?: boolean;
 };

@@ -1,30 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, FileDownIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Field } from "@/components/ui/field";
+import { useDataVersionQuery } from "@/queries/cache";
 import { useStore } from "@/store";
-import { queryDataVersion } from "@/store/services/queries";
 import { cx } from "@/utils/cx";
 import css from "./card-data-sync.module.css";
 
-type Props = {
-  showDetails?: boolean;
-};
-
-export function CardDataSync(props: Props) {
-  const { showDetails } = props;
-
+export function CardDataSync() {
   const { t } = useTranslation();
 
   const dataVersion = useStore((state) => state.metadata.dataVersion);
   const settings = useStore((state) => state.settings);
 
-  const queryFn = () => queryDataVersion(settings.locale);
-
-  const { data, error, isPending } = useQuery({
-    queryKey: ["settings", "dataVersion", settings.locale],
-    queryFn,
-  });
+  const { data, error, isPending } = useDataVersionQuery(settings.locale);
 
   const upToDate =
     data &&
@@ -38,10 +26,7 @@ export function CardDataSync(props: Props) {
   const loading = isPending;
 
   return (
-    <Field
-      bordered={showDetails}
-      className={cx(css["sync"], upToDate && css["uptodate"])}
-    >
+    <Field bordered className={cx(css["sync"], upToDate && css["uptodate"])}>
       <div className={css["status"]}>
         {loading && <p>{t("settings.card_data.loading")}</p>}
         {!!error && <p>{t("settings.card_data.error")}</p>}
@@ -59,7 +44,7 @@ export function CardDataSync(props: Props) {
             </p>
           ))}
       </div>
-      {showDetails && dataVersion && (
+      {dataVersion && (
         <dl className={css["info"]}>
           <dt>{t("settings.card_data.data_version")}:</dt>
           <dd>{dataVersion.cards_updated_at.split(".")[0]}</dd>

@@ -1,32 +1,38 @@
-import {
-  QueryClient,
-  QueryClientProvider,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Route, Router, Switch, useLocation, useSearch } from "wouter";
+import {
+  Redirect,
+  Route,
+  Router,
+  Switch,
+  useLocation,
+  useSearch,
+} from "wouter";
 import { useBrowserLocation } from "wouter/use-browser-location";
 import { ErrorBoundary } from "./components/error-boundary";
+import { KeyboardShortcutsModal } from "./components/keyboard-shortcuts/keyboard-shortcuts-modal";
 import { Loader } from "./components/ui/loader";
 import { ToastProvider } from "./components/ui/toast";
 import { useToast } from "./components/ui/toast.hooks";
-import { Connect } from "./pages/connect/connect";
 import { ErrorStatus } from "./pages/errors/404";
-import { useStore } from "./store";
-import { shouldAutoSync, useSync } from "./store/hooks/use-sync";
-import { selectIsInitialized } from "./store/selectors/shared";
 import {
-  queryCards,
-  queryDataVersion,
-  queryMetadata,
-} from "./store/services/queries";
+  useDataVersionQuery,
+  useRefreshMetadataMutation,
+} from "./queries/cache";
+import { useStore } from "./store";
+import { selectSession } from "./store/selectors/auth";
+import { selectIsInitialized } from "./store/selectors/shared";
+import type { HttpClient } from "./store/services/http-client";
+import { HttpClientProvider } from "./store/services/http-client.provider";
 import { useAgathaEasterEggHint } from "./utils/easter-egg-agatha";
 import { useColorThemeListener } from "./utils/use-color-theme";
 
 const Index = lazy(() => import("./pages/index"));
+
+const AccountMigration = lazy(
+  () => import("./pages/account-migration/account-migration"),
+);
 
 const BrowseRoutes = lazy(() => import("./pages/browse/index"));
 
@@ -47,6 +53,12 @@ const CardView = lazy(() => import("./pages/card-view/card-view"));
 const CardViewUsable = lazy(() => import("./pages/card-view/usable-cards"));
 
 const About = lazy(() => import("./pages/about/about"));
+
+const Privacy = lazy(() => import("./pages/legal/privacy"));
+
+const Terms = lazy(() => import("./pages/legal/terms"));
+
+const LegalNotice = lazy(() => import("./pages/legal/legal-notice"));
 
 const Share = lazy(() => import("./pages/share/share"));
 
@@ -75,10 +87,16 @@ const Investigator2026Reveal = lazy(
 const FanMadeContentPreview = lazy(
   () => import("./pages/fan-made-content-preview/fan-made-content-preview"),
 );
+const Login = lazy(() => import("./pages/auth/login"));
+const Signup = lazy(() => import("./pages/auth/signup"));
+const CompleteSignup = lazy(() => import("./pages/auth/complete-signup"));
+const ForgotPassword = lazy(() => import("./pages/auth/forgot-password"));
+const VerifyEmail = lazy(() => import("./pages/auth/verify-email"));
+const ResetPassword = lazy(() => import("./pages/auth/reset-password"));
 
-function App() {
+function App(props: { httpClient: HttpClient }) {
   return (
-    <Providers>
+    <Providers httpClient={props.httpClient}>
       <AppInner />
     </Providers>
   );
@@ -93,15 +111,20 @@ const queryClient = new QueryClient({
   },
 });
 
-function Providers(props: { children: React.ReactNode }) {
+function Providers(props: {
+  children: React.ReactNode;
+  httpClient: HttpClient;
+}) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <Suspense>
-          <ToastProvider>{props.children}</ToastProvider>
-        </Suspense>
-      </ErrorBoundary>
-    </QueryClientProvider>
+    <HttpClientProvider client={props.httpClient}>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <Suspense>
+            <ToastProvider>{props.children}</ToastProvider>
+          </Suspense>
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </HttpClientProvider>
   );
 }
 
@@ -123,61 +146,124 @@ function AppInner() {
       <Suspense fallback={<Loader delay={300} show />}>
         {storeInitialized && (
           <Router hook={useBrowserLocation}>
-            <Switch>
-              <Route component={Index} path="/" />
-              <Route component={BrowseRoutes} path="/browse" />
-              <Route component={BrowseRoutes} path="/browse/pack/:pack_code" />
-              <Route
-                component={BrowseRoutes}
-                path="/browse/cycle/:cycle_code"
-              />
-              <Route
-                component={BrowseRoutes}
-                path="/browse/encounter_set/:encounter_code"
-              />
-              <Route component={Search} path="/search" />
-              <Route component={CardView} path="/card/:code" />
-              <Route
-                component={CardViewUsable}
-                path="/card/:code/usable_cards"
-              />
-              <Route component={ChooseInvestigator} path="/deck/create" />
-              <Route component={DeckCreate} path="/deck/create/:code" />
-              <Route component={DeckView} path="/:type/view/:id" />
-              <Route component={DeckView} path="/:type/view/:id/:slug" />
-              <Route component={DeckEdit} nest path="/deck/edit/:id" />
-              <Route component={Settings} path="/settings" />
-              <Route component={About} path="/about" />
-              <Route component={Share} path="/share/:id" />
-              <Route component={CollectionStats} path="/collection-stats" />
-              <Route component={BrowseDecklists} path="/decklists" />
-              <Route component={Connect} path="/connect" />
-              <Route component={Rules} path="/rules" />
-              <Route component={Core2026Reveal} path="/blog/core-2026-reveal" />
-              <Route
-                component={Investigator2026Reveal}
-                path="/blog/investigator-2026-reveal"
-              />
-              <Route
-                component={FanMadeContentPreview}
-                path="/fan-made-content/preview/:id"
-              />
-              <Route
-                component={InstallFanMadeContent}
-                path="/install-fan-made-content"
-              />
-              <Route path="*">
-                <ErrorStatus statusCode={404} />
-              </Route>
-            </Switch>
+            <AccountMigrationRouteGuard>
+              <ProfileCompletionRouteGuard>
+                <Switch>
+                  <Route component={Index} path="/" />
+                  <Route
+                    component={AccountMigration}
+                    path="/account-migration"
+                  />
+                  <Route component={BrowseRoutes} path="/browse" />
+                  <Route
+                    component={BrowseRoutes}
+                    path="/browse/pack/:pack_code"
+                  />
+                  <Route
+                    component={BrowseRoutes}
+                    path="/browse/cycle/:cycle_code"
+                  />
+                  <Route
+                    component={BrowseRoutes}
+                    path="/browse/encounter_set/:encounter_code"
+                  />
+                  <Route component={Search} path="/search" />
+                  <Route component={CardView} path="/card/:code" />
+                  <Route
+                    component={CardViewUsable}
+                    path="/card/:code/usable_cards"
+                  />
+                  <Route component={ChooseInvestigator} path="/deck/create" />
+                  <Route component={DeckCreate} path="/deck/create/:code" />
+                  <Route component={DeckView} path="/:type/view/:id" />
+                  <Route component={DeckView} path="/:type/view/:id/:slug" />
+                  <Route component={DeckEdit} nest path="/deck/edit/:id" />
+                  <Route component={Settings} path="/settings" />
+                  <Route component={About} path="/about" />
+                  <Route component={Privacy} path="/privacy" />
+                  <Route component={Terms} path="/terms" />
+                  <Route component={LegalNotice} path="/legal-notice" />
+                  <Route component={Share} path="/share/:id" />
+                  <Route component={CollectionStats} path="/collection-stats" />
+                  <Route component={BrowseDecklists} path="/decklists" />
+                  <Route component={Rules} path="/rules" />
+                  <Route
+                    component={Core2026Reveal}
+                    path="/blog/core-2026-reveal"
+                  />
+                  <Route
+                    component={Investigator2026Reveal}
+                    path="/blog/investigator-2026-reveal"
+                  />
+                  <Route
+                    component={FanMadeContentPreview}
+                    path="/fan-made-content/preview/:id"
+                  />
+                  <Route
+                    component={InstallFanMadeContent}
+                    path="/install-fan-made-content"
+                  />
+                  <Route component={Login} path="/auth/login" />
+                  <Route component={Signup} path="/auth/signup" />
+                  <Route
+                    component={CompleteSignup}
+                    path="/auth/signup/complete"
+                  />
+                  <Route
+                    component={ForgotPassword}
+                    path="/auth/forgot-password"
+                  />
+                  <Route component={VerifyEmail} path="/auth/verify-email" />
+                  <Route
+                    component={ResetPassword}
+                    path="/auth/reset-password"
+                  />
+                  <Route path="*">
+                    <ErrorStatus statusCode={404} />
+                  </Route>
+                </Switch>
+              </ProfileCompletionRouteGuard>
+            </AccountMigrationRouteGuard>
             <RouteReset />
             <CardDataSyncTask />
             <AppTasks />
+            <KeyboardShortcutsModal />
           </Router>
         )}
       </Suspense>
     </>
   );
+}
+
+function AccountMigrationRouteGuard(props: { children: React.ReactNode }) {
+  const migrationNeeded = useStore(
+    (state) => state.settings.flags?.migrationNeeded === true,
+  );
+  const [pathname] = useLocation();
+
+  if (migrationNeeded && pathname !== "/account-migration") {
+    return <Redirect to="/account-migration" />;
+  }
+
+  return props.children;
+}
+
+function ProfileCompletionRouteGuard(props: { children: React.ReactNode }) {
+  const authStatus = useStore((state) => state.auth.status);
+  const session = useStore(selectSession);
+  const [pathname] = useLocation();
+
+  if (
+    authStatus === "authenticated" &&
+    session &&
+    !session.account.profileComplete &&
+    pathname !== "/auth/signup/complete" &&
+    pathname !== "/account-migration"
+  ) {
+    return <Redirect to="/auth/signup/complete" />;
+  }
+
+  return props.children;
 }
 
 function RouteReset() {
@@ -226,36 +312,20 @@ function CardDataSyncTask() {
   const shouldQueryDataVersion =
     !navigator.webdriver && !location.includes("/connect");
 
-  const { data: remoteDataVersion } = useQuery({
-    enabled: shouldQueryDataVersion,
-    queryFn: () => queryDataVersion(locale),
-    queryKey: ["tasks", "dataVersion", locale],
-    staleTime: 24 * 60 * 60 * 1000,
-  });
+  const { data: remoteDataVersion } = useDataVersionQuery(
+    locale,
+    shouldQueryDataVersion,
+  );
 
-  const init = useStore((state) => state.init);
-  const queryClient = useQueryClient();
-
-  const { isError, isPending, mutateAsync } = useMutation({
-    mutationFn: async () => {
-      await init(queryMetadata, queryDataVersion, queryCards, {
-        refresh: true,
-        locale,
-      });
-      queryClient.setQueryData(
-        ["tasks", "dataVersion", locale],
-        useStore.getState().metadata.dataVersion,
-      );
-    },
-  });
+  const refreshMetadataMutation = useRefreshMetadataMutation();
 
   useEffect(() => {
     if (
       hasTriggeredSync.current ||
       !remoteDataVersion ||
       !dataVersion ||
-      isPending ||
-      isError
+      refreshMetadataMutation.isPending ||
+      refreshMetadataMutation.isError
     ) {
       return;
     }
@@ -274,7 +344,8 @@ function CardDataSyncTask() {
         children: t("settings.card_data.loading"),
       });
 
-      mutateAsync()
+      refreshMetadataMutation
+        .mutateAsync()
         .then(() => {
           if (toastId.current) {
             toast.dismiss(toastId.current);
@@ -282,35 +353,75 @@ function CardDataSyncTask() {
         })
         .catch(console.error);
     }
-  }, [
-    dataVersion,
-    isError,
-    isPending,
-    mutateAsync,
-    remoteDataVersion,
-    toast,
-    t,
-  ]);
+  }, [dataVersion, refreshMetadataMutation, remoteDataVersion, toast, t]);
 
   return null;
 }
 
 function AppTasks() {
-  const connections = useStore((state) => state.connections);
-
-  const sync = useSync();
-  const [location] = useLocation();
-
   useAgathaEasterEggHint();
 
-  const autoSyncLock = useRef(false);
+  return (
+    <>
+      <OAuthErrorToastTask />
+      <SettingsSyncErrorTask />
+    </>
+  );
+}
+
+function OAuthErrorToastTask() {
+  const { i18n, t } = useTranslation();
+  const toast = useToast();
 
   useEffect(() => {
-    if (!autoSyncLock.current && shouldAutoSync(location, connections)) {
-      autoSyncLock.current = true;
-      sync().catch(console.error);
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get("oauth_error");
+
+    if (!oauthError) {
+      return;
     }
-  }, [sync, location, connections]);
+
+    params.delete("oauth_error");
+    const nextSearch = params.toString();
+    const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", nextUrl);
+
+    const translationKey = `auth.oauth_errors.${oauthError}`;
+
+    toast.show({
+      children: t(
+        i18n.exists(translationKey)
+          ? translationKey
+          : "auth.oauth_errors.oauth_failed",
+      ),
+      variant: "error",
+    });
+  }, [i18n, t, toast]);
+
+  return null;
+}
+
+function SettingsSyncErrorTask() {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const { error, status } = useStore((state) => state.sync.settings);
+
+  const previousSettingsSyncStatus = useRef(status);
+
+  useEffect(() => {
+    if (
+      previousSettingsSyncStatus.current === "loading" &&
+      status === "error" &&
+      error
+    ) {
+      toast.show({
+        children: t("settings.load_error", { error }),
+        variant: "error",
+      });
+    }
+
+    previousSettingsSyncStatus.current = status;
+  }, [error, status, t, toast]);
 
   return null;
 }

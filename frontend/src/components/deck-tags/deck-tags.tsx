@@ -1,5 +1,6 @@
+import type { StorageProvider } from "@arkham-build/shared";
 import type { TFunction } from "i18next";
-import { LockKeyholeIcon, ShareIcon } from "lucide-react";
+import { CloudIcon, HardDriveIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { createSelector } from "reselect";
 import { useShallow } from "zustand/react/shallow";
@@ -8,7 +9,6 @@ import type { ResolvedDeck } from "@/store/lib/types";
 import { selectLimitedPoolPacks } from "@/store/selectors/lists";
 import { selectMetadata } from "@/store/selectors/shared";
 import type { StoreState } from "@/store/slices";
-import type { StorageProvider } from "@/utils/constants";
 import { resolveLimitedPoolPacks } from "@/utils/environments";
 import { capitalize, formatProviderName } from "@/utils/formatting";
 import { isEmpty } from "@/utils/is-empty";
@@ -87,15 +87,17 @@ export function ProviderTagInner({
 }) {
   let icon = null;
 
-  if (tag === "arkhamdb") {
+  const canonicalTag = tag ?? "local";
+
+  if (canonicalTag === "arkhamdb") {
     icon = <i className="icon-elder_sign" />;
-  } else if (tag === "local") {
-    icon = <LockKeyholeIcon />;
-  } else if (tag === "shared") {
-    icon = <ShareIcon />;
+  } else if (canonicalTag === "local") {
+    icon = <HardDriveIcon />;
+  } else if (canonicalTag === "account") {
+    icon = <CloudIcon />;
   }
 
-  const str = tag.trim();
+  const str = canonicalTag.trim();
 
   return (
     <>
@@ -105,8 +107,8 @@ export function ProviderTagInner({
           ? formatProviderName(str)
           : str === "local"
             ? t("deck.tags.private")
-            : str === "shared"
-              ? t("deck.tags.shared")
+            : str === "account"
+              ? t("deck.tags.account")
               : capitalize(str)}
       </span>
     </>
@@ -116,16 +118,11 @@ export function ProviderTagInner({
 export function ProviderTag({
   deck,
 }: {
-  deck: Pick<ResolvedDeck, "source" | "shared"> | undefined;
+  deck: Pick<ResolvedDeck, "source"> | undefined;
 }) {
   const { t } = useTranslation();
 
-  let source: StorageProvider = "local";
-  if (deck?.source) {
-    source = deck.source as StorageProvider;
-  } else if (deck?.shared) {
-    source = "shared";
-  }
+  const source = (deck?.source as StorageProvider) || "local";
 
   return (
     <Tag as="li" size="xs">

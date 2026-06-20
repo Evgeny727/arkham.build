@@ -22,7 +22,74 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export type ModerationActionScope = "account";
+
+export type ModerationActionType = "ban" | "warning";
+
+export type PgbossJobState =
+  | "active"
+  | "cancelled"
+  | "completed"
+  | "created"
+  | "failed"
+  | "retry";
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface Account {
+  created_at: Generated<Timestamp>;
+  id: Generated<string>;
+  last_activity_at: Generated<Timestamp>;
+  name: string;
+  profile_completed_at: Generated<Timestamp | null>;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface AccountFolder {
+  account_id: string;
+  revision: Generated<string>;
+  state: Json;
+}
+
+export interface AccountIdentity {
+  account_id: string;
+  created_at: Generated<Timestamp>;
+  email: string | null;
+  id: Generated<string>;
+  password_hash: string | null;
+  pending_email: string | null;
+  provider: string;
+  provider_user_id: string | null;
+  state: Json | null;
+  updated_at: Generated<Timestamp>;
+  verified_at: Timestamp | null;
+}
+
+export interface AccountModerationAction {
+  account_id: string;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  end_reason: string | null;
+  ended_by: string | null;
+  ends_at: Timestamp | null;
+  id: Generated<string>;
+  reason: string;
+  scope: ModerationActionScope;
+  type: ModerationActionType;
+}
+
+export interface AccountSettings {
+  account_id: string;
+  collection: Json | null;
+  revision: Generated<string>;
+  settings: Json | null;
+}
+
+export interface ArkhamdbDeckAdditionalMetadata {
+  data: Json;
+  deck_id: number;
+  id: Generated<string>;
+}
 
 export interface ArkhamdbDecklist {
   canonical_investigator_code: string;
@@ -52,6 +119,14 @@ export interface ArkhamdbDecklist {
   xp_adjustment: number | null;
   xp_required: number | null;
   xp_spent: number | null;
+}
+
+export interface ArkhamdbDeckSnapshot {
+  account_identity_id: string;
+  created_at: Generated<Timestamp>;
+  decks: Json;
+  id: Generated<string>;
+  last_modified: string | null;
 }
 
 export interface ArkhamdbRankingCache {
@@ -189,6 +264,32 @@ export interface DataVersion {
   translation_updated_at: Timestamp;
 }
 
+export interface Deck {
+  account_id: string | null;
+  created_at: Generated<Timestamp>;
+  description: Generated<string | null>;
+  exile_string: string | null;
+  id: Generated<string>;
+  ignore_deck_limit: Json | null;
+  investigator_code: string;
+  investigator_name: string;
+  meta: Json | null;
+  name: string;
+  next_deck: string | null;
+  prev_deck: string | null;
+  problem: string | null;
+  provider_type: string;
+  side_slots: Json | null;
+  slots: Json;
+  taboo_set_id: number | null;
+  tags: string | null;
+  updated_at: Generated<Timestamp>;
+  version: string | null;
+  xp: number | null;
+  xp_adjustment: number | null;
+  xp_spent: number | null;
+}
+
 export interface EncounterSet {
   code: string;
   name: string;
@@ -287,6 +388,15 @@ export interface GrimoireSection {
   translations: { locale: string; title?: string; text?: string }[];
 }
 
+export interface OauthToken {
+  access_token: string;
+  account_identity_id: string;
+  created_at: Generated<Timestamp>;
+  refresh_token: string | null;
+  token_expires_at: Timestamp | null;
+  updated_at: Generated<Timestamp>;
+}
+
 export interface Pack {
   chapter: number | null;
   code: string;
@@ -303,6 +413,107 @@ export interface Pack {
 
 export interface PackType {
   pack_type: string;
+}
+
+export interface PgbossBam {
+  command: string;
+  completed_on: Timestamp | null;
+  created_on: Generated<Timestamp>;
+  error: string | null;
+  id: Generated<string>;
+  name: string;
+  queue: string | null;
+  started_on: Timestamp | null;
+  status: Generated<string>;
+  table_name: string;
+  version: number;
+}
+
+export interface PgbossJob {
+  completed_on: Timestamp | null;
+  created_on: Generated<Timestamp>;
+  data: Json | null;
+  dead_letter: string | null;
+  deletion_seconds: Generated<number>;
+  expire_seconds: Generated<number>;
+  group_id: string | null;
+  group_tier: string | null;
+  heartbeat_on: Timestamp | null;
+  heartbeat_seconds: number | null;
+  id: Generated<string>;
+  keep_until: Generated<Timestamp>;
+  name: string;
+  output: Json | null;
+  policy: string | null;
+  priority: Generated<number>;
+  retry_backoff: Generated<boolean>;
+  retry_count: Generated<number>;
+  retry_delay: Generated<number>;
+  retry_delay_max: number | null;
+  retry_limit: Generated<number>;
+  singleton_key: string | null;
+  singleton_on: Timestamp | null;
+  start_after: Generated<Timestamp>;
+  started_on: Timestamp | null;
+  state: Generated<PgbossJobState>;
+}
+
+export interface PgbossQueue {
+  active_count: Generated<number>;
+  created_on: Generated<Timestamp>;
+  dead_letter: string | null;
+  deferred_count: Generated<number>;
+  deletion_seconds: number;
+  expire_seconds: number;
+  heartbeat_seconds: number | null;
+  maintain_on: Timestamp | null;
+  monitor_on: Timestamp | null;
+  name: string;
+  partition: boolean;
+  policy: string;
+  queued_count: Generated<number>;
+  retention_seconds: number;
+  retry_backoff: boolean;
+  retry_delay: number;
+  retry_delay_max: number | null;
+  retry_limit: number;
+  singletons_active: string[] | null;
+  table_name: string;
+  total_count: Generated<number>;
+  updated_on: Generated<Timestamp>;
+  warning_queued: Generated<number>;
+}
+
+export interface PgbossSchedule {
+  created_on: Generated<Timestamp>;
+  cron: string;
+  data: Json | null;
+  key: Generated<string>;
+  name: string;
+  options: Json | null;
+  timezone: string | null;
+  updated_on: Generated<Timestamp>;
+}
+
+export interface PgbossSubscription {
+  created_on: Generated<Timestamp>;
+  event: string;
+  name: string;
+  updated_on: Generated<Timestamp>;
+}
+
+export interface PgbossVersion {
+  bam_on: Timestamp | null;
+  cron_on: Timestamp | null;
+  version: number;
+}
+
+export interface PgbossWarning {
+  created_on: Generated<Timestamp>;
+  data: Json | null;
+  id: Generated<string>;
+  message: string;
+  type: string;
 }
 
 export interface RulesVersion {
@@ -334,6 +545,15 @@ export interface SchemaMigrations {
   version: string;
 }
 
+export interface Session {
+  account_id: string;
+  created_at: Generated<Timestamp>;
+  expires_at: Timestamp;
+  id: Generated<string>;
+  last_activity_at: Generated<Timestamp>;
+  token_hash: string;
+}
+
 export interface Subtype {
   code: string;
   name: string;
@@ -354,7 +574,24 @@ export interface Type {
   translations: Json;
 }
 
+export interface VerificationToken {
+  account_identity_id: string | null;
+  created_at: Generated<Timestamp>;
+  email: string;
+  expires_at: Timestamp;
+  id: Generated<string>;
+  token_hash: string;
+  token_type: string;
+}
+
 export interface DB {
+  account: Account;
+  account_folder: AccountFolder;
+  account_identity: AccountIdentity;
+  account_moderation_action: AccountModerationAction;
+  account_settings: AccountSettings;
+  arkhamdb_deck_additional_metadata: ArkhamdbDeckAdditionalMetadata;
+  arkhamdb_deck_snapshot: ArkhamdbDeckSnapshot;
   arkhamdb_decklist: ArkhamdbDecklist;
   arkhamdb_ranking_cache: ArkhamdbRankingCache;
   arkhamdb_user: ArkhamdbUser;
@@ -364,6 +601,7 @@ export interface DB {
   card_resolution: CardResolution;
   cycle: Cycle;
   data_version: DataVersion;
+  deck: Deck;
   encounter_set: EncounterSet;
   errata: Errata;
   errata_card: ErrataCard;
@@ -378,14 +616,24 @@ export interface DB {
   grimoire_entry: GrimoireEntry;
   grimoire_entry_reference: GrimoireEntryReference;
   grimoire_section: GrimoireSection;
+  oauth_token: OauthToken;
   pack: Pack;
   pack_type: PackType;
+  "pgboss.bam": PgbossBam;
+  "pgboss.job": PgbossJob;
+  "pgboss.queue": PgbossQueue;
+  "pgboss.schedule": PgbossSchedule;
+  "pgboss.subscription": PgbossSubscription;
+  "pgboss.version": PgbossVersion;
+  "pgboss.warning": PgbossWarning;
   rules_version: RulesVersion;
   scenario: Scenario;
   scenario_encounter_set: ScenarioEncounterSet;
   scenario_encounter_set_card: ScenarioEncounterSetCard;
   schema_migrations: SchemaMigrations;
+  session: Session;
   subtype: Subtype;
   taboo_set: TabooSet;
   type: Type;
+  verification_token: VerificationToken;
 }

@@ -1,7 +1,7 @@
 \restrict dbmate
 
 -- Dumped from database version 18.3
--- Dumped by pg_dump version 18.3 (Homebrew)
+-- Dumped by pg_dump version 18.4 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -14,6 +14,266 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: pgboss; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA pgboss;
+
+
+--
+-- Name: btree_gist; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION btree_gist; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION btree_gist IS 'support for indexing common datatypes in GiST';
+
+
+--
+-- Name: job_state; Type: TYPE; Schema: pgboss; Owner: -
+--
+
+CREATE TYPE pgboss.job_state AS ENUM (
+    'created',
+    'retry',
+    'active',
+    'completed',
+    'cancelled',
+    'failed'
+);
+
+
+--
+-- Name: moderation_action_scope; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.moderation_action_scope AS ENUM (
+    'account'
+);
+
+
+--
+-- Name: moderation_action_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.moderation_action_type AS ENUM (
+    'warning',
+    'ban'
+);
+
+
+--
+-- Name: create_queue(text, jsonb); Type: FUNCTION; Schema: pgboss; Owner: -
+--
+
+CREATE FUNCTION pgboss.create_queue(queue_name text, options jsonb) RETURNS void
+    LANGUAGE plpgsql
+    AS $_$
+    DECLARE
+      tablename varchar := CASE WHEN options->>'partition' = 'true'
+                            THEN 'j' || encode(sha224(queue_name::bytea), 'hex')
+                            ELSE 'job_common'
+                            END;
+      queue_created_on timestamptz;
+    BEGIN
+
+      WITH q as (
+        INSERT INTO pgboss.queue (
+          name,
+          policy,
+          retry_limit,
+          retry_delay,
+          retry_backoff,
+          retry_delay_max,
+          expire_seconds,
+          retention_seconds,
+          deletion_seconds,
+          warning_queued,
+          dead_letter,
+          partition,
+          table_name,
+          heartbeat_seconds
+        )
+        VALUES (
+          queue_name,
+          options->>'policy',
+          COALESCE((options->>'retryLimit')::int, 2),
+          COALESCE((options->>'retryDelay')::int, 0),
+          COALESCE((options->>'retryBackoff')::bool, false),
+          (options->>'retryDelayMax')::int,
+          COALESCE((options->>'expireInSeconds')::int, 900),
+          COALESCE((options->>'retentionSeconds')::int, 1209600),
+          COALESCE((options->>'deleteAfterSeconds')::int, 604800),
+          COALESCE((options->>'warningQueueSize')::int, 0),
+          options->>'deadLetter',
+          COALESCE((options->>'partition')::bool, false),
+          tablename,
+          (options->>'heartbeatSeconds')::int
+        )
+        ON CONFLICT DO NOTHING
+        RETURNING created_on
+      )
+      SELECT created_on into queue_created_on from q;
+
+      IF queue_created_on IS NULL OR options->>'partition' IS DISTINCT FROM 'true' THEN
+        RETURN;
+      END IF;
+
+      EXECUTE format('CREATE TABLE pgboss.%I (LIKE pgboss.job INCLUDING DEFAULTS)', tablename);
+
+      EXECUTE pgboss.job_table_format($cmd$ALTER TABLE pgboss.job ADD PRIMARY KEY (name, id)$cmd$, tablename);
+      EXECUTE pgboss.job_table_format($cmd$ALTER TABLE pgboss.job ADD CONSTRAINT q_fkey FOREIGN KEY (name) REFERENCES pgboss.queue (name) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED$cmd$, tablename);
+      EXECUTE pgboss.job_table_format($cmd$ALTER TABLE pgboss.job ADD CONSTRAINT dlq_fkey FOREIGN KEY (dead_letter) REFERENCES pgboss.queue (name) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED$cmd$, tablename);
+
+      EXECUTE pgboss.job_table_format($cmd$CREATE INDEX job_i5 ON pgboss.job (name, start_after) INCLUDE (priority, created_on, id) WHERE state < 'active'$cmd$, tablename);
+      EXECUTE pgboss.job_table_format($cmd$CREATE UNIQUE INDEX job_i4 ON pgboss.job (name, singleton_on, COALESCE(singleton_key, '')) WHERE state <> 'cancelled' AND singleton_on IS NOT NULL$cmd$, tablename);
+      EXECUTE pgboss.job_table_format($cmd$CREATE INDEX job_i7 ON pgboss.job (name, group_id) WHERE state = 'active' AND group_id IS NOT NULL$cmd$, tablename);
+
+      IF options->>'policy' = 'short' THEN
+        EXECUTE pgboss.job_table_format($cmd$CREATE UNIQUE INDEX job_i1 ON pgboss.job (name, COALESCE(singleton_key, '')) WHERE state = 'created' AND policy = 'short'$cmd$, tablename);
+      ELSIF options->>'policy' = 'singleton' THEN
+        EXECUTE pgboss.job_table_format($cmd$CREATE UNIQUE INDEX job_i2 ON pgboss.job (name, COALESCE(singleton_key, '')) WHERE state = 'active' AND policy = 'singleton'$cmd$, tablename);
+      ELSIF options->>'policy' = 'stately' THEN
+        EXECUTE pgboss.job_table_format($cmd$CREATE UNIQUE INDEX job_i3 ON pgboss.job (name, state, COALESCE(singleton_key, '')) WHERE state <= 'active' AND policy = 'stately'$cmd$, tablename);
+      ELSIF options->>'policy' = 'exclusive' THEN
+        EXECUTE pgboss.job_table_format($cmd$CREATE UNIQUE INDEX job_i6 ON pgboss.job (name, COALESCE(singleton_key, '')) WHERE state <= 'active' AND policy = 'exclusive'$cmd$, tablename);
+      ELSIF options->>'policy' = 'key_strict_fifo' THEN
+        EXECUTE pgboss.job_table_format($cmd$CREATE UNIQUE INDEX job_i8 ON pgboss.job (name, singleton_key) WHERE state IN ('active', 'retry', 'failed') AND policy = 'key_strict_fifo'$cmd$, tablename);
+        EXECUTE pgboss.job_table_format($cmd$ALTER TABLE pgboss.job ADD CONSTRAINT job_key_strict_fifo_singleton_key_check CHECK (NOT (policy = 'key_strict_fifo' AND singleton_key IS NULL))$cmd$, tablename);
+      END IF;
+
+      EXECUTE format('ALTER TABLE pgboss.%I ADD CONSTRAINT cjc CHECK (name=%L)', tablename, queue_name);
+      EXECUTE format('ALTER TABLE pgboss.job ATTACH PARTITION pgboss.%I FOR VALUES IN (%L)', tablename, queue_name);
+    END;
+    $_$;
+
+
+--
+-- Name: delete_queue(text); Type: FUNCTION; Schema: pgboss; Owner: -
+--
+
+CREATE FUNCTION pgboss.delete_queue(queue_name text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+      v_table varchar;
+      v_partition bool;
+    BEGIN
+      SELECT table_name, partition
+      FROM pgboss.queue
+      WHERE name = queue_name
+      INTO v_table, v_partition;
+
+      IF v_partition THEN
+        EXECUTE format('DROP TABLE IF EXISTS pgboss.%I', v_table);
+      ELSE
+        EXECUTE format('DELETE FROM pgboss.%I WHERE name = %L', v_table, queue_name);
+      END IF;
+
+      DELETE FROM pgboss.queue WHERE name = queue_name;
+    END;
+    $$;
+
+
+--
+-- Name: job_table_format(text, text); Type: FUNCTION; Schema: pgboss; Owner: -
+--
+
+CREATE FUNCTION pgboss.job_table_format(command text, table_name text) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    AS $_$
+      SELECT format(
+        replace(
+          replace(command, '.job', '.%1$I'),
+          'job_i', '%1$s_i'
+        ),
+        table_name
+      );
+    $_$;
+
+
+--
+-- Name: job_table_run(text, text, text); Type: FUNCTION; Schema: pgboss; Owner: -
+--
+
+CREATE FUNCTION pgboss.job_table_run(command text, tbl_name text DEFAULT NULL::text, queue_name text DEFAULT NULL::text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+    DECLARE
+      tbl RECORD;
+    BEGIN
+      IF queue_name IS NOT NULL THEN
+        SELECT table_name INTO tbl_name FROM pgboss.queue WHERE name = queue_name;
+      END IF;
+
+      IF tbl_name IS NOT NULL THEN
+        EXECUTE pgboss.job_table_format(command, tbl_name);
+        RETURN;
+      END IF;
+
+      EXECUTE pgboss.job_table_format(command, 'job_common');
+
+      FOR tbl IN SELECT table_name FROM pgboss.queue WHERE partition = true
+      LOOP
+        EXECUTE pgboss.job_table_format(command, tbl.table_name);
+      END LOOP;
+    END;
+    $$;
+
+
+--
+-- Name: job_table_run_async(text, integer, text, text, text); Type: FUNCTION; Schema: pgboss; Owner: -
+--
+
+CREATE FUNCTION pgboss.job_table_run_async(command_name text, version integer, command text, tbl_name text DEFAULT NULL::text, queue_name text DEFAULT NULL::text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      IF queue_name IS NOT NULL THEN
+        SELECT table_name INTO tbl_name FROM pgboss.queue WHERE name = queue_name;
+      END IF;
+
+      IF tbl_name IS NOT NULL THEN
+        INSERT INTO pgboss.bam (name, version, status, queue, table_name, command)
+        VALUES (
+          command_name,
+          version,
+          'pending',
+          queue_name,
+          tbl_name,
+          pgboss.job_table_format(command, tbl_name)
+        );
+        RETURN;
+      END IF;
+
+      INSERT INTO pgboss.bam (name, version, status, queue, table_name, command)
+      SELECT
+        command_name,
+        version,
+        'pending',
+        NULL,
+        'job_common',
+        pgboss.job_table_format(command, 'job_common')
+      UNION ALL
+      SELECT
+        command_name,
+        version,
+        'pending',
+        queue.name,
+        queue.table_name,
+        pgboss.job_table_format(command, queue.table_name)
+      FROM pgboss.queue
+      WHERE partition = true;
+    END;
+    $$;
+
 
 --
 -- Name: resolve_card(character varying); Type: FUNCTION; Schema: public; Owner: -
@@ -34,6 +294,282 @@ $$;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: bam; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.bam (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    version integer NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    queue text,
+    table_name text NOT NULL,
+    command text NOT NULL,
+    error text,
+    created_on timestamp with time zone DEFAULT now() NOT NULL,
+    started_on timestamp with time zone,
+    completed_on timestamp with time zone
+);
+
+
+--
+-- Name: job; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.job (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    priority integer DEFAULT 0 NOT NULL,
+    data jsonb,
+    state pgboss.job_state DEFAULT 'created'::pgboss.job_state NOT NULL,
+    retry_limit integer DEFAULT 2 NOT NULL,
+    retry_count integer DEFAULT 0 NOT NULL,
+    retry_delay integer DEFAULT 0 NOT NULL,
+    retry_backoff boolean DEFAULT false NOT NULL,
+    retry_delay_max integer,
+    expire_seconds integer DEFAULT 900 NOT NULL,
+    deletion_seconds integer DEFAULT 604800 NOT NULL,
+    singleton_key text,
+    singleton_on timestamp without time zone,
+    group_id text,
+    group_tier text,
+    start_after timestamp with time zone DEFAULT now() NOT NULL,
+    created_on timestamp with time zone DEFAULT now() NOT NULL,
+    started_on timestamp with time zone,
+    completed_on timestamp with time zone,
+    keep_until timestamp with time zone DEFAULT (now() + '336:00:00'::interval) NOT NULL,
+    output jsonb,
+    dead_letter text,
+    policy text,
+    heartbeat_on timestamp with time zone,
+    heartbeat_seconds integer
+)
+PARTITION BY LIST (name);
+
+
+--
+-- Name: job_common; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.job_common (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT job_id_not_null NOT NULL,
+    name text CONSTRAINT job_name_not_null NOT NULL,
+    priority integer DEFAULT 0 CONSTRAINT job_priority_not_null NOT NULL,
+    data jsonb,
+    state pgboss.job_state DEFAULT 'created'::pgboss.job_state CONSTRAINT job_state_not_null NOT NULL,
+    retry_limit integer DEFAULT 2 CONSTRAINT job_retry_limit_not_null NOT NULL,
+    retry_count integer DEFAULT 0 CONSTRAINT job_retry_count_not_null NOT NULL,
+    retry_delay integer DEFAULT 0 CONSTRAINT job_retry_delay_not_null NOT NULL,
+    retry_backoff boolean DEFAULT false CONSTRAINT job_retry_backoff_not_null NOT NULL,
+    retry_delay_max integer,
+    expire_seconds integer DEFAULT 900 CONSTRAINT job_expire_seconds_not_null NOT NULL,
+    deletion_seconds integer DEFAULT 604800 CONSTRAINT job_deletion_seconds_not_null NOT NULL,
+    singleton_key text,
+    singleton_on timestamp without time zone,
+    group_id text,
+    group_tier text,
+    start_after timestamp with time zone DEFAULT now() CONSTRAINT job_start_after_not_null NOT NULL,
+    created_on timestamp with time zone DEFAULT now() CONSTRAINT job_created_on_not_null NOT NULL,
+    started_on timestamp with time zone,
+    completed_on timestamp with time zone,
+    keep_until timestamp with time zone DEFAULT (now() + '336:00:00'::interval) CONSTRAINT job_keep_until_not_null NOT NULL,
+    output jsonb,
+    dead_letter text,
+    policy text,
+    heartbeat_on timestamp with time zone,
+    heartbeat_seconds integer,
+    CONSTRAINT job_key_strict_fifo_singleton_key_check CHECK ((NOT ((policy = 'key_strict_fifo'::text) AND (singleton_key IS NULL))))
+);
+
+
+--
+-- Name: queue; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.queue (
+    name text NOT NULL,
+    policy text NOT NULL,
+    retry_limit integer NOT NULL,
+    retry_delay integer NOT NULL,
+    retry_backoff boolean NOT NULL,
+    retry_delay_max integer,
+    expire_seconds integer NOT NULL,
+    retention_seconds integer NOT NULL,
+    deletion_seconds integer NOT NULL,
+    dead_letter text,
+    partition boolean NOT NULL,
+    table_name text NOT NULL,
+    deferred_count integer DEFAULT 0 NOT NULL,
+    queued_count integer DEFAULT 0 NOT NULL,
+    warning_queued integer DEFAULT 0 NOT NULL,
+    active_count integer DEFAULT 0 NOT NULL,
+    total_count integer DEFAULT 0 NOT NULL,
+    heartbeat_seconds integer,
+    singletons_active text[],
+    monitor_on timestamp with time zone,
+    maintain_on timestamp with time zone,
+    created_on timestamp with time zone DEFAULT now() NOT NULL,
+    updated_on timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT queue_check CHECK ((dead_letter IS DISTINCT FROM name))
+);
+
+
+--
+-- Name: schedule; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.schedule (
+    name text NOT NULL,
+    key text DEFAULT ''::text NOT NULL,
+    cron text NOT NULL,
+    timezone text,
+    data jsonb,
+    options jsonb,
+    created_on timestamp with time zone DEFAULT now() NOT NULL,
+    updated_on timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: subscription; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.subscription (
+    event text NOT NULL,
+    name text NOT NULL,
+    created_on timestamp with time zone DEFAULT now() NOT NULL,
+    updated_on timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: version; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.version (
+    version integer NOT NULL,
+    cron_on timestamp with time zone,
+    bam_on timestamp with time zone
+);
+
+
+--
+-- Name: warning; Type: TABLE; Schema: pgboss; Owner: -
+--
+
+CREATE TABLE pgboss.warning (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    type text NOT NULL,
+    message text NOT NULL,
+    data jsonb,
+    created_on timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: account; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.account (
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT uuidv7() NOT NULL,
+    name character varying(64) NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    profile_completed_at timestamp without time zone DEFAULT now(),
+    last_activity_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: account_folder; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.account_folder (
+    account_id uuid NOT NULL,
+    revision uuid DEFAULT uuidv7() NOT NULL,
+    state jsonb NOT NULL
+);
+
+
+--
+-- Name: account_identity; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.account_identity (
+    account_id uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    id uuid DEFAULT uuidv7() NOT NULL,
+    provider character varying(64) NOT NULL,
+    provider_user_id text,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    verified_at timestamp without time zone,
+    email character varying(255),
+    password_hash text,
+    pending_email character varying(255),
+    state jsonb
+);
+
+
+--
+-- Name: account_moderation_action; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.account_moderation_action (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    account_id uuid NOT NULL,
+    scope public.moderation_action_scope NOT NULL,
+    type public.moderation_action_type NOT NULL,
+    reason text NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    ends_at timestamp without time zone,
+    end_reason text,
+    ended_by uuid,
+    CONSTRAINT chk_account_moderation_action_end_fields CHECK (((ends_at IS NULL) = (end_reason IS NULL))),
+    CONSTRAINT chk_account_moderation_action_ended_by CHECK (((ended_by IS NULL) OR (ends_at IS NOT NULL))),
+    CONSTRAINT chk_account_moderation_action_ends_after_created CHECK (((ends_at IS NULL) OR (ends_at > created_at)))
+);
+
+
+--
+-- Name: account_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.account_settings (
+    account_id uuid NOT NULL,
+    collection jsonb,
+    revision uuid DEFAULT uuidv7() NOT NULL,
+    settings jsonb,
+    CONSTRAINT chk_account_settings_settings_length CHECK ((octet_length(COALESCE((settings)::text, ''::text)) <= 65536))
+);
+
+
+--
+-- Name: arkhamdb_deck_additional_metadata; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.arkhamdb_deck_additional_metadata (
+    id text DEFAULT (uuidv7())::text NOT NULL,
+    deck_id integer NOT NULL,
+    data jsonb NOT NULL
+);
+
+
+--
+-- Name: arkhamdb_deck_snapshot; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.arkhamdb_deck_snapshot (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    account_identity_id uuid NOT NULL,
+    last_modified text,
+    decks jsonb NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_arkhamdb_deck_snapshot_decks_length CHECK ((octet_length((decks)::text) <= 52428800))
+);
+
 
 --
 -- Name: arkhamdb_decklist; Type: TABLE; Schema: public; Owner: -
@@ -266,6 +802,44 @@ CREATE TABLE public.data_version (
 
 
 --
+-- Name: deck; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.deck (
+    account_id uuid,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    description text DEFAULT ''::text,
+    exile_string text,
+    id text DEFAULT (uuidv7())::text NOT NULL,
+    ignore_deck_limit jsonb,
+    investigator_code character varying(255) NOT NULL,
+    investigator_name character varying(255) NOT NULL,
+    meta jsonb,
+    name character varying(255) NOT NULL,
+    next_deck text,
+    prev_deck text,
+    problem text,
+    provider_type character varying(64) NOT NULL,
+    side_slots jsonb,
+    slots jsonb NOT NULL,
+    taboo_set_id integer,
+    tags text,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    version character varying(8),
+    xp integer,
+    xp_adjustment integer,
+    xp_spent integer,
+    CONSTRAINT chk_deck_description_length CHECK ((octet_length(COALESCE(description, ''::text)) <= 131072)),
+    CONSTRAINT chk_deck_exile_string_length CHECK ((octet_length(COALESCE(exile_string, ''::text)) <= 4096)),
+    CONSTRAINT chk_deck_id_length CHECK ((char_length(id) <= 255)),
+    CONSTRAINT chk_deck_next_deck_length CHECK ((char_length(COALESCE(next_deck, ''::text)) <= 255)),
+    CONSTRAINT chk_deck_prev_deck_length CHECK ((char_length(COALESCE(prev_deck, ''::text)) <= 255)),
+    CONSTRAINT chk_deck_problem_length CHECK ((char_length(COALESCE(problem, ''::text)) <= 255)),
+    CONSTRAINT chk_deck_tags_length CHECK ((octet_length(COALESCE(tags, ''::text)) <= 1024))
+);
+
+
+--
 -- Name: encounter_set; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -465,6 +1039,20 @@ CREATE TABLE public.grimoire_section (
 
 
 --
+-- Name: oauth_token; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.oauth_token (
+    account_identity_id uuid NOT NULL,
+    access_token text NOT NULL,
+    refresh_token text,
+    token_expires_at timestamp without time zone,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: pack; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -547,6 +1135,20 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: session; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.session (
+    account_id uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    id uuid DEFAULT uuidv7() NOT NULL,
+    last_activity_at timestamp without time zone DEFAULT now() NOT NULL,
+    token_hash text NOT NULL
+);
+
+
+--
 -- Name: subtype; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -582,10 +1184,176 @@ CREATE TABLE public.type (
 
 
 --
+-- Name: verification_token; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.verification_token (
+    account_identity_id uuid,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    email character varying(255) NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    id uuid DEFAULT uuidv7() NOT NULL,
+    token_hash text NOT NULL,
+    token_type character varying(32) NOT NULL
+);
+
+
+--
+-- Name: job_common; Type: TABLE ATTACH; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.job ATTACH PARTITION pgboss.job_common DEFAULT;
+
+
+--
 -- Name: arkhamdb_ranking_cache id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.arkhamdb_ranking_cache ALTER COLUMN id SET DEFAULT nextval('public.arkhamdb_ranking_cache_id_seq'::regclass);
+
+
+--
+-- Name: bam bam_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.bam
+    ADD CONSTRAINT bam_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: job job_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.job
+    ADD CONSTRAINT job_pkey PRIMARY KEY (name, id);
+
+
+--
+-- Name: job_common job_common_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.job_common
+    ADD CONSTRAINT job_common_pkey PRIMARY KEY (name, id);
+
+
+--
+-- Name: queue queue_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.queue
+    ADD CONSTRAINT queue_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: schedule schedule_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.schedule
+    ADD CONSTRAINT schedule_pkey PRIMARY KEY (name, key);
+
+
+--
+-- Name: subscription subscription_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.subscription
+    ADD CONSTRAINT subscription_pkey PRIMARY KEY (event, name);
+
+
+--
+-- Name: version version_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.version
+    ADD CONSTRAINT version_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: warning warning_pkey; Type: CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.warning
+    ADD CONSTRAINT warning_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: account_folder account_folder_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_folder
+    ADD CONSTRAINT account_folder_pkey PRIMARY KEY (account_id);
+
+
+--
+-- Name: account_identity account_identity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_identity
+    ADD CONSTRAINT account_identity_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: account_identity account_identity_provider_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_identity
+    ADD CONSTRAINT account_identity_provider_email_key UNIQUE (provider, email);
+
+
+--
+-- Name: account_identity account_identity_provider_provider_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_identity
+    ADD CONSTRAINT account_identity_provider_provider_user_id_key UNIQUE (provider, provider_user_id);
+
+
+--
+-- Name: account_moderation_action account_moderation_action_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_moderation_action
+    ADD CONSTRAINT account_moderation_action_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: account account_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_name_key UNIQUE (name);
+
+
+--
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: account_settings account_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_settings
+    ADD CONSTRAINT account_settings_pkey PRIMARY KEY (account_id);
+
+
+--
+-- Name: arkhamdb_deck_additional_metadata arkhamdb_deck_additional_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arkhamdb_deck_additional_metadata
+    ADD CONSTRAINT arkhamdb_deck_additional_metadata_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: arkhamdb_deck_snapshot arkhamdb_deck_snapshot_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arkhamdb_deck_snapshot
+    ADD CONSTRAINT arkhamdb_deck_snapshot_pkey PRIMARY KEY (id);
 
 
 --
@@ -669,6 +1437,14 @@ ALTER TABLE ONLY public.data_version
 
 
 --
+-- Name: deck deck_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deck
+    ADD CONSTRAINT deck_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: encounter_set encounter_set_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -706,6 +1482,14 @@ ALTER TABLE ONLY public.errata
 
 ALTER TABLE ONLY public.errata_scenario
     ADD CONSTRAINT errata_scenario_pkey PRIMARY KEY (errata_id, scenario_code);
+
+
+--
+-- Name: account_moderation_action ex_account_moderation_action_no_overlapping_bans; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_moderation_action
+    ADD CONSTRAINT ex_account_moderation_action_no_overlapping_bans EXCLUDE USING gist (account_id WITH =, scope WITH =, tsrange(created_at, COALESCE(ends_at, 'infinity'::timestamp without time zone), '[)'::text) WITH &&) WHERE ((type = 'ban'::public.moderation_action_type));
 
 
 --
@@ -789,6 +1573,14 @@ ALTER TABLE ONLY public.grimoire_section
 
 
 --
+-- Name: oauth_token oauth_token_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_token
+    ADD CONSTRAINT oauth_token_pkey PRIMARY KEY (account_identity_id);
+
+
+--
 -- Name: pack pack_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -845,6 +1637,22 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: session session_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_token_hash_key UNIQUE (token_hash);
+
+
+--
 -- Name: subtype subtype_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -866,6 +1674,162 @@ ALTER TABLE ONLY public.taboo_set
 
 ALTER TABLE ONLY public.type
     ADD CONSTRAINT type_pkey PRIMARY KEY (code);
+
+
+--
+-- Name: verification_token verification_token_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verification_token
+    ADD CONSTRAINT verification_token_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: verification_token verification_token_token_type_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verification_token
+    ADD CONSTRAINT verification_token_token_type_token_hash_key UNIQUE (token_type, token_hash);
+
+
+--
+-- Name: job_common_i1; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE UNIQUE INDEX job_common_i1 ON pgboss.job_common USING btree (name, COALESCE(singleton_key, ''::text)) WHERE ((state = 'created'::pgboss.job_state) AND (policy = 'short'::text));
+
+
+--
+-- Name: job_common_i2; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE UNIQUE INDEX job_common_i2 ON pgboss.job_common USING btree (name, COALESCE(singleton_key, ''::text)) WHERE ((state = 'active'::pgboss.job_state) AND (policy = 'singleton'::text));
+
+
+--
+-- Name: job_common_i3; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE UNIQUE INDEX job_common_i3 ON pgboss.job_common USING btree (name, state, COALESCE(singleton_key, ''::text)) WHERE ((state <= 'active'::pgboss.job_state) AND (policy = 'stately'::text));
+
+
+--
+-- Name: job_common_i4; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE UNIQUE INDEX job_common_i4 ON pgboss.job_common USING btree (name, singleton_on, COALESCE(singleton_key, ''::text)) WHERE ((state <> 'cancelled'::pgboss.job_state) AND (singleton_on IS NOT NULL));
+
+
+--
+-- Name: job_common_i5; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE INDEX job_common_i5 ON pgboss.job_common USING btree (name, start_after) INCLUDE (priority, created_on, id) WHERE (state < 'active'::pgboss.job_state);
+
+
+--
+-- Name: job_common_i6; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE UNIQUE INDEX job_common_i6 ON pgboss.job_common USING btree (name, COALESCE(singleton_key, ''::text)) WHERE ((state <= 'active'::pgboss.job_state) AND (policy = 'exclusive'::text));
+
+
+--
+-- Name: job_common_i7; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE INDEX job_common_i7 ON pgboss.job_common USING btree (name, group_id) WHERE ((state = 'active'::pgboss.job_state) AND (group_id IS NOT NULL));
+
+
+--
+-- Name: job_common_i8; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE UNIQUE INDEX job_common_i8 ON pgboss.job_common USING btree (name, singleton_key) WHERE ((state = ANY (ARRAY['active'::pgboss.job_state, 'retry'::pgboss.job_state, 'failed'::pgboss.job_state])) AND (policy = 'key_strict_fifo'::text));
+
+
+--
+-- Name: warning_i1; Type: INDEX; Schema: pgboss; Owner: -
+--
+
+CREATE INDEX warning_i1 ON pgboss.warning USING btree (created_on DESC);
+
+
+--
+-- Name: idx_account_folder_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_account_folder_account_id ON public.account_folder USING btree (account_id);
+
+
+--
+-- Name: idx_account_identity_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_account_identity_account_id ON public.account_identity USING btree (account_id);
+
+
+--
+-- Name: idx_account_identity_provider_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_account_identity_provider_email ON public.account_identity USING btree (provider, email) WHERE (email IS NOT NULL);
+
+
+--
+-- Name: idx_account_identity_provider_pending_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_account_identity_provider_pending_email ON public.account_identity USING btree (provider, pending_email) WHERE (pending_email IS NOT NULL);
+
+
+--
+-- Name: idx_account_identity_provider_uid; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_account_identity_provider_uid ON public.account_identity USING btree (provider, provider_user_id) WHERE (provider_user_id IS NOT NULL);
+
+
+--
+-- Name: idx_account_last_activity_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_account_last_activity_at ON public.account USING btree (last_activity_at);
+
+
+--
+-- Name: idx_account_moderation_action_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_account_moderation_action_account_id ON public.account_moderation_action USING btree (account_id);
+
+
+--
+-- Name: idx_account_moderation_action_account_type_scope_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_account_moderation_action_account_type_scope_created_at ON public.account_moderation_action USING btree (account_id, type, scope, created_at DESC);
+
+
+--
+-- Name: idx_account_name_lower; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_account_name_lower ON public.account USING btree (lower((name)::text));
+
+
+--
+-- Name: idx_account_settings_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_account_settings_account_id ON public.account_settings USING btree (account_id);
+
+
+--
+-- Name: idx_arkhamdb_deck_snapshot_account_identity_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_arkhamdb_deck_snapshot_account_identity_id ON public.arkhamdb_deck_snapshot USING btree (account_identity_id);
 
 
 --
@@ -1044,6 +2008,27 @@ CREATE INDEX idx_card_type_code ON public.card USING btree (type_code);
 
 
 --
+-- Name: idx_deck_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deck_account_id ON public.deck USING btree (account_id);
+
+
+--
+-- Name: idx_deck_next_deck; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deck_next_deck ON public.deck USING btree (next_deck);
+
+
+--
+-- Name: idx_deck_prev_deck; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_deck_prev_deck ON public.deck USING btree (prev_deck);
+
+
+--
 -- Name: idx_decklist_not_duplicate; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1121,6 +2106,13 @@ CREATE INDEX idx_grimoire_entry_section ON public.grimoire_entry USING btree (se
 
 
 --
+-- Name: idx_oauth_tokens_account_identity; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_oauth_tokens_account_identity ON public.oauth_token USING btree (account_identity_id);
+
+
+--
 -- Name: idx_pack_cycle_code; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1146,6 +2138,144 @@ CREATE INDEX idx_scenario_encounter_set_card_card_id ON public.scenario_encounte
 --
 
 CREATE INDEX idx_scenario_encounter_set_encounter_code ON public.scenario_encounter_set USING btree (encounter_code);
+
+
+--
+-- Name: idx_session_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_session_account_id ON public.session USING btree (account_id);
+
+
+--
+-- Name: idx_session_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_session_expires_at ON public.session USING btree (expires_at);
+
+
+--
+-- Name: idx_verification_token_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_verification_token_email ON public.verification_token USING btree (email);
+
+
+--
+-- Name: idx_verification_token_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_verification_token_expires_at ON public.verification_token USING btree (expires_at);
+
+
+--
+-- Name: idx_verification_token_token_hash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_verification_token_token_hash ON public.verification_token USING btree (token_hash);
+
+
+--
+-- Name: job_common_pkey; Type: INDEX ATTACH; Schema: pgboss; Owner: -
+--
+
+ALTER INDEX pgboss.job_pkey ATTACH PARTITION pgboss.job_common_pkey;
+
+
+--
+-- Name: job_common dlq_fkey; Type: FK CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.job_common
+    ADD CONSTRAINT dlq_fkey FOREIGN KEY (dead_letter) REFERENCES pgboss.queue(name) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: job_common q_fkey; Type: FK CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.job_common
+    ADD CONSTRAINT q_fkey FOREIGN KEY (name) REFERENCES pgboss.queue(name) ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED;
+
+
+--
+-- Name: queue queue_dead_letter_fkey; Type: FK CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.queue
+    ADD CONSTRAINT queue_dead_letter_fkey FOREIGN KEY (dead_letter) REFERENCES pgboss.queue(name);
+
+
+--
+-- Name: schedule schedule_name_fkey; Type: FK CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.schedule
+    ADD CONSTRAINT schedule_name_fkey FOREIGN KEY (name) REFERENCES pgboss.queue(name) ON DELETE CASCADE;
+
+
+--
+-- Name: subscription subscription_name_fkey; Type: FK CONSTRAINT; Schema: pgboss; Owner: -
+--
+
+ALTER TABLE ONLY pgboss.subscription
+    ADD CONSTRAINT subscription_name_fkey FOREIGN KEY (name) REFERENCES pgboss.queue(name) ON DELETE CASCADE;
+
+
+--
+-- Name: account_folder account_folder_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_folder
+    ADD CONSTRAINT account_folder_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
+
+
+--
+-- Name: account_identity account_identity_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_identity
+    ADD CONSTRAINT account_identity_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
+
+
+--
+-- Name: account_moderation_action account_moderation_action_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_moderation_action
+    ADD CONSTRAINT account_moderation_action_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
+
+
+--
+-- Name: account_moderation_action account_moderation_action_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_moderation_action
+    ADD CONSTRAINT account_moderation_action_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.account(id) ON DELETE SET NULL;
+
+
+--
+-- Name: account_moderation_action account_moderation_action_ended_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_moderation_action
+    ADD CONSTRAINT account_moderation_action_ended_by_fkey FOREIGN KEY (ended_by) REFERENCES public.account(id) ON DELETE SET NULL;
+
+
+--
+-- Name: account_settings account_settings_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account_settings
+    ADD CONSTRAINT account_settings_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
+
+
+--
+-- Name: arkhamdb_deck_snapshot arkhamdb_deck_snapshot_account_identity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.arkhamdb_deck_snapshot
+    ADD CONSTRAINT arkhamdb_deck_snapshot_account_identity_id_fkey FOREIGN KEY (account_identity_id) REFERENCES public.account_identity(id) ON DELETE CASCADE;
 
 
 --
@@ -1282,6 +2412,38 @@ ALTER TABLE ONLY public.card
 
 ALTER TABLE ONLY public.card
     ADD CONSTRAINT card_type_code_fkey FOREIGN KEY (type_code) REFERENCES public.type(code) ON DELETE CASCADE;
+
+
+--
+-- Name: deck deck_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deck
+    ADD CONSTRAINT deck_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
+
+
+--
+-- Name: deck deck_next_deck_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deck
+    ADD CONSTRAINT deck_next_deck_fkey FOREIGN KEY (next_deck) REFERENCES public.deck(id) ON DELETE SET NULL;
+
+
+--
+-- Name: deck deck_prev_deck_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deck
+    ADD CONSTRAINT deck_prev_deck_fkey FOREIGN KEY (prev_deck) REFERENCES public.deck(id) ON DELETE SET NULL;
+
+
+--
+-- Name: deck deck_taboo_set_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.deck
+    ADD CONSTRAINT deck_taboo_set_id_fkey FOREIGN KEY (taboo_set_id) REFERENCES public.taboo_set(id) ON DELETE SET NULL;
 
 
 --
@@ -1445,6 +2607,14 @@ ALTER TABLE ONLY public.grimoire_section
 
 
 --
+-- Name: oauth_token oauth_token_account_identity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.oauth_token
+    ADD CONSTRAINT oauth_token_account_identity_id_fkey FOREIGN KEY (account_identity_id) REFERENCES public.account_identity(id) ON DELETE CASCADE;
+
+
+--
 -- Name: pack pack_cycle_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1501,6 +2671,22 @@ ALTER TABLE ONLY public.scenario_encounter_set
 
 
 --
+-- Name: session session_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id) ON DELETE CASCADE;
+
+
+--
+-- Name: verification_token verification_token_account_identity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.verification_token
+    ADD CONSTRAINT verification_token_account_identity_id_fkey FOREIGN KEY (account_identity_id) REFERENCES public.account_identity(id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
@@ -1518,6 +2704,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20250805131452'),
     ('20250826075406'),
     ('20250831084503'),
+    ('20260113192307'),
     ('20260206184321'),
     ('20260227194035'),
     ('20260418123000'),

@@ -1,11 +1,14 @@
-import { type Card, SPECIAL_CARD_CODES } from "@arkham-build/shared";
+import {
+  type Card,
+  type Settings,
+  SPECIAL_CARD_CODES,
+} from "@arkham-build/shared";
 import type { ReferenceType } from "@floating-ui/react";
 import { FileWarningIcon, StarIcon } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { useStore } from "@/store";
-import type { SettingsState } from "@/store/slices/settings.types";
 import {
   cardLimit,
   displayAttribute,
@@ -41,10 +44,10 @@ export type Props = {
   annotation?: string | null;
   as?: "li" | "div";
   card: Card;
-  cardLevelDisplay?: SettingsState["cardLevelDisplay"];
-  cardShowCollectionNumber?: SettingsState["cardShowCollectionNumber"];
-  cardSkillIconsDisplay?: SettingsState["cardSkillIconsDisplay"];
-  cardShowUniqueIcon?: SettingsState["cardShowUniqueIcon"];
+  cardLevelDisplay?: Settings["cardLevelDisplay"];
+  cardShowCollectionNumber?: Settings["cardShowCollectionNumber"];
+  cardSkillIconsDisplay?: Settings["cardSkillIconsDisplay"];
+  cardShowUniqueIcon?: Settings["cardShowUniqueIcon"];
   className?: string;
   disableKeyboard?: boolean;
   disableModalOpen?: boolean;

@@ -21,7 +21,7 @@ import metadataResponse from "../../fixtures/stubs/metadata.json" with {
 };
 
 export async function mockApiCalls(page: Page) {
-  const apiUrl = process.env.VITE_API_URL ?? "https://api-v2.arkham.build";
+  const apiUrl = process.env.VITE_API_URL ?? "https://api.arkham.build";
 
   const baseUrl = `${apiUrl}/v1`;
 
@@ -50,7 +50,7 @@ export async function mockApiCalls(page: Page) {
       const json = versionsResponse;
       await route.fulfill({ json });
     }),
-    page.route(/\/public\/import/, async (route) => {
+    page.route(/\/v1\/public\/import/, async (route) => {
       const json = deckResponse;
       await route.fulfill({ json });
     }),

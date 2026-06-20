@@ -1,4 +1,4 @@
-import type { Card } from "@arkham-build/shared";
+import type { Card, Deck, DecklistConfig, Id } from "@arkham-build/shared";
 import { createSelector } from "reselect";
 import { resolveDeck, resolveDeckSummary } from "@/store/lib/resolve-deck";
 import { time, timeEnd } from "@/utils/time";
@@ -22,9 +22,7 @@ import { limitedSlotOccupation } from "../lib/limited-slots";
 import type { LookupTables } from "../lib/lookup-tables.types";
 import { makeSortFunction, sortAlphabeticalLatin } from "../lib/sorting";
 import type { Customization, DeckSummary, ResolvedDeck } from "../lib/types";
-import type { Deck, Id } from "../schemas/deck.schema";
 import type { StoreState } from "../slices";
-import type { DecklistConfig } from "../slices/settings.types";
 import {
   selectBuildQlInterpreter,
   selectLocaleSortingCollator,
@@ -35,19 +33,18 @@ import {
 export const selectResolvedDeckById = createSelector(
   selectMetadata,
   selectLookupTables,
-  (state: StoreState) => state.sharing,
   selectLocaleSortingCollator,
   (state: StoreState, deckId?: Id) =>
     deckId ? state.data.decks[deckId] : undefined,
   (state: StoreState, deckId?: Id, applyEdits?: boolean) =>
     deckId && applyEdits ? state.deckEdits?.[deckId] : undefined,
-  (metadata, lookupTables, sharing, collator, deck, edits) => {
+  (metadata, lookupTables, collator, deck, edits) => {
     if (!deck) return undefined;
 
     time("select_resolved_deck");
 
     const resolvedDeck = resolveDeck(
-      { metadata, lookupTables, sharing },
+      { metadata, lookupTables },
       collator,
       edits ? applyDeckEdits(deck, edits, metadata) : deck,
     );
@@ -61,9 +58,8 @@ export const selectLocalDeckSummaries = createSelector(
   (state: StoreState) => state.data,
   selectMetadata,
   selectLookupTables,
-  (state: StoreState) => state.sharing,
   selectLocaleSortingCollator,
-  (data, metadata, lookupTables, sharing, collator) => {
+  (data, metadata, lookupTables, collator) => {
     time("select_local_deck_summaries");
 
     const summaries = Object.keys(data.history).reduce<DeckSummary[]>(
@@ -73,11 +69,7 @@ export const selectLocalDeckSummaries = createSelector(
         try {
           if (deck) {
             acc.push(
-              resolveDeckSummary(
-                { metadata, lookupTables, sharing },
-                collator,
-                deck,
-              ),
+              resolveDeckSummary({ metadata, lookupTables }, collator, deck),
             );
           } else {
             console.warn(`Could not find deck ${id} in local storage.`);
@@ -295,15 +287,14 @@ export const selectDeckHistoryCached = createSelector(
   selectMetadata,
   selectLookupTables,
   (state: StoreState) => state.data,
-  (state: StoreState) => state.sharing,
   (state: StoreState) => state.settings,
   selectLocaleSortingCollator,
-  (id, metadata, lookupTables, data, sharing, settings, collator) => {
+  (id, metadata, lookupTables, data, settings, collator) => {
     const deck = data.decks[id];
     if (!deck) return [];
 
     return selectDeckHistory(
-      { metadata, data, sharing, settings },
+      { metadata, data, settings },
       lookupTables,
       collator,
       deck,
@@ -311,8 +302,8 @@ export const selectDeckHistoryCached = createSelector(
   },
 );
 
-export function selectDeckHistory(
-  deps: Pick<StoreState, "metadata" | "data" | "sharing" | "settings">,
+function selectDeckHistory(
+  deps: Pick<StoreState, "metadata" | "data" | "settings">,
   lookupTables: LookupTables,
   collator: Intl.Collator,
   deck: Deck,
@@ -329,7 +320,7 @@ export function selectDeckHistory(
 
   const resolvedDecks = history.map((deckId) =>
     resolveDeck(
-      { metadata: deps.metadata, lookupTables, sharing: deps.sharing },
+      { metadata: deps.metadata, lookupTables },
       collator,
       deckId === deck.id ? deck : deps.data.decks[deckId],
     ),
@@ -413,16 +404,15 @@ export const selectDeckGroups = createSelector(
 export const selectUndoHistory = createSelector(
   selectMetadata,
   selectLookupTables,
-  (state: StoreState) => state.sharing,
   (state: StoreState) => state.data,
   selectLocaleSortingCollator,
   (_: StoreState, deck: ResolvedDeck) => deck,
-  (metadata, lookupTables, sharing, data, collator, deck) => {
+  (metadata, lookupTables, data, collator, deck) => {
     const prevDeck = data.decks[deck.id];
     if (!prevDeck) return [];
 
     const prev = resolveDeck(
-      { metadata, lookupTables: lookupTables, sharing },
+      { metadata, lookupTables: lookupTables },
       collator,
       prevDeck,
     );

@@ -1,4 +1,4 @@
-import type { Card } from "@arkham-build/shared";
+import type { Card, Cycle, Pack } from "@arkham-build/shared";
 import {
   ASSET_SLOT_ORDER,
   FACTION_ORDER,
@@ -74,8 +74,6 @@ import {
   sortByName,
 } from "../lib/sorting";
 import { isResolvedDeck, type ResolvedDeck } from "../lib/types";
-import type { Cycle } from "../schemas/cycle.schema";
-import type { Pack } from "../schemas/pack.schema";
 import type { StoreState } from "../slices";
 import type {
   AssetFilter,
@@ -627,6 +625,7 @@ const selectBaseListCards = createSelector(
     time("select_base_list_cards");
 
     let filteredCards = Object.values(metadata.cards);
+    const totalCardCount = filteredCards.length;
 
     // filters can be impacted by card changes, apply them now.
     if (tabooSetId || customizations) {
@@ -674,7 +673,6 @@ const selectBaseListCards = createSelector(
     }
 
     filteredCards = filteredCards.filter(and(filters));
-    const totalCardCount = filteredCards.length;
 
     filters = [];
 
@@ -1211,7 +1209,7 @@ export const selectInvestigatorOptions = createSelector(
     investigators.sort(sortByName(collator));
 
     return [
-      { label: i18n.t("filters.investigator.any_investigator"), value: "" },
+      { label: "Any investigator", value: "" },
       ...investigators.map((card) => ({
         label: displayAttribute(card, "name"),
         value: card.code,
@@ -1377,7 +1375,7 @@ const selectCycleChanges = createSelector(
   (metadata, value) => {
     return value
       .map((id) => displayPackName(metadata.cycles[id]))
-      .join(` ${i18n.t("filters.or")} `);
+      .join(` ${i18n.t("common.or")} `);
   },
 );
 
@@ -1736,7 +1734,7 @@ function selectAssetChanges(value: AssetFilter) {
   const slot = value.slots.reduce((acc, key) => {
     return !acc
       ? `${t("filters.slot.title")}: ${key}`
-      : `${acc} ${t("filters.or")} ${key}`;
+      : `${acc} ${t("common.or")} ${key}`;
   }, "");
 
   const uses = value.uses.reduce((acc, key) => {
@@ -1746,7 +1744,7 @@ function selectAssetChanges(value: AssetFilter) {
 
     return !acc
       ? `${t("filters.uses.title")}: ${displayStr}`
-      : `${acc} ${t("filters.or")} ${displayStr}`;
+      : `${acc} ${t("common.or")} ${displayStr}`;
   }, "");
 
   const skillBoosts = value.skillBoosts.reduce((acc, key) => {
@@ -1754,7 +1752,7 @@ function selectAssetChanges(value: AssetFilter) {
 
     return !acc
       ? `${t("filters.skill_boost.title")}: ${displayStr}`
-      : `${acc} ${t("filters.or")} ${displayStr}`;
+      : `${acc} ${t("common.or")} ${displayStr}`;
   }, "");
 
   const healthFilter = formatHealthChanges(
@@ -1798,7 +1796,7 @@ const selectEncounterSetChanges = createSelector(
   (value, metadata) => {
     return value
       .map((id) => displayPackName(metadata.encounterSets[id]))
-      .join(` ${i18n.t("filters.or")} `);
+      .join(` ${i18n.t("common.or")} `);
   },
 );
 
@@ -1818,7 +1816,7 @@ function selectHealthChanges(value: [number, number] | undefined) {
 export function selectIllustratorChanges(value: MultiselectFilter) {
   const count = value.length;
   if (!count) return "";
-  return value.join(` ${i18n.t("filters.or")} `);
+  return value.join(` ${i18n.t("common.or")} `);
 }
 
 function selectInvestigatorCardAccessChanges(value: MultiselectFilter) {
@@ -1883,7 +1881,7 @@ const selectPackChanges = createSelector(
 
     return resolveLimitedPoolPacks(metadata, value)
       .map((pack) => displayPackName(pack))
-      .join(` ${i18n.t("filters.or")} `);
+      .join(` ${i18n.t("common.or")} `);
   },
 );
 
@@ -1924,7 +1922,7 @@ function selectSubtypeChanges(value: SubtypeFilter) {
   const labels = subtypeLabels();
   if (enabled.length === 0) return labels["none"];
 
-  return enabled.map(([key]) => labels[key]).join(` ${i18n.t("filters.or")} `);
+  return enabled.map(([key]) => labels[key]).join(` ${i18n.t("common.or")} `);
 }
 
 const selectTabooSetChanges = createSelector(
@@ -1945,14 +1943,14 @@ function selectTraitChanges(value: MultiselectFilter) {
       const key = `common.traits.${code}`;
       return i18n.exists(key) ? i18n.t(key) : code;
     })
-    .join(` ${i18n.t("filters.or")} `);
+    .join(` ${i18n.t("common.or")} `);
 }
 
 function selectTypeChanges(value: MultiselectFilter) {
   if (!value.length) return "";
   return value
     .map((code) => i18n.t(`common.type.${code}`))
-    .join(` ${i18n.t("filters.or")} `);
+    .join(` ${i18n.t("common.or")} `);
 }
 
 export function selectFilterChanges<T extends keyof FilterMapping>(

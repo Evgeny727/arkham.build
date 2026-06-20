@@ -1,6 +1,6 @@
+import type { Deck } from "@arkham-build/shared";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { StoreApi } from "zustand";
-import type { Deck } from "@/store/schemas/deck.schema";
 import { getMockStore } from "@/test/get-mock-store";
 import {
   selectLocaleSortingCollator,
@@ -291,7 +291,6 @@ function validate(store: StoreApi<StoreState>, deck: Deck) {
   return validateDeck(
     resolveDeck(
       {
-        sharing: state.sharing,
         metadata,
         lookupTables,
       },

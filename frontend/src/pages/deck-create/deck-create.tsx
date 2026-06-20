@@ -14,7 +14,8 @@ import {
   selectDeckCreateCardSets,
   selectDeckCreateInvestigators,
 } from "@/store/selectors/deck-create";
-import { querySealedDeck } from "@/store/services/queries";
+import { useHttpClient } from "@/store/services/http-client.context";
+import { querySealedDeck } from "@/store/services/requests/sealed-decks";
 import { cx } from "@/utils/cx";
 import { useAccentColor } from "@/utils/use-accent-color";
 import css from "./deck-create.module.css";
@@ -26,6 +27,7 @@ function DeckCreate() {
 
   const { t } = useTranslation();
   const toast = useToast();
+  const client = useHttpClient();
 
   const deckCreate = useStore((state) => state.deckCreate);
   const destroy = useStore((state) => state.resetCreate);
@@ -51,7 +53,7 @@ function DeckCreate() {
       });
 
       try {
-        const sealedDeck = await querySealedDeck(id);
+        const sealedDeck = await querySealedDeck(client, id);
         if (!mounted) return;
 
         setSealedDeck(sealedDeck);
@@ -77,7 +79,7 @@ function DeckCreate() {
       mounted = false;
       destroy();
     };
-  }, [code, destroy, initialize, search, setSealedDeck, t, toast]);
+  }, [client, code, destroy, initialize, search, setSealedDeck, t, toast]);
 
   return deckCreate ? (
     <CardModalProvider>

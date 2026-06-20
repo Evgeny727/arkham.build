@@ -1,3 +1,4 @@
+import { type Deck, DeckSchema } from "@arkham-build/shared";
 import limitCustomizableLevel0 from "@test/fixtures/decks/validation/customizable_level_below.json";
 import limitCarolyn from "@test/fixtures/decks/validation/tag_based_access.json";
 import limitCarolynInvalid from "@test/fixtures/decks/validation/tag_based_access_invalid.json";
@@ -5,7 +6,6 @@ import limitCarolynVersatile from "@test/fixtures/decks/validation/tag_based_acc
 import limitCarolynVersatileInvalid from "@test/fixtures/decks/validation/tag_based_access_versatile_invalid.json";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { StoreApi } from "zustand";
-import { type Deck, DeckSchema } from "@/store/schemas/deck.schema";
 import { getMockStore } from "@/test/get-mock-store";
 import {
   selectLocaleSortingCollator,
@@ -31,11 +31,10 @@ function snapshotResult(state: StoreState, deck: Deck) {
   const metadata = selectMetadata(state);
   const lookupTables = selectLookupTables(state);
   const buildQlInterpreter = selectStaticBuildQlInterpreter(state);
-  const sharing = state.sharing;
 
   return limitedSlotOccupation(
     resolveDeck(
-      { lookupTables, metadata, sharing },
+      { lookupTables, metadata },
       selectLocaleSortingCollator(state),
       deck,
     ),

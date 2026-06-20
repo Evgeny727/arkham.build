@@ -1,9 +1,9 @@
+import type { DeckFanMadeContent } from "@arkham-build/shared";
 import type { StateCreator } from "zustand";
 import {
   addProjectToMetadata,
   buildCacheFromDecks,
 } from "../lib/fan-made-content";
-import type { DeckFanMadeContent } from "../lib/types";
 import type { StoreState } from ".";
 import type { Metadata } from "./metadata.types";
 import type { UISlice, UIState } from "./ui.types";
@@ -15,7 +15,9 @@ function getInitialUIState(): UIState {
       showUnusableCards: false,
       showLimitedAccess: true,
       fanMadeContentCache: {},
+      keyboardShortcutsOpen: false,
       navigationHistory: [],
+      sessionInitialized: false,
       cardModal: {
         code: undefined,
         config: undefined,
@@ -110,6 +112,14 @@ export const createUISlice: StateCreator<StoreState, [], [], UISlice> = (
             ).filter(([code]) => !encounterSets?.[code]),
           ),
         },
+      },
+    }));
+  },
+  toggleKeyboardShortcuts() {
+    set((state) => ({
+      ui: {
+        ...state.ui,
+        keyboardShortcutsOpen: !state.ui.keyboardShortcutsOpen,
       },
     }));
   },

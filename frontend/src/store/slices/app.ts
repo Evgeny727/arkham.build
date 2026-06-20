@@ -1,51 +1,26 @@
-import { type Card, SPECIAL_CARD_CODES } from "@arkham-build/shared";
+import { type Card, type Deck, isDeck } from "@arkham-build/shared";
 import type { StateCreator } from "zustand";
-import { applyDeckEdits, getChangeRecord } from "@/store/lib/deck-edits";
-import { createDeck } from "@/store/lib/deck-factory";
-import type { Deck } from "@/store/schemas/deck.schema";
 import factions from "@/store/services/data/factions.json";
 import subTypes from "@/store/services/data/subtypes.json";
 import types from "@/store/services/data/types.json";
-import { assertCanPublishDeck, incrementVersion } from "@/utils/arkhamdb";
 import { assert } from "@/utils/assert";
-import { decodeExileSlots } from "@/utils/card-utils";
 import { inferChapterNumber } from "@/utils/chapters";
 import { randomId } from "@/utils/crypto";
 import { download } from "@/utils/download";
 import { time, timeEnd } from "@/utils/time";
-import { prepareBackup, restoreBackup } from "../lib/backup";
-import { applyCardChanges } from "../lib/card-edits";
-import { mapValidationToProblem } from "../lib/deck-io";
+import { prepareBackup } from "../lib/backup";
 import {
-  decodeDeckMeta,
-  encodeCardPool,
-  encodeSealedDeck,
-} from "../lib/deck-meta";
+  createAdapter,
+  deleteAdapter,
+  updateAdapter,
+  upgradeAdapter,
+  uploadAdapter,
+} from "../lib/deck-crud";
+import { formatDeckImport } from "../lib/deck-io";
 import { buildCacheFromDecks } from "../lib/fan-made-content";
 import { mappedByCode, mappedById } from "../lib/metadata-utils";
-import { resolveDeck } from "../lib/resolve-deck";
-import { decodeExtraSlots, encodeExtraSlots } from "../lib/slots";
-import { disconnectProviderIfUnauthorized, syncAdapters } from "../lib/sync";
-import type { DeckMeta } from "../lib/types";
+import { isSyncedStorageProvider } from "../lib/sync";
 import { dehydrate, hydrate } from "../persist";
-import { selectDeckCreateCardSets } from "../selectors/deck-create";
-import {
-  selectDeckHistory,
-  selectDeckValid,
-  selectLatestUpgrade,
-} from "../selectors/decks";
-import {
-  selectLocaleSortingCollator,
-  selectLookupTables,
-  selectMetadata,
-} from "../selectors/shared";
-import {
-  createShare,
-  deleteDeck,
-  newDeck,
-  updateDeck,
-  upgradeDeck,
-} from "../services/queries";
 import type { StoreState } from ".";
 import type { AppSlice } from "./app.types";
 import { makeLists } from "./lists";
@@ -70,7 +45,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
     queryCards,
     { refresh, locale, overrides } = {},
   ) {
-    const persistedState = await hydrate();
+    const persistedState = refresh ? undefined : await hydrate();
 
     if (
       !refresh &&
@@ -227,134 +202,27 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
 
     return true;
   },
-  async createDeck() {
+  async createDeck(client) {
     const state = get();
-    const metadata = selectMetadata(state);
+    const deck = await createAdapter.persist(
+      client,
+      state,
+      createAdapter.format(state),
+    );
+    createAdapter.transition(set, deck);
+    await dehydrate(get(), "app");
+    return deck.id;
+  },
+  async importSharedDeck(importDeck, type) {
+    const state = get();
 
-    assert(state.deckCreate, "DeckCreate state must be initialized.");
-
-    const extraSlots: Record<string, number> = {};
-    const meta: DeckMeta = {};
-    const slots: Record<string, number> = {};
-
-    const { investigatorCode, investigatorFrontCode, investigatorBackCode } =
-      state.deckCreate;
-
-    if (investigatorCode !== investigatorFrontCode) {
-      meta.alternate_front = investigatorFrontCode;
-    }
-
-    if (investigatorCode !== investigatorBackCode) {
-      meta.alternate_back = investigatorBackCode;
-    }
-
-    const back = applyCardChanges(
-      metadata.cards[investigatorBackCode],
-      metadata,
-      state.deckCreate.tabooSetId,
-      undefined,
+    assert(
+      !state.data.decks[importDeck.id],
+      `Deck with id ${importDeck.id} already exists.`,
     );
 
-    const deckSizeOption = [
-      ...(back.deck_options ?? []),
-      ...(back.side_deck_options ?? []),
-    ]?.find((o) => !!o.deck_size_select);
-
-    for (const [key, value] of Object.entries(state.deckCreate.selections)) {
-      // EDGE CASE: mandy's taboo removes the deck size select,
-      // omit any selection made from deck meta.
-      if (key === "deck_size_selected" && !deckSizeOption) {
-        continue;
-      }
-
-      meta[key as keyof Omit<DeckMeta, "fan_made_content" | "hidden_slots">] =
-        value;
-    }
-
-    if (deckSizeOption && !meta.deck_size_selected) {
-      meta.deck_size_selected = "30";
-    }
-
-    const cardSets = selectDeckCreateCardSets(state);
-
-    for (const set of cardSets) {
-      if (!set.selected) continue;
-
-      for (const { card } of set.cards) {
-        const quantity =
-          state.deckCreate.extraCardQuantities?.[card.code] ??
-          set.quantities?.[card.code];
-
-        if (!quantity) continue;
-
-        if (set.id === "sideDeckRequiredCards") {
-          extraSlots[card.code] = quantity;
-        } else {
-          slots[card.code] = quantity;
-        }
-      }
-    }
-
-    if (Object.keys(extraSlots).length) {
-      meta.extra_deck = encodeExtraSlots(extraSlots);
-    }
-
-    const cardPool = state.deckCreate.cardPool ?? [];
-    if (cardPool.length) {
-      meta.card_pool = encodeCardPool(cardPool);
-    }
-
-    const sealedDeck = state.deckCreate.sealed;
-
-    if (sealedDeck) {
-      Object.assign(meta, encodeSealedDeck(sealedDeck));
-    }
-
-    let deck = createDeck({
-      investigator_code: state.deckCreate.investigatorCode,
-      investigator_name: back.real_name,
-      name: state.deckCreate.title,
-      slots,
-      meta: JSON.stringify(meta),
-      taboo_id: state.deckCreate.tabooSetId ?? null,
-      problem: "too_few_cards",
-    });
-
-    const resolved = resolveDeck(
-      {
-        lookupTables: selectLookupTables(state),
-        metadata,
-        sharing: state.sharing,
-      },
-      selectLocaleSortingCollator(state),
-      deck,
-    );
-
-    if (resolved.fanMadeData) {
-      const meta = decodeDeckMeta(deck);
-      meta.fan_made_content = resolved.fanMadeData;
-      deck.meta = JSON.stringify(meta);
-    }
-
-    if (state.deckCreate.provider === "arkhamdb") {
-      assertCanPublishDeck(resolved);
-
-      state.setRemoting("arkhamdb", true);
-
-      try {
-        const adapter = new syncAdapters["arkhamdb"](get);
-        const { id } = await newDeck(state.app.clientId, adapter.out(deck));
-
-        deck = adapter.in(
-          await updateDeck(state.app.clientId, adapter.out({ ...deck, id })),
-        );
-      } catch (err) {
-        disconnectProviderIfUnauthorized("arkhamdb", err, set);
-        throw err;
-      } finally {
-        state.setRemoting("arkhamdb", false);
-      }
-    }
+    const deck = formatDeckImport(state, importDeck as Deck, type);
+    assert(isDeck(deck), "Invalid deck data.");
 
     set((prev) => ({
       data: {
@@ -368,75 +236,190 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
           [deck.id]: [],
         },
       },
-      deckCreate: undefined,
     }));
 
     await dehydrate(get(), "app");
 
-    if (state.deckCreate.provider === "shared") {
-      await state.createShare(deck.id as string);
-    }
-
     return deck.id;
   },
-  async deleteDeck(id, cb) {
+  async uploadDeckToProvider(client, deckId, provider) {
+    const state = get();
+    const deck = uploadAdapter.format(state, deckId, provider);
+    const canonicalDeck = await uploadAdapter.persist(client, state, deck);
+    const shouldSyncFolders =
+      deck.id !== canonicalDeck.id && state.data.deckFolders[deck.id] != null;
+
+    uploadAdapter.transition(set, deck, canonicalDeck);
+    await dehydrate(get(), "app", "edits");
+
+    if (shouldSyncFolders && get().auth.status === "authenticated") {
+      await get().saveFolders(client);
+    }
+
+    return canonicalDeck.id;
+  },
+  async deleteDeck(client, id, cb) {
     const state = get();
 
-    const deck = state.data.decks[id];
-    assert(deck.next_deck == null, "Cannot delete a deck that has upgrades.");
+    const deck = deleteAdapter.format(state, id);
+    const shouldSyncFolders = hasFolderAssignmentsForDelete(state, deck.id);
 
-    if (deck.source === "arkhamdb") {
-      state.setRemoting("arkhamdb", true);
-      try {
-        await deleteDeck(state.app.clientId, id, true);
-      } catch (err) {
-        disconnectProviderIfUnauthorized("arkhamdb", err, set);
-        // when deleting, we ignore the remote error and continue to delete
-      } finally {
-        state.setRemoting("arkhamdb", false);
-      }
-    } else {
-      await Promise.allSettled(
-        [...state.data.history[id], deck.id].map((curr) =>
-          state.deleteShare(curr as string),
-        ),
-      );
-    }
+    await deleteAdapter.persist(
+      client,
+      get,
+      set,
+      deck,
+      state.sync.decks.items[id]?.version,
+    );
 
     cb?.();
 
-    set((prev) => {
-      const history = { ...prev.data.history };
-      const undoHistory = { ...prev.data.undoHistory };
-      const decks = { ...prev.data.decks };
-      const deckEdits = { ...prev.deckEdits };
+    deleteAdapter.transition(set, deck.id);
 
-      delete deckEdits[id];
-      delete decks[id];
+    await dehydrate(get(), "app", "edits");
 
-      const historyEntries = history[id] ?? [];
+    if (shouldSyncFolders && get().auth.status === "authenticated") {
+      await get().saveFolders(client);
+    }
+  },
+  async deleteUpgrade(client, id, cb) {
+    const state = get();
 
-      for (const prevId of historyEntries) {
-        delete decks[prevId];
-        delete deckEdits[prevId];
-        delete undoHistory[prevId];
+    const deck = deleteAdapter.format(state, id);
+    assert(deck, `Deck ${id} does not exist.`);
+
+    const previousId = deck.previous_deck;
+    const shouldSyncFolders = hasFolderAssignmentsForDelete(
+      state,
+      deck.id,
+      true,
+    );
+
+    assert(previousId, "Deck does not have a previous deck");
+    assert(state.data.decks[previousId], "Previous deck does not exist");
+
+    await deleteAdapter.persist(
+      client,
+      get,
+      set,
+      deck,
+      state.sync.decks.items[id]?.version,
+    );
+
+    cb?.(previousId);
+
+    deleteAdapter.transition(set, deck.id, previousId);
+
+    await dehydrate(get(), "app", "edits");
+
+    if (shouldSyncFolders && get().auth.status === "authenticated") {
+      await get().saveFolders(client);
+    }
+
+    return previousId;
+  },
+  async updateDeckProperties(client, deckId, properties) {
+    const state = get();
+
+    const { deck } = updateAdapter.formatPropertyPatch(
+      state,
+      deckId,
+      properties,
+    );
+
+    const canonicalDeck = await updateAdapter.persist(
+      client,
+      get,
+      set,
+      deck,
+      state.sync.decks.items[deckId]?.version,
+    );
+
+    updateAdapter.transition(set, canonicalDeck, undefined, (deckEdits) => {
+      const nextEdits = { ...deckEdits };
+      const edit = deckEdits[deckId];
+
+      if (!edit) return nextEdits;
+
+      if (properties.slots || properties.sideSlots || properties.meta) {
+        delete nextEdits[deckId];
+        return nextEdits;
       }
 
-      delete history[id];
-      delete undoHistory[id];
+      const nextEdit = structuredClone(edit);
+      if (properties.name) delete nextEdit.name;
+      if (properties.tags) delete nextEdit.tags;
+      nextEdits[deckId] = nextEdit;
 
-      return {
-        data: {
-          ...prev.data,
-          decks,
-          history,
-          undoHistory,
-        },
-        deckEdits,
-      };
+      return nextEdits;
     });
 
     await dehydrate(get(), "app", "edits");
+
+    return deck;
+  },
+  async saveDeck(client, deckId) {
+    const state = get();
+    const { deck, undo } = updateAdapter.formatSave(get(), deckId);
+
+    const canonicalDeck = await updateAdapter.persist(
+      client,
+      get,
+      set,
+      deck,
+      state.sync.decks.items[deckId]?.version,
+    );
+
+    updateAdapter.transition(set, canonicalDeck, undo, (deckEdits) => {
+      const nextEdits = { ...deckEdits };
+      delete nextEdits[deck.id];
+      return nextEdits;
+    });
+
+    await dehydrate(get(), "app", "edits");
+    return deck.id;
+  },
+  async upgradeDeck(client, payload) {
+    const state = get();
+
+    const deck = state.data.decks[payload.id];
+    assert(deck, `Deck ${payload.id} does not exist.`);
+
+    const upgrade = await upgradeAdapter.persist(
+      client,
+      get,
+      set,
+      deck,
+      upgradeAdapter.format(state, deck, payload),
+      state.sync.decks.items[deck.id]?.version,
+    );
+
+    upgradeAdapter.transition(set, deck, upgrade);
+
+    await dehydrate(get(), "app", "edits");
+    return upgrade;
+  },
+  backup() {
+    download(
+      prepareBackup(get()),
+      `arkham-build-${new Date().toISOString()}.json`,
+      "application/json",
+    );
+  },
+  async dismissBanner(bannerId) {
+    set((state) => {
+      const banners = new Set(state.app.bannersDismissed);
+      banners.add(bannerId);
+
+      return {
+        app: {
+          ...state.app,
+          bannersDismissed: Array.from(banners),
+        },
+      };
+    });
+
+    await dehydrate(get(), "app");
   },
   async deleteAllDecks() {
     set((state) => {
@@ -446,7 +429,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
       const undoHistory = { ...state.data.undoHistory };
 
       for (const id of Object.keys(decks)) {
-        if (decks[id].source !== "arkhamdb") {
+        if (!isSyncedStorageProvider(decks[id]?.source)) {
           delete decks[id];
           delete history[id];
           delete edits[id];
@@ -466,443 +449,20 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
     });
 
     await dehydrate(get(), "app", "edits");
-
-    if (Object.keys(get().sharing.decks).length) {
-      await get().deleteAllShares().catch(console.error);
-    }
-  },
-  async updateDeckProperties(deckId, properties) {
-    const state = get();
-
-    const deck = state.data.decks[deckId];
-    assert(deck, `Deck ${deckId} does not exist.`);
-
-    let nextDeck = {
-      ...deck,
-      ...properties,
-    };
-
-    nextDeck.date_update = new Date().toISOString();
-    nextDeck.version = incrementVersion(deck.version);
-
-    if (nextDeck.source === "arkhamdb") {
-      state.setRemoting("arkhamdb", true);
-
-      try {
-        const adapter = new syncAdapters.arkhamdb(get);
-        nextDeck = adapter.in(
-          await updateDeck(state.app.clientId, adapter.out(nextDeck)),
-        );
-      } catch (err) {
-        disconnectProviderIfUnauthorized("arkhamdb", err, set);
-        throw err;
-      } finally {
-        state.setRemoting("arkhamdb", false);
-      }
-    } else {
-      await state.updateShare(nextDeck);
-    }
-
-    set((prev) => {
-      const nextEdits = { ...prev.deckEdits };
-
-      const edit = prev.deckEdits[deckId];
-
-      if (edit) {
-        if (properties.slots || properties.sideSlots || properties.meta) {
-          delete nextEdits[deckId];
-        } else {
-          const nextEdit = structuredClone(edit);
-          if (properties.name) delete nextEdit.name;
-          if (properties.tags) delete nextEdit.tags;
-          nextEdits[deckId] = nextEdit;
-        }
-      }
-
-      return {
-        deckEdits: nextEdits,
-        data: {
-          ...prev.data,
-          decks: {
-            ...prev.data.decks,
-            [nextDeck.id]: nextDeck,
-          },
-        },
-      };
-    });
-
-    await dehydrate(get(), "app", "edits");
-
-    return nextDeck;
-  },
-  async saveDeck(deckId) {
-    const state = get();
-    const metadata = selectMetadata(state);
-
-    const edits = state.deckEdits[deckId];
-
-    const deck = state.data.decks[deckId];
-    if (!deck) return deckId;
-
-    const previousDeck = deck.previous_deck
-      ? state.data.decks[deck.previous_deck]
-      : undefined;
-
-    let nextDeck = applyDeckEdits(deck, edits, metadata, true, previousDeck);
-    nextDeck.date_update = new Date().toISOString();
-    nextDeck.version = incrementVersion(deck.version);
-
-    const resolved = resolveDeck(
-      {
-        lookupTables: selectLookupTables(state),
-        metadata,
-        sharing: state.sharing,
-      },
-      selectLocaleSortingCollator(state),
-      nextDeck,
-    );
-
-    if (resolved.fanMadeData) {
-      const meta = decodeDeckMeta(nextDeck);
-      meta.fan_made_content = resolved.fanMadeData;
-      nextDeck.meta = JSON.stringify(meta);
-    }
-
-    const validation = selectDeckValid(state, resolved);
-    nextDeck.problem = mapValidationToProblem(validation);
-
-    const upgrade = selectLatestUpgrade(state, resolved);
-
-    if (upgrade) {
-      nextDeck.xp_spent = upgrade.xpSpent ?? 0;
-      nextDeck.xp_adjustment = upgrade.xpAdjustment ?? 0;
-    }
-
-    if (nextDeck.source === "arkhamdb") {
-      assertCanPublishDeck(resolved);
-
-      state.setRemoting("arkhamdb", true);
-
-      try {
-        const adapter = new syncAdapters.arkhamdb(get);
-        nextDeck = adapter.in(
-          await updateDeck(state.app.clientId, adapter.out(nextDeck)),
-        );
-      } catch (err) {
-        disconnectProviderIfUnauthorized("arkhamdb", err, set);
-        throw err;
-      } finally {
-        state.setRemoting("arkhamdb", false);
-      }
-    } else {
-      await state.updateShare(nextDeck);
-    }
-
-    set((prev) => {
-      const deckEdits = { ...prev.deckEdits };
-      delete deckEdits[deckId];
-
-      const undoHistory = { ...prev.data.undoHistory };
-
-      const resolveState = {
-        metadata: selectMetadata(state),
-        lookupTables: selectLookupTables(state),
-        sharing: state.sharing,
-      };
-
-      const undoEntry = {
-        changes: getChangeRecord(
-          resolveDeck(resolveState, selectLocaleSortingCollator(state), deck),
-          resolveDeck(
-            resolveState,
-            selectLocaleSortingCollator(state),
-            nextDeck,
-          ),
-          true,
-        ),
-        date_update: nextDeck.date_update,
-        version: nextDeck.version,
-      };
-
-      return {
-        deckEdits,
-        data: {
-          ...prev.data,
-          decks: {
-            ...prev.data.decks,
-            [nextDeck.id]: nextDeck,
-          },
-          undoHistory: {
-            ...undoHistory,
-            [nextDeck.id]: [...(undoHistory[nextDeck.id] ?? []), undoEntry],
-          },
-        },
-      };
-    });
-
-    await dehydrate(get(), "app", "edits");
-    return nextDeck.id;
-  },
-  async upgradeDeck({ id, xp, exileString, usurped }) {
-    const state = get();
-    const metadata = selectMetadata(state);
-
-    const deck = state.data.decks[id];
-    assert(deck, `Deck ${id} does not exist.`);
-
-    assert(
-      !deck.next_deck,
-      `Deck ${id} already has an upgrade: ${deck.next_deck}.`,
-    );
-
-    const xpCarryover =
-      (deck.xp ?? 0) + (deck.xp_adjustment ?? 0) - (deck.xp_spent ?? 0);
-
-    const now = new Date().toISOString();
-
-    let newDeck: Deck = {
-      ...structuredClone(deck),
-      id: randomId(),
-      date_creation: now,
-      date_update: now,
-      next_deck: null,
-      previous_deck: deck.id,
-      version: "0.1",
-      xp: xp + xpCarryover,
-      xp_spent: null,
-      xp_adjustment: null,
-      exile_string: exileString ?? null,
-    };
-
-    const meta = decodeDeckMeta(deck);
-
-    if (usurped) {
-      delete newDeck.slots[SPECIAL_CARD_CODES.THE_GREAT_WORK];
-      meta.transform_into = SPECIAL_CARD_CODES.LOST_HOMUNCULUS;
-
-      for (const [code, quantity] of Object.entries(newDeck.slots)) {
-        const card = metadata.cards[code];
-
-        if (quantity && card.restrictions?.investigator) {
-          delete newDeck.slots[code];
-          newDeck.slots[SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS] ??= 0;
-          newDeck.slots[SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS] += quantity;
-        }
-      }
-    }
-
-    if (exileString) {
-      const exiledSlots = decodeExileSlots(exileString);
-      const extraSlots = decodeExtraSlots(meta);
-
-      for (const [code, quantity] of Object.entries(exiledSlots)) {
-        if (newDeck.slots[code]) {
-          newDeck.slots[code] -= quantity;
-          if (newDeck.slots[code] <= 0) delete newDeck.slots[code];
-        }
-
-        if (extraSlots[code]) {
-          extraSlots[code] -= quantity;
-          if (extraSlots[code] <= 0) delete extraSlots[code];
-        }
-
-        if (meta[`cus_${code}`]) {
-          delete meta[`cus_${code}`];
-        }
-      }
-
-      meta.extra_deck = encodeExtraSlots(extraSlots);
-    }
-
-    const resolved = resolveDeck(
-      {
-        lookupTables: selectLookupTables(state),
-        metadata,
-        sharing: state.sharing,
-      },
-      selectLocaleSortingCollator(state),
-      newDeck,
-    );
-
-    if (resolved.fanMadeData) {
-      meta.fan_made_content = resolved.fanMadeData;
-    }
-
-    newDeck.meta = JSON.stringify(meta);
-
-    const isShared = !!state.sharing.decks[deck.id];
-
-    if (deck.source === "arkhamdb") {
-      state.setRemoting("arkhamdb", true);
-      try {
-        const adapter = new syncAdapters.arkhamdb(get);
-        const payload = adapter.out(newDeck);
-        const res = await upgradeDeck(state.app.clientId, deck.id, {
-          xp,
-          exiles: exileString,
-          meta: payload.meta,
-        });
-        newDeck = adapter.in(res);
-      } catch (err) {
-        disconnectProviderIfUnauthorized("arkhamdb", err, set);
-        throw err;
-      } finally {
-        state.setRemoting("arkhamdb", false);
-      }
-    } else if (isShared) {
-      await createShare(
-        state.app.clientId,
-        newDeck,
-        selectDeckHistory(
-          {
-            ...state,
-            metadata,
-            data: {
-              ...state.data,
-              history: {
-                ...state.data.history,
-                [newDeck.id]: [deck.id, ...state.data.history[deck.id]],
-              },
-            },
-          },
-          selectLookupTables(state),
-          selectLocaleSortingCollator(state),
-          newDeck,
-        ),
-      );
-    }
-
-    set((prev) => {
-      const history = { ...prev.data.history };
-      history[newDeck.id] = [deck.id, ...history[deck.id]];
-      delete history[deck.id];
-
-      const deckEdits = { ...prev.deckEdits };
-      delete deckEdits[deck.id];
-
-      const undoHistory = { ...prev.data.undoHistory };
-      delete undoHistory[deck.id];
-
-      const sharedDecks = { ...prev.sharing.decks };
-      if (isShared) {
-        sharedDecks[newDeck.id] = newDeck.date_update;
-      }
-
-      return {
-        deckEdits,
-        data: {
-          ...prev.data,
-          decks: {
-            ...prev.data.decks,
-            [deck.id]: {
-              ...deck,
-              next_deck: newDeck.id,
-            },
-            [newDeck.id]: newDeck,
-          },
-          history,
-          undoHistory,
-        },
-        sharing: {
-          ...prev.sharing,
-          decks: sharedDecks,
-        },
-      };
-    });
-
-    await dehydrate(get(), "app", "edits");
-    return newDeck;
-  },
-  async deleteUpgrade(id, cb) {
-    const state = get();
-
-    const deck = state.data.decks[id];
-    assert(deck, `Deck ${id} does not exist.`);
-
-    const previousId = deck.previous_deck;
-    assert(previousId, "Deck does not have a previous deck");
-    assert(state.data.decks[previousId], "Previous deck does not exist");
-
-    assert(
-      Array.isArray(state.data.history[deck.id]),
-      "Deck history does not exist",
-    );
-
-    if (deck.source === "arkhamdb") {
-      state.setRemoting("arkhamdb", true);
-
-      try {
-        await deleteDeck(state.app.clientId, deck.id, false);
-      } catch (err) {
-        disconnectProviderIfUnauthorized("arkhamdb", err, set);
-        throw err;
-      } finally {
-        state.setRemoting("arkhamdb", false);
-      }
-    } else {
-      await state.deleteShare(deck.id as string).catch(console.error);
-    }
-
-    cb?.(previousId);
-
-    set((prev) => {
-      const decks = { ...prev.data.decks };
-      const history = { ...prev.data.history };
-      const deckHistory = history[deck.id];
-
-      history[previousId] = deckHistory.filter((x) => deck.previous_deck !== x);
-      delete history[deck.id];
-
-      decks[previousId] = { ...decks[previousId], next_deck: null };
-      delete decks[deck.id];
-
-      const deckEdits = { ...prev.deckEdits };
-      delete deckEdits[deck.id];
-
-      const undoHistory = { ...prev.data.undoHistory };
-      delete undoHistory[deck.id];
-
-      return {
-        deckEdits,
-        data: {
-          ...prev.data,
-          decks,
-          history,
-          undoHistory,
-        },
-      };
-    });
-
-    await dehydrate(get(), "app", "edits");
-    return previousId;
-  },
-  backup() {
-    download(
-      prepareBackup(get()),
-      `arkham-build-${new Date().toISOString()}.json`,
-      "application/json",
-    );
-  },
-  async restore(buffer) {
-    set(await restoreBackup(get(), buffer));
-    await dehydrate(get(), "app");
-  },
-  async dismissBanner(bannerId) {
-    set((state) => {
-      const banners = new Set(state.app.bannersDismissed);
-      banners.add(bannerId);
-
-      return {
-        app: {
-          ...state.app,
-          bannersDismissed: Array.from(banners),
-        },
-      };
-    });
-
-    await dehydrate(get(), "app");
   },
 });
+
+function hasFolderAssignmentsForDelete(
+  state: StoreState,
+  deckId: string | number,
+  keepPreviousDeck = false,
+) {
+  const deletedDeckIds = keepPreviousDeck
+    ? [deckId]
+    : [deckId, ...(state.data.history[deckId] ?? [])];
+
+  return deletedDeckIds.some((id) => state.data.deckFolders[id] != null);
+}
 
 function mergeInitialState(
   initialState: StoreState,
@@ -919,6 +479,11 @@ function mergeInitialState(
       clientId:
         overrides?.app?.clientId || persistedState?.app?.clientId || randomId(),
     },
+    auth: {
+      ...initialState.auth,
+      ...persistedState?.auth,
+      ...overrides?.auth,
+    },
     settings: {
       ...initialState.settings,
       ...persistedState?.settings,
@@ -927,6 +492,31 @@ function mergeInitialState(
         ...initialState.settings.lists,
         ...persistedState?.settings?.lists,
         ...overrides?.settings?.lists,
+      },
+    },
+    sync: {
+      ...initialState.sync,
+      ...persistedState?.sync,
+      ...overrides?.sync,
+      settings: {
+        ...initialState.sync.settings,
+        ...persistedState?.sync?.settings,
+        ...overrides?.sync?.settings,
+      },
+      decks: {
+        ...initialState.sync.decks,
+        ...persistedState?.sync?.decks,
+        ...overrides?.sync?.decks,
+        items: {
+          ...initialState.sync.decks.items,
+          ...persistedState?.sync?.decks?.items,
+          ...overrides?.sync?.decks?.items,
+        },
+      },
+      folders: {
+        ...initialState.sync.folders,
+        ...persistedState?.sync?.folders,
+        ...overrides?.sync?.folders,
       },
     },
   };

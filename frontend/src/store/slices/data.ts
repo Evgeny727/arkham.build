@@ -1,14 +1,15 @@
+import { type Deck, type Id, isDeck } from "@arkham-build/shared";
 import type { StateCreator } from "zustand";
 import { assert } from "@/utils/assert";
 import { ARCHIVE_FOLDER_ID } from "@/utils/constants";
 import i18n from "@/utils/i18n";
 import { applyDeckEdits } from "../lib/deck-edits";
-import { cloneDeck } from "../lib/deck-factory";
+import { makeDeckCopy } from "../lib/deck-factory";
 import { formatDeckImport } from "../lib/deck-io";
 import { dehydrate } from "../persist";
-import { type Deck, type Id, isDeck } from "../schemas/deck.schema";
-import { selectClientId, selectMetadata } from "../selectors/shared";
-import { importDeck } from "../services/queries";
+import { selectMetadata } from "../selectors/shared";
+import type { HttpClient } from "../services/http-client";
+import { importDeck } from "../services/requests/public-decks";
 import type { StoreState } from ".";
 import type { DataSlice } from "./data.types";
 
@@ -29,8 +30,8 @@ export const createDataSlice: StateCreator<StoreState, [], [], DataSlice> = (
 ) => ({
   ...getInitialDataState(),
 
-  async importDeck(input) {
-    const { data, type } = await importDeck(selectClientId(get()), input);
+  async importDeck(client, input) {
+    const { data, type } = await importDeck(client, input);
 
     set((state) => {
       const deck = formatDeckImport(state, data, type);
@@ -94,8 +95,10 @@ export const createDataSlice: StateCreator<StoreState, [], [], DataSlice> = (
     assert(deck, `Deck ${id} does not exist.`);
 
     const newDeck = options?.applyEdits
-      ? cloneDeck(applyDeckEdits(deck, state.deckEdits[id], metadata, true))
-      : cloneDeck(deck);
+      ? makeDeckCopy(applyDeckEdits(deck, state.deckEdits[id], metadata, true))
+      : makeDeckCopy(deck);
+
+    newDeck.source = null;
 
     set((prev) => ({
       data: {
@@ -115,57 +118,75 @@ export const createDataSlice: StateCreator<StoreState, [], [], DataSlice> = (
 
     return newDeck.id;
   },
-  async addDeckToArchive(deckId) {
+  async setDeckFolder(client, deckId, folderId) {
     set((state) => {
-      const archive = state.data.folders[ARCHIVE_FOLDER_ID];
+      if (folderId != null && folderId !== ARCHIVE_FOLDER_ID) {
+        assert(
+          state.data.folders[folderId],
+          `Folder ${folderId} does not exist.`,
+        );
+      }
 
-      const deckFolders = {
-        ...state.data.deckFolders,
-        [deckId]: ARCHIVE_FOLDER_ID,
-      };
-
-      return archive
-        ? {
-            data: {
-              ...state.data,
-              deckFolders,
-            },
-          }
-        : {
-            data: {
-              ...state.data,
-              folders: {
-                ...state.data.folders,
-                [ARCHIVE_FOLDER_ID]: createArchiveFolder(),
-              },
-              deckFolders,
-            },
-          };
-    });
-
-    await dehydrate(get(), "app");
-  },
-  async removeDeckFromFolder(deckId) {
-    set((state) => {
       const deckFolders = { ...state.data.deckFolders };
-      delete deckFolders[deckId];
+
+      if (folderId == null) {
+        delete deckFolders[deckId];
+      } else {
+        deckFolders[deckId] = folderId;
+      }
+
+      if (
+        folderId !== ARCHIVE_FOLDER_ID ||
+        state.data.folders[ARCHIVE_FOLDER_ID]
+      ) {
+        return {
+          data: {
+            ...state.data,
+            deckFolders,
+          },
+        };
+      }
+
       return {
         data: {
           ...state.data,
+          folders: {
+            ...state.data.folders,
+            [ARCHIVE_FOLDER_ID]: createArchiveFolder(),
+          },
           deckFolders,
         },
       };
     });
 
-    await dehydrate(get(), "app");
+    await persistFolderState(get, client);
+  },
+
+  async removeDeckFromFolder(client, deckId) {
+    await get().setDeckFolder(client, deckId, null);
   },
 });
 
-function createArchiveFolder() {
+export function createArchiveFolder() {
   return {
     id: ARCHIVE_FOLDER_ID,
     name: i18n.t("deck_collection.archive"),
     icon: "lucide://archive",
     color: "var(--palette-1)",
   };
+}
+
+async function persistFolderState(
+  get: () => StoreState,
+  client: HttpClient | undefined,
+) {
+  await dehydrate(get(), "app");
+
+  const state = get();
+  if (state.auth.status !== "authenticated") {
+    return;
+  }
+
+  assert(client, "Cannot sync folders without a client.");
+  await state.saveFolders(client);
 }

@@ -1,9 +1,10 @@
+import type { StorageProvider } from "@arkham-build/shared";
 import type { StateCreator } from "zustand";
 import { assert } from "@/utils/assert";
 import { displayAttribute } from "@/utils/card-utils";
 import { environments } from "@/utils/environments";
 import { getDefaultDeckName } from "../lib/deck-factory";
-import { selectConnectionsData } from "../selectors/connections";
+import { isStorageProviderAvailable } from "../lib/sync";
 import { selectMetadata, selectSettingsTabooId } from "../selectors/shared";
 import type { StoreState } from ".";
 import type { CardSet, DeckCreateSlice } from "./deck-create.types";
@@ -20,7 +21,6 @@ export const createDeckCreateSlice: StateCreator<
     set((state) => {
       const metadata = selectMetadata(state);
       const settings = state.settings;
-      const connections = selectConnectionsData(state);
 
       const investigator = metadata.cards[code];
       assert(
@@ -44,12 +44,10 @@ export const createDeckCreateSlice: StateCreator<
         );
       }
 
-      const provider = settings.defaultStorageProvider;
-
-      // when arkhamdb is set as default storage, but not available, default to local.
-      const providerExists =
-        provider !== "arkhamdb" ||
-        connections.some((c) => c.provider === provider);
+      const provider = getAvailableDeckCreateProvider(
+        state,
+        settings.defaultStorageProvider,
+      );
 
       // Apply current environment packs if default environment is set to "current"
       const cardPool =
@@ -63,7 +61,7 @@ export const createDeckCreateSlice: StateCreator<
           investigatorBackCode: choice ? choice.code : investigator.code,
           investigatorCode: investigator.code,
           investigatorFrontCode: choice ? choice.code : investigator.code,
-          provider: providerExists ? provider : "local",
+          provider,
           selections: {},
           sets: ["requiredCards"],
           tabooSetId: selectSettingsTabooId(settings, metadata),
@@ -228,6 +226,13 @@ export const createDeckCreateSlice: StateCreator<
     });
   },
 });
+
+function getAvailableDeckCreateProvider(
+  state: StoreState,
+  provider: StorageProvider,
+): StorageProvider {
+  return isStorageProviderAvailable(state, provider) ? provider : "local";
+}
 
 function isCardSet(value: string): value is CardSet {
   return (

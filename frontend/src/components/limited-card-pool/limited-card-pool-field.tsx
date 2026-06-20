@@ -1,8 +1,7 @@
-import type { Card } from "@arkham-build/shared";
+import type { Card, Pack } from "@arkham-build/shared";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "@/store";
-import type { Pack } from "@/store/schemas/pack.schema";
 import {
   selectLimitedPoolPackOptions,
   selectPackMapper,
@@ -64,9 +63,9 @@ export function LimitedCardPoolField(props: Props) {
   return (
     <Dialog>
       <Field
+        className={css["field"]}
         data-testid="limited-card-pool-field"
         full
-        padded
         helpText={t("deck_edit.config.card_pool.help")}
       >
         <div className={css["environment-actions"]}>

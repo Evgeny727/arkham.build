@@ -87,7 +87,9 @@
     --layout-max-width: 118rem;
 
     --scrollbar-size: 10px;
-    --scrollbar-padding: 14px;
+    --scrollbar-padding: 10px;
+
+    --error: var(--nord-11);
   }
 
   html[data-theme="dark"] {
@@ -813,6 +815,11 @@
   .longform li :where(ul, ol),
   .longform li + li {
     margin-top: 1rem;
+  }
+
+  .longform hr {
+    height: 0;
+    border-bottom: 1px solid var(--palette-1);
   }
 
   .longform :where(.icon-rogue) {

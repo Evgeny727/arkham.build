@@ -1,11 +1,9 @@
-import type { Card } from "@arkham-build/shared";
+import type { Card, Cycle, Pack } from "@arkham-build/shared";
 import { InfoIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useStore } from "@/store";
-import type { Cycle } from "@/store/schemas/cycle.schema";
-import type { Pack } from "@/store/schemas/pack.schema";
 import {
   type CycleWithPacks,
   selectCampaignCycles,
@@ -245,7 +243,7 @@ function LimitedTab(props: TabProps) {
 
   return (
     <>
-      <Field full padded bordered>
+      <Field full>
         <Combobox
           autoFocus
           id="cycle-select-combobox"
@@ -310,7 +308,7 @@ function CampaignPlayalongTab(props: TabProps) {
 
   return (
     <>
-      <Field className={css["cpa"]} full padded bordered>
+      <Field className={css["cpa"]} full>
         <Combobox
           autoFocus
           id="cycle-select-combobox"
@@ -389,7 +387,7 @@ function Limited25Tab(props: TabProps) {
 
   return (
     <>
-      <Field full padded bordered>
+      <Field full>
         <Combobox
           autoFocus
           id="cycle-select-combobox"

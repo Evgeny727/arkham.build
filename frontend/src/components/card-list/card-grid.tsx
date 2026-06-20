@@ -152,6 +152,7 @@ export function CardGrid(
     <Scroller
       className={css["scroller"]}
       data-testid="card-list-scroller"
+      padded
       ref={setScrollParent as unknown as React.RefObject<HTMLDivElement | null>}
       type="always"
     >

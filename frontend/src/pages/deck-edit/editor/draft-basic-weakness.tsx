@@ -1,4 +1,8 @@
-import { type Card, SPECIAL_CARD_CODES } from "@arkham-build/shared";
+import {
+  type Card,
+  type Slots,
+  SPECIAL_CARD_CODES,
+} from "@arkham-build/shared";
 import {
   DicesIcon,
   ExternalLinkIcon,
@@ -27,7 +31,6 @@ import { useStore } from "@/store";
 import type { LookupTables } from "@/store/lib/lookup-tables.types";
 import { randomBasicWeaknessForDeck } from "@/store/lib/random-basic-weakness";
 import type { ResolvedDeck } from "@/store/lib/types";
-import type { Slots } from "@/store/schemas/deck.schema";
 import { selectLookupTables, selectMetadata } from "@/store/selectors/shared";
 import type { StoreState } from "@/store/slices";
 import { assert } from "@/utils/assert";
@@ -98,7 +101,7 @@ function DraftBasicWeaknessModal(props: Props) {
   const dialogContext = useDialogContext();
 
   const handleSubmit = useCallback(
-    (evt: React.FormEvent<HTMLFormElement>) => {
+    (evt: React.SubmitEvent) => {
       evt.preventDefault();
 
       assert(weaknesses, "Submit called before draft initialized.");

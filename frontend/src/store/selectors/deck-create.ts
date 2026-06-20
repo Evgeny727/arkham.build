@@ -4,6 +4,7 @@ import { assert } from "@/utils/assert";
 import { formatRelationTitle } from "@/utils/formatting";
 import i18n from "@/utils/i18n";
 import { resolveCardWithRelations } from "../lib/resolve-card";
+import { hasHealthyArkhamDBIdentity } from "../lib/sync";
 import type { CardSet, CardWithRelations, ResolvedCard } from "../lib/types";
 import type { StoreState } from "../slices";
 import {
@@ -46,6 +47,32 @@ export const selectDeckCreateInvestigators = createSelector(
       },
       {} as Record<string, CardWithRelations>,
     );
+  },
+);
+
+export const selectDeckCreateStorageProviderOptions = createSelector(
+  (state: StoreState) => state.auth,
+  (state: StoreState) => state.settings.locale,
+  (auth) => {
+    const providers: string[] = ["local", "account", "arkhamdb"];
+
+    return providers
+      .filter((provider) => {
+        switch (provider) {
+          case "local":
+            return true;
+          case "account":
+            return auth.status === "authenticated";
+          case "arkhamdb":
+            return hasHealthyArkhamDBIdentity(auth);
+          default:
+            return false;
+        }
+      })
+      .map((provider) => ({
+        label: i18n.t(`deck_edit.config.storage_provider.${provider}`),
+        value: provider,
+      }));
   },
 );
 

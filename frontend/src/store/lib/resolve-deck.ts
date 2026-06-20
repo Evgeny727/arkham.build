@@ -1,7 +1,9 @@
-import type { Attachments } from "@arkham-build/shared";
 import {
+  type Attachments,
   type Card,
   countExperience,
+  type Deck,
+  type DeckMeta,
   SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
 import {
@@ -11,7 +13,6 @@ import {
 } from "@/utils/card-utils";
 import i18n from "@/utils/i18n";
 import { isEmpty } from "@/utils/is-empty";
-import type { Deck } from "../schemas/deck.schema";
 import type { StoreState } from "../slices";
 import { getAttachableCards } from "./attachments";
 import { applyCardChanges } from "./card-edits";
@@ -27,18 +28,13 @@ import {
 import type { LookupTables } from "./lookup-tables.types";
 import { resolveCardWithRelations } from "./resolve-card";
 import { decodeExtraSlots, decodeSlots } from "./slots";
-import type {
-  CardWithRelations,
-  DeckMeta,
-  DeckSummary,
-  ResolvedDeck,
-} from "./types";
+import type { CardWithRelations, DeckSummary, ResolvedDeck } from "./types";
 
 /**
  * Given a decoded deck, resolve all cards and metadata for display.
  */
 export function resolveDeck(
-  deps: Pick<StoreState, "metadata" | "sharing"> & {
+  deps: Pick<StoreState, "metadata"> & {
     lookupTables: LookupTables;
   },
   collator: Intl.Collator,
@@ -80,6 +76,10 @@ export function resolveDeck(
     "alternate_back",
   );
 
+  if (!investigatorFront || !investigatorBack) {
+    throw new Error(`Investigator not found: ${deck.investigator_code}`);
+  }
+
   if (
     deckMeta.buildql_deck_options_override &&
     SPECIAL_CARD_CODES.GENERIC_CUSTOM_INVESTIGATORS.includes(
@@ -95,10 +95,6 @@ export function resolveDeck(
   const hasExtraDeck = !!investigatorBack.card.side_deck_options;
   const hasParallel = !!investigator.relations?.parallel;
   const hasReplacements = !isEmpty(investigator.relations?.replacement);
-
-  if (!investigatorFront || !investigatorBack) {
-    throw new Error(`Investigator not found: ${deck.investigator_code}`);
-  }
 
   const sealedDeck = decodeSealedDeck(deckMeta);
 
@@ -166,7 +162,6 @@ export function resolveDeck(
     sealedDeck,
     selections: decodeSelections(investigatorBack, deckMeta),
     sideSlots: Array.isArray(deck.sideSlots) ? {} : deck.sideSlots,
-    shared: !!deps.sharing.decks[deck.id],
     stats: {
       deckSize,
       deckSizeTotal,
@@ -317,7 +312,7 @@ export function getDeckLimitOverride(
  * skipping full card resolution, charts, and other expensive operations.
  */
 export function resolveDeckSummary(
-  deps: Pick<StoreState, "metadata" | "sharing"> & {
+  deps: Pick<StoreState, "metadata"> & {
     lookupTables: LookupTables;
   },
   collator: Intl.Collator,
@@ -384,7 +379,6 @@ export function resolveDeckSummary(
     name: deck.name,
     problem: deck.problem,
     sealedDeck: decodeSealedDeck(deckMeta),
-    shared: !!deps.sharing.decks[deck.id],
     sideSlots: Array.isArray(deck.sideSlots) ? null : (deck.sideSlots ?? null),
     slots: deck.slots,
     source: deck.source,

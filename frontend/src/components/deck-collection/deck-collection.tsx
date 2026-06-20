@@ -1,10 +1,5 @@
-import {
-  BookTextIcon,
-  EllipsisIcon,
-  PlusIcon,
-  Trash2Icon,
-  UploadIcon,
-} from "lucide-react";
+import type { DeckId } from "@arkham-build/shared";
+import { EllipsisIcon, PlusIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Virtuoso } from "react-virtuoso";
@@ -30,10 +25,13 @@ import {
 } from "@/components/ui/popover";
 import { Scroller } from "@/components/ui/scroller";
 import { useToast } from "@/components/ui/toast.hooks";
+import {
+  useDeleteAllDecksMutation,
+  useImportFromFilesMutation,
+} from "@/queries/mutations/decks";
 import { useStore } from "@/store";
-import { selectConnectionsData } from "@/store/selectors/connections";
+import type { DeckSummary as DeckSummaryType } from "@/store/lib/types";
 import { selectDecksDisplayList } from "@/store/selectors/deck-collection";
-import { isEmpty } from "@/utils/is-empty";
 import { useHotkey } from "@/utils/use-hotkey";
 import { FileInput } from "../ui/file-input";
 import css from "./deck-collection.module.css";
@@ -51,20 +49,20 @@ export function DeckCollection() {
   const toast = useToast();
 
   const deckCollection = useStore(selectDecksDisplayList);
-  const hasConnections = !isEmpty(useStore(selectConnectionsData));
+  const hasConnections = false; // XXX
 
-  const importDecks = useStore((state) => state.importFromFiles);
-  const deleteAllDecks = useStore((state) => state.deleteAllDecks);
+  const importDecksMutation = useImportFromFilesMutation();
+  const deleteAllDecksMutation = useDeleteAllDecksMutation();
 
   const onAddFiles = useCallback(
     (evt: React.ChangeEvent<HTMLInputElement>) => {
       const files = evt.target.files;
       if (files?.length) {
-        importDecks(files);
+        importDecksMutation.mutate(files);
         setPopoverOpen(false);
       }
     },
-    [importDecks],
+    [importDecksMutation],
   );
 
   const onDeleteAll = useCallback(async () => {
@@ -78,7 +76,7 @@ export function DeckCollection() {
         variant: "loading",
       });
       try {
-        await deleteAllDecks();
+        await deleteAllDecksMutation.mutateAsync();
         toast.dismiss(toastId);
       } catch (err) {
         toast.dismiss(toastId);
@@ -90,7 +88,7 @@ export function DeckCollection() {
         });
       }
     }
-  }, [deleteAllDecks, toast, t]);
+  }, [deleteAllDecksMutation, toast, t]);
 
   const deleteDeck = useDeleteDeck();
   const duplicateDeck = useDuplicateDeck();
@@ -111,12 +109,6 @@ export function DeckCollection() {
               <DeckCollectionImport />
             </Popover>
           )}
-          <Link to="/decklists" asChild>
-            <Button as="a" data-testid="collection-deck-guides" size="sm">
-              <BookTextIcon />
-              {t("decklists.browse.title")}
-            </Button>
-          </Link>
           <Popover onOpenChange={setPopoverOpen} open={popoverOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -174,6 +166,7 @@ export function DeckCollection() {
       {deckCollection.total ? (
         <Scroller
           className={css["scroller"]}
+          padded
           ref={
             setScrollParent as unknown as React.RefObject<HTMLDivElement | null>
           }
@@ -204,26 +197,12 @@ export function DeckCollection() {
                   />
                 )}
                 {entry.type === "deck" && (
-                  <div
-                    className={css["deck"]}
-                    data-testid={`collection-deck-${entry.deck.name}`}
-                    style={{ "--depth": entry.depth } as React.CSSProperties}
-                  >
-                    <DeckSummary
-                      data-testid="collection-deck"
-                      deck={entry.deck}
-                      interactive
-                      showThumbnail
-                      size="sm"
-                      validation={entry.deck.problem}
-                    >
-                      <DeckSummaryQuickActions
-                        deck={entry.deck}
-                        onDeleteDeck={deleteDeck}
-                        onDuplicateDeck={duplicateDeck}
-                      />
-                    </DeckSummary>
-                  </div>
+                  <DeckCollectionDeckEntry
+                    deck={entry.deck}
+                    deleteDeck={deleteDeck}
+                    depth={entry.depth}
+                    duplicateDeck={duplicateDeck}
+                  />
                 )}
               </div>
             )}
@@ -253,6 +232,46 @@ export function DeckCollection() {
           </figure>
         </div>
       )}
+    </div>
+  );
+}
+
+function DeckCollectionDeckEntry({
+  deck,
+  deleteDeck,
+  depth,
+  duplicateDeck,
+}: {
+  deck: DeckSummaryType;
+  deleteDeck: (id: DeckId) => Promise<void>;
+  depth: number;
+  duplicateDeck: (id: DeckId) => void;
+}) {
+  const hasSyncConflict = useStore(
+    (state) => state.sync.decks.items[deck.id]?.status === "conflict",
+  );
+
+  return (
+    <div
+      className={css["deck"]}
+      data-testid={`collection-deck-${deck.name}`}
+      style={{ "--depth": depth } as React.CSSProperties}
+    >
+      <DeckSummary
+        data-testid="collection-deck"
+        deck={deck}
+        hasSyncConflict={hasSyncConflict}
+        interactive
+        showThumbnail
+        size="sm"
+        validation={deck.problem}
+      >
+        <DeckSummaryQuickActions
+          deck={deck}
+          onDeleteDeck={deleteDeck}
+          onDuplicateDeck={duplicateDeck}
+        />
+      </DeckSummary>
     </div>
   );
 }
