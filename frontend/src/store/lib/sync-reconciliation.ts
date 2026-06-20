@@ -48,22 +48,22 @@ export function removeRemoteAccountDecks(
   { data, deckEdits }: Pick<StoreState, "data" | "deckEdits">,
   { preserveDeckFolders = false }: RemoveRemoteAccountDecksOptions = {},
 ) {
-  const remoteDeckIds = new Set<DeckId>();
+  const remoteDeckIdKeys = new Set<string>();
 
   for (const deck of Object.values(data.decks)) {
     if (isSyncedStorageProvider(deck.source)) {
-      remoteDeckIds.add(deck.id);
+      remoteDeckIdKeys.add(deckIdKey(deck.id));
     }
   }
 
-  if (!remoteDeckIds.size) {
+  if (!remoteDeckIdKeys.size) {
     return { data, deckEdits };
   }
 
   const nextDecks: DataState["decks"] = {};
 
   for (const [id, deck] of Object.entries(data.decks)) {
-    if (!hasDeckId(remoteDeckIds, deck.id)) {
+    if (!remoteDeckIdKeys.has(deckIdKey(deck.id))) {
       nextDecks[id] = deck;
     }
   }
@@ -76,7 +76,7 @@ export function removeRemoteAccountDecks(
     ? { ...data.undoHistory }
     : undefined;
 
-  for (const id of remoteDeckIds) {
+  for (const id of remoteDeckIdKeys) {
     if (!preserveDeckFolders) {
       delete nextDeckFolders[id];
     }
@@ -109,39 +109,40 @@ export function getDeckReconciliationPlan({
   syncDecks: DecksSyncState;
 }): DeckReconciliationPlan {
   const fetchTargets: DeckSyncTarget[] = [];
-  const skippedIds = new Set<Id>();
+  const skippedIdKeys = new Set<string>();
+  const manifestIdKeys = new Set(
+    manifest.decks.map((item) => deckIdKey(item.id)),
+  );
 
   for (const item of manifest.decks) {
-    const syncItem = syncDecks.items[item.id];
+    const idKey = deckIdKey(item.id);
+    const syncItem = syncDecks.items[idKey];
 
     if (shouldSkipSyncItem(syncItem)) {
-      skippedIds.add(item.id);
+      skippedIdKeys.add(idKey);
       continue;
     }
 
-    if (
-      !data.decks[item.id] ||
-      !syncItem ||
-      syncItem.version !== item.version
-    ) {
+    if (!data.decks[idKey] || !syncItem || syncItem.version !== item.version) {
       fetchTargets.push({ provider: item.provider, id: item.id });
     }
   }
 
   const removeIds = Object.keys(syncDecks.items).reduce<Id[]>((acc, id) => {
-    const deck = data.decks[id];
+    const idKey = deckIdKey(id);
+    const deck = data.decks[idKey];
 
     if (deck?.source === "arkhamdb" && !manifest.providers.arkhamdb.available) {
-      skippedIds.add(id);
+      skippedIdKeys.add(idKey);
       return acc;
     }
 
-    if (manifestHasDeckId(manifest, id)) return acc;
+    if (manifestIdKeys.has(idKey)) return acc;
 
-    const item = syncDecks.items[id];
+    const item = syncDecks.items[idKey];
 
     if (shouldSkipSyncItem(item)) {
-      skippedIds.add(id);
+      skippedIdKeys.add(idKey);
       return acc;
     }
 
@@ -152,7 +153,7 @@ export function getDeckReconciliationPlan({
   return {
     fetchTargets,
     removeIds,
-    skippedIds: Array.from(skippedIds),
+    skippedIds: Array.from(skippedIdKeys),
   };
 }
 
@@ -166,7 +167,7 @@ export function applyRemoteDeckReconciliation({
   syncDecks,
 }: DeckReconciliationInput): DeckReconciliationResult {
   const now = Date.now();
-  const skippedIds = new Set<DeckId>(plan.skippedIds);
+  const skippedIdKeys = new Set(plan.skippedIds.map(deckIdKey));
 
   const nextDecks = { ...data.decks };
   const nextDeckFolders = { ...data.deckFolders };
@@ -177,45 +178,48 @@ export function applyRemoteDeckReconciliation({
     : undefined;
 
   for (const id of plan.removeIds) {
-    const item = nextItems[id];
+    const idKey = deckIdKey(id);
+    const item = nextItems[idKey];
 
     if (shouldSkipSyncItem(item)) {
-      skippedIds.add(id);
+      skippedIdKeys.add(idKey);
       continue;
     }
 
-    delete nextDecks[id];
-    delete nextItems[id];
-    delete nextDeckEdits[id];
-    delete nextDeckFolders[id];
-    delete nextUndoHistory?.[id];
+    delete nextDecks[idKey];
+    delete nextItems[idKey];
+    delete nextDeckEdits[idKey];
+    delete nextDeckFolders[idKey];
+    delete nextUndoHistory?.[idKey];
   }
 
   for (const deck of remoteDecks) {
-    const item = nextItems[deck.id];
+    const idKey = deckIdKey(deck.id);
+    const item = nextItems[idKey];
 
     if (shouldSkipSyncItem(item)) {
-      skippedIds.add(deck.id);
+      skippedIdKeys.add(idKey);
       continue;
     }
 
-    nextDecks[deck.id] = { ...deck, source: deck.source };
-    nextItems[deck.id] = makeSyncedItem(deck.version, now, item);
-    delete nextUndoHistory?.[deck.id];
+    nextDecks[idKey] = { ...deck, source: deck.source };
+    nextItems[idKey] = makeSyncedItem(deck.version, now, item);
+    delete nextUndoHistory?.[idKey];
   }
 
   for (const item of manifest.decks) {
-    const syncItem = nextItems[item.id];
+    const idKey = deckIdKey(item.id);
+    const syncItem = nextItems[idKey];
 
-    if (hasDeckId(skippedIds, item.id)) continue;
+    if (skippedIdKeys.has(idKey)) continue;
 
     if (shouldSkipSyncItem(syncItem)) {
-      skippedIds.add(item.id);
+      skippedIdKeys.add(idKey);
       continue;
     }
 
-    if (!nextDecks[item.id]) continue;
-    nextItems[item.id] = makeSyncedItem(item.version, now, syncItem);
+    if (!nextDecks[idKey]) continue;
+    nextItems[idKey] = makeSyncedItem(item.version, now, syncItem);
   }
 
   const sanitizedDecks = sanitizeDeckLinks(nextDecks);
@@ -232,11 +236,11 @@ export function applyRemoteDeckReconciliation({
     syncDecks: {
       ...syncDecks,
       accountId,
-      manifestVersion: skippedIds.size
+      manifestVersion: skippedIdKeys.size
         ? syncDecks.manifestVersion
         : manifest.version,
       lastSyncedAt: now,
-      status: getReconciliationStatus(skippedIds, nextItems),
+      status: getReconciliationStatus(skippedIdKeys, nextItems),
       error: null,
       items: nextItems,
     },
@@ -263,12 +267,12 @@ function makeSyncedItem(
 }
 
 function getReconciliationStatus(
-  skippedIds: Set<DeckId>,
-  items: Record<DeckId, DeckSyncItemState>,
+  skippedIdKeys: Set<string>,
+  items: Record<string, DeckSyncItemState>,
 ): SyncStatus {
-  if (!skippedIds.size) return "synced";
+  if (!skippedIdKeys.size) return "synced";
 
-  for (const id of skippedIds) {
+  for (const id of skippedIdKeys) {
     if (items[id]?.status === "conflict") return "conflict";
   }
 
@@ -276,30 +280,34 @@ function getReconciliationStatus(
 }
 
 export function rebuildDeckHistory(decks: Record<DeckId, Deck>) {
-  const previousIds = new Set<DeckId>();
+  const decksByIdKey = getDecksByIdKey(decks);
+  const previousIdKeys = new Set<string>();
 
   for (const deck of Object.values(decks)) {
-    if (deck.previous_deck != null && decks[deck.previous_deck]) {
-      previousIds.add(deck.previous_deck);
+    if (
+      deck.previous_deck != null &&
+      decksByIdKey.has(deckIdKey(deck.previous_deck))
+    ) {
+      previousIdKeys.add(deckIdKey(deck.previous_deck));
     }
   }
 
   const latestIds = Object.values(decks)
     .filter((deck) => {
       const hasKnownNextDeck =
-        deck.next_deck != null && decks[deck.next_deck] != null;
-      return !hasDeckId(previousIds, deck.id) && !hasKnownNextDeck;
+        deck.next_deck != null && decksByIdKey.has(deckIdKey(deck.next_deck));
+      return !previousIdKeys.has(deckIdKey(deck.id)) && !hasKnownNextDeck;
     })
     .map((deck) => deck.id);
 
   const history: DataState["history"] = {};
 
   for (const latestId of latestIds) {
-    history[latestId] = collectPreviousDeckIds(decks, latestId);
+    history[latestId] = collectPreviousDeckIds(decksByIdKey, latestId);
   }
 
   for (const deck of Object.values(decks)) {
-    if (!history[deck.id] && !hasDeckId(previousIds, deck.id)) {
+    if (!history[deck.id] && !previousIdKeys.has(deckIdKey(deck.id))) {
       history[deck.id] = [];
     }
   }
@@ -307,37 +315,47 @@ export function rebuildDeckHistory(decks: Record<DeckId, Deck>) {
   return history;
 }
 
-function collectPreviousDeckIds(decks: Record<DeckId, Deck>, latestId: DeckId) {
+function collectPreviousDeckIds(
+  decksByIdKey: Map<string, Deck>,
+  latestId: DeckId,
+) {
   const history: Id[] = [];
-  const seen = new Set<DeckId>([latestId]);
-  let current = decks[latestId];
+  const seenIdKeys = new Set<string>([deckIdKey(latestId)]);
+  let current = decksByIdKey.get(deckIdKey(latestId));
 
   while (current?.previous_deck != null) {
     const previousId = current.previous_deck;
+    const previousIdKey = deckIdKey(previousId);
 
-    if (hasDeckId(seen, previousId) || !decks[previousId]) break;
+    if (seenIdKeys.has(previousIdKey) || !decksByIdKey.has(previousIdKey)) {
+      break;
+    }
 
     history.push(previousId);
-    seen.add(previousId);
-    current = decks[previousId];
+    seenIdKeys.add(previousIdKey);
+    current = decksByIdKey.get(previousIdKey);
   }
 
   return history;
 }
 
 function sanitizeDeckLinks(decks: Record<DeckId, Deck>) {
+  const decksByIdKey = getDecksByIdKey(decks);
   const previousByDeckId = new Map<string, DeckId>();
   const nextByDeckId = new Map<string, DeckId>();
 
   for (const deck of Object.values(decks)) {
-    if (deck.previous_deck != null && decks[deck.previous_deck]) {
-      previousByDeckId.set(String(deck.id), deck.previous_deck);
-      nextByDeckId.set(String(deck.previous_deck), deck.id);
+    if (
+      deck.previous_deck != null &&
+      decksByIdKey.has(deckIdKey(deck.previous_deck))
+    ) {
+      previousByDeckId.set(deckIdKey(deck.id), deck.previous_deck);
+      nextByDeckId.set(deckIdKey(deck.previous_deck), deck.id);
     }
 
-    if (deck.next_deck != null && decks[deck.next_deck]) {
-      nextByDeckId.set(String(deck.id), deck.next_deck);
-      previousByDeckId.set(String(deck.next_deck), deck.id);
+    if (deck.next_deck != null && decksByIdKey.has(deckIdKey(deck.next_deck))) {
+      nextByDeckId.set(deckIdKey(deck.id), deck.next_deck);
+      previousByDeckId.set(deckIdKey(deck.next_deck), deck.id);
     }
   }
 
@@ -346,27 +364,21 @@ function sanitizeDeckLinks(decks: Record<DeckId, Deck>) {
       id,
       {
         ...deck,
-        previous_deck: previousByDeckId.get(id) ?? null,
-        next_deck: nextByDeckId.get(id) ?? null,
+        previous_deck: previousByDeckId.get(deckIdKey(deck.id)) ?? null,
+        next_deck: nextByDeckId.get(deckIdKey(deck.id)) ?? null,
       },
     ]),
   );
 }
 
-function manifestHasDeckId(manifest: DeckManifestResponse, id: DeckId) {
-  return manifest.decks.some((item) => deckIdsMatch(item.id, id));
+function getDecksByIdKey(decks: Record<DeckId, Deck>) {
+  return new Map(
+    Object.values(decks).map((deck) => [deckIdKey(deck.id), deck]),
+  );
 }
 
-function hasDeckId(ids: Set<DeckId>, id: DeckId) {
-  for (const candidate of ids) {
-    if (deckIdsMatch(candidate, id)) return true;
-  }
-
-  return false;
-}
-
-function deckIdsMatch(a: DeckId, b: DeckId) {
-  return a === b || String(a) === String(b);
+function deckIdKey(id: DeckId) {
+  return String(id);
 }
 
 function shouldSkipSyncItem(item: DeckSyncItemState | undefined) {
