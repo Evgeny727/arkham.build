@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { legacyKeys } from "@/queries/keys";
 import { useStore } from "@/store";
-import { providerAdapters } from "@/store/lib/provider-adapters";
+import { normalizeArkhamDbDeck } from "@/store/lib/arkhamdb-decks";
 import { useHttpClient } from "@/store/services/http-client.context";
 import { getShare, queryDeck } from "@/store/services/requests/public-decks";
 
@@ -28,8 +28,8 @@ export function useArkhamDbDeckQuery(type: string, id: number) {
     queryFn: async () => {
       const decks = await queryDeck(client, type, id);
       cacheFanMadeContent(decks);
-      const adapter = new providerAdapters.arkhamdb(useStore.getState);
-      return decks.map((deck) => adapter.in(deck));
+      const state = useStore.getState();
+      return decks.map((deck) => normalizeArkhamDbDeck(deck, state));
     },
     enabled: !Number.isNaN(id),
   });
