@@ -1,10 +1,6 @@
 import type { Context } from "hono";
 import { z } from "zod";
 import type { HonoEnv } from "../../hono-env.ts";
-import {
-  type AuthenticatedRequestDependencies,
-  authenticatedRequest,
-} from "./core/authenticated-request.ts";
 import { ArkhamDbRemoteDecksSchema } from "./core/dtos.ts";
 import { ApiError } from "./core/errors.ts";
 import { baseHeaders } from "./core/headers.ts";
@@ -71,8 +67,13 @@ export async function refreshAccessToken<E extends HonoEnv = HonoEnv>(
   return token;
 }
 
+type BearerTokenRequestDependencies<E extends HonoEnv = HonoEnv> = {
+  context: Context<E>;
+  accessToken: OAuthAccessToken;
+};
+
 export async function fetchDecksForOAuthUser(
-  auth: AuthenticatedRequestDependencies,
+  auth: BearerTokenRequestDependencies,
 ) {
   const response = await bearerTokenRequest<unknown>(auth, "/decks");
   return {
@@ -107,9 +108,15 @@ function getOAuthConfig<TEnv extends HonoEnv = HonoEnv>(c: Context<TEnv>) {
 }
 
 function bearerTokenRequest<T, E extends HonoEnv = HonoEnv>(
-  { context, accessToken }: AuthenticatedRequestDependencies<E>,
+  { context, accessToken }: BearerTokenRequestDependencies<E>,
   path: string,
   options: RequestInit = {},
 ) {
-  return authenticatedRequest<T, E>({ context, accessToken }, path, options);
+  return request<T, E>(context, `/api/oauth2${path}`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${accessToken.access_token}`,
+    },
+  });
 }

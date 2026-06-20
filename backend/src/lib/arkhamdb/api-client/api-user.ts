@@ -1,22 +1,12 @@
 import assert from "node:assert";
-import {
-  type ArkhamDbIdentityState,
-  type DeckWritePayload,
-  SlotsSchema,
-} from "@arkham-build/shared";
+import { type DeckWritePayload, SlotsSchema } from "@arkham-build/shared";
 import type { Context } from "hono";
-import type { z } from "zod";
-import type { AccountIdentity } from "../../../db/schema.types.ts";
-import { updateAccountIdentityState } from "../../auth/account-identities.ts";
-import { upsertOAuthToken } from "../../auth/oauth-tokens.ts";
 import type { SessionAuthHonoEnv } from "../../hono-env.ts";
-import type { OAuthAccessToken } from "../../oauth.ts";
 import {
   mergeAdditionalMeta,
   storeAdditionalMetadata,
 } from "../additional-metadata.ts";
 import { extractHiddenSlots } from "../hidden-slots.ts";
-import { refreshAccessToken } from "./api-oauth.ts";
 import {
   ArkhamDbOperationResponseSchema,
   type ArkhamDbRemoteDeck,
@@ -29,12 +19,10 @@ import {
   type ArkhamDbExecutor,
   withArkhamDbExecutor,
 } from "./core/execute-with-lock.ts";
-import { request, type WrappedResponse } from "./core/request.ts";
 
 export function fetchDeck(c: Context<SessionAuthHonoEnv>, id: string | number) {
   return withArkhamDbExecutor(c, async (executor) => {
-    const response = await executeArkhamDbRequest(
-      executor,
+    const response = await executor.request(
       `/deck/load/${id}`,
       ArkhamDbRemoteDeckSchema,
     );
@@ -60,8 +48,7 @@ export function syncDecks(
             }
           : {};
 
-      const response = await executeArkhamDbRequest(
-        executor,
+      const response = await executor.request(
         "/decks",
         ArkhamDbRemoteDecksSchema,
         { headers },
@@ -76,7 +63,7 @@ export function syncDecks(
         },
       );
 
-      await patchArkhamDbIdentityState(executor, {
+      await executor.patchIdentityState({
         lastError: null,
         lastSyncedAt: syncedAt.toISOString(),
         status: "healthy",
@@ -93,7 +80,7 @@ export function syncDecks(
         data: await mergeAdditionalMetadataForDecks(executor.db, response.data),
       };
     } catch (error) {
-      await patchArkhamDbIdentityFailure(executor, error);
+      await executor.patchIdentityFailure(error);
       throw error;
     }
   });
@@ -107,8 +94,7 @@ export function saveDeck(
   return withArkhamDbExecutor(c, async (executor) => {
     const storedDeck = await storeAdditionalMetadata(executor.db, id, deck);
 
-    const { data: operation } = await executeArkhamDbRequest(
-      executor,
+    const { data: operation } = await executor.request(
       `/deck/save/${id}`,
       ArkhamDbOperationResponseSchema,
       {
@@ -143,8 +129,7 @@ export function createDeck(
     const deck = { ..._deck };
     extractHiddenSlots(deck);
 
-    const { data: operation } = await executeArkhamDbRequest(
-      executor,
+    const { data: operation } = await executor.request(
       "/deck/new",
       ArkhamDbOperationResponseSchema,
       {
@@ -165,8 +150,7 @@ export function createDeck(
       deck,
     );
 
-    const { data: saveOperation } = await executeArkhamDbRequest(
-      executor,
+    const { data: saveOperation } = await executor.request(
       `/deck/save/${operation.msg}`,
       ArkhamDbOperationResponseSchema,
       {
@@ -202,8 +186,7 @@ export function upgradeDeck(
     const deck = { ..._deck };
     extractHiddenSlots(deck);
 
-    const { data: operation } = await executeArkhamDbRequest(
-      executor,
+    const { data: operation } = await executor.request(
       `/deck/upgrade/${id}`,
       ArkhamDbOperationResponseSchema,
       {
@@ -228,8 +211,7 @@ export function deleteDeck(
 ) {
   return withArkhamDbExecutor(c, async (executor) => {
     const path = `/deck/delete/${deckId}`;
-    const { data: operation } = await executeArkhamDbRequest(
-      executor,
+    const { data: operation } = await executor.request(
       all ? `${path}?all=true` : path,
       ArkhamDbSuccessResponseSchema,
       {
@@ -241,17 +223,8 @@ export function deleteDeck(
   });
 }
 
-export function refreshArkhamDbAccessTokenForAccount(
-  c: Context<SessionAuthHonoEnv>,
-) {
-  return withArkhamDbExecutor(c, (executor) =>
-    refreshArkhamDbAccessTokenForConnection(executor),
-  );
-}
-
 async function loadDeck(executor: ArkhamDbExecutor, id: string | number) {
-  const response = await executeArkhamDbRequest(
-    executor,
+  const response = await executor.request(
     `/deck/load/${id}`,
     ArkhamDbRemoteDeckSchema,
   );
@@ -267,89 +240,6 @@ async function mergeAdditionalMetadataForDecks(
   decks: ArkhamDbRemoteDeck[],
 ) {
   return await Promise.all(decks.map((deck) => mergeAdditionalMeta(db, deck)));
-}
-
-async function executeArkhamDbRequest<T, R = never>(
-  executor: ArkhamDbExecutor,
-  path: string,
-  schema: z.ZodType<T>,
-  options: RequestInit = {},
-  handleApiError?: (error: ApiError) => WrappedResponse<R> | undefined,
-): Promise<WrappedResponse<T | R>> {
-  const executeRequest = async (accessToken: string) =>
-    parseWrappedResponse(
-      await request<unknown, SessionAuthHonoEnv>(
-        executor.context,
-        `/api/oauth2${path}`,
-        {
-          ...options,
-          headers: {
-            ...options.headers,
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      ),
-      schema,
-    );
-
-  try {
-    return await executeRequest(executor.connection.token.access_token);
-  } catch (error) {
-    if (!(error instanceof ApiError)) {
-      throw error;
-    }
-
-    const handled = handleApiError?.(error);
-    if (handled) {
-      return handled;
-    }
-
-    if (error.status !== 401) {
-      throw error;
-    }
-  }
-
-  const accessToken = await refreshArkhamDbAccessTokenForConnection(executor);
-
-  try {
-    return await executeRequest(accessToken.access_token);
-  } catch (error) {
-    if (!(error instanceof ApiError)) {
-      throw error;
-    }
-
-    const handled = handleApiError?.(error);
-    if (handled) {
-      return handled;
-    }
-
-    throw error;
-  }
-}
-
-async function refreshArkhamDbAccessTokenForConnection(
-  executor: ArkhamDbExecutor,
-): Promise<OAuthAccessToken> {
-  assert(
-    executor.connection.token.refresh_token,
-    "Missing OAuth refresh token for ArkhamDB account.",
-  );
-
-  try {
-    const token = await refreshAccessToken(
-      executor.context,
-      executor.connection.token.refresh_token,
-    );
-    await upsertOAuthToken(executor.db, executor.connection.identity.id, token);
-    await patchArkhamDbIdentityState(executor, {
-      lastError: null,
-      status: "healthy",
-    });
-    return token;
-  } catch (error) {
-    await patchArkhamDbIdentityFailure(executor, error);
-    throw error;
-  }
 }
 
 function stringifyOptionalSlots(
@@ -376,16 +266,6 @@ function encodeParams(data: Record<string, unknown>) {
   return new URLSearchParams(payload).toString();
 }
 
-function parseWrappedResponse<T>(
-  response: WrappedResponse<unknown>,
-  schema: z.ZodType<T>,
-): WrappedResponse<T> {
-  return {
-    ...response,
-    data: schema.parse(response.data),
-  };
-}
-
 function assertSuccessfulOperation(res: {
   success: boolean;
   msg?: string | number | null | undefined;
@@ -393,41 +273,4 @@ function assertSuccessfulOperation(res: {
   if (!res.success) {
     throw new ApiError(res.msg?.toString() ?? "Unknown operation error.", 500);
   }
-}
-
-async function patchArkhamDbIdentityState(
-  executor: ArkhamDbExecutor,
-  patch: Partial<ArkhamDbIdentityState>,
-) {
-  await updateAccountIdentityState(
-    executor.db,
-    executor.connection.identity.id,
-    buildArkhamDbIdentityState(
-      executor.connection.state,
-      patch,
-    ) as AccountIdentity["state"],
-  );
-}
-
-async function patchArkhamDbIdentityFailure(
-  executor: ArkhamDbExecutor,
-  error: unknown,
-) {
-  await patchArkhamDbIdentityState(executor, {
-    lastError: error instanceof Error ? error.message : "Unknown error",
-    status: "unhealthy",
-  });
-}
-
-function buildArkhamDbIdentityState(
-  state: ArkhamDbIdentityState | null,
-  patch: Partial<ArkhamDbIdentityState>,
-) {
-  return {
-    lastError: state?.lastError ?? null,
-    lastSyncedAt: state?.lastSyncedAt ?? null,
-    status: state?.status ?? "healthy",
-    username: state?.username ?? null,
-    ...patch,
-  };
 }

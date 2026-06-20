@@ -251,6 +251,151 @@ describe("Deck routes", () => {
       });
     });
 
+    test("refreshes an expired arkhamdb token and persists the new token", async ({
+      dependencies,
+    }) => {
+      const { app, db, sessionCookie } = dependencies;
+      await insertArkhamDbConnection(db);
+
+      let deckRequestCount = 0;
+
+      const fetch = vi.fn<typeof globalThis.fetch>((input, init) => {
+        const url = input instanceof Request ? input.url : input.toString();
+
+        if (url.endsWith("/api/oauth2/decks")) {
+          deckRequestCount += 1;
+          const authorization = new Headers(init?.headers).get("Authorization");
+
+          if (deckRequestCount === 1) {
+            expect(authorization).toBe("Bearer access-token");
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({
+                  error: "invalid_token",
+                  error_description: "expired",
+                }),
+                {
+                  status: 401,
+                  headers: { "Content-Type": "application/json" },
+                },
+              ),
+            );
+          }
+
+          expect(authorization).toBe("Bearer refreshed-access-token");
+
+          return Promise.resolve(
+            new Response(
+              JSON.stringify([
+                buildArkhamDbApiDeck({
+                  id: 123,
+                  name: "Refreshed token deck",
+                  version: "1.3",
+                }),
+              ]),
+              {
+                status: 200,
+                headers: {
+                  "Content-Type": "application/json",
+                  "Last-Modified": "Thu, 04 Jun 2026 12:00:00 GMT",
+                },
+              },
+            ),
+          );
+        }
+
+        if (url.endsWith("/oauth/v2/token")) {
+          return Promise.resolve(
+            jsonResponse({
+              access_token: "refreshed-access-token",
+              expires_in: 3600,
+              refresh_token: "refreshed-refresh-token",
+              scope: null,
+              token_type: "Bearer",
+            }),
+          );
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`);
+      });
+      vi.stubGlobal("fetch", fetch);
+
+      const res = await getManifest(app, sessionCookie);
+      expect(res.status).toBe(200);
+
+      const manifest = DeckManifestResponseSchema.parse(await res.json());
+      expect(manifest.decks).toEqual([
+        expect.objectContaining({
+          id: 123,
+          version: "1.3",
+        }),
+      ]);
+      expect(fetch).toHaveBeenCalledTimes(3);
+
+      const token = await db
+        .selectFrom("account_identity")
+        .innerJoin(
+          "oauth_token",
+          "oauth_token.account_identity_id",
+          "account_identity.id",
+        )
+        .select(["oauth_token.access_token", "oauth_token.refresh_token"])
+        .where("account_identity.provider", "=", "arkhamdb")
+        .executeTakeFirstOrThrow();
+
+      expect(token).toEqual({
+        access_token: "refreshed-access-token",
+        refresh_token: "refreshed-refresh-token",
+      });
+    });
+
+    test("uses the latest arkhamdb snapshot when the manifest is unchanged", async ({
+      dependencies,
+    }) => {
+      const { app, db, sessionCookie } = dependencies;
+      const identity = await insertArkhamDbConnection(db);
+      const lastModified = "Thu, 04 Jun 2026 12:00:00 GMT";
+
+      const snapshot = await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 321,
+              name: "Cached Arkham Deck",
+              version: "2.0",
+            }),
+          ]),
+          last_modified: lastModified,
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const fetch = vi.fn<typeof globalThis.fetch>((input, init) => {
+        const url = input instanceof Request ? input.url : input.toString();
+        expect(url).toBe("https://arkhamdb.com/api/oauth2/decks");
+        expect(new Headers(init?.headers).get("If-Modified-Since")).toBe(
+          lastModified,
+        );
+        return Promise.resolve(new Response(null, { status: 304 }));
+      });
+      vi.stubGlobal("fetch", fetch);
+
+      const res = await getManifest(app, sessionCookie);
+      expect(res.status).toBe(200);
+
+      const manifest = DeckManifestResponseSchema.parse(await res.json());
+      expect(manifest.arkhamdbSyncToken).toBe(snapshot.id);
+      expect(manifest.decks).toEqual([
+        expect.objectContaining({
+          id: 321,
+          version: "2.0",
+        }),
+      ]);
+      expect(fetch).toHaveBeenCalledOnce();
+    });
+
     test("keeps account decks available when arkhamdb sync fails", async ({
       dependencies,
     }) => {
@@ -1091,6 +1236,8 @@ async function insertArkhamDbConnection(db: Database) {
       token_expires_at: new Date("2026-06-04T13:00:00.000Z"),
     })
     .executeTakeFirstOrThrow();
+
+  return identity;
 }
 
 function buildArkhamDbApiDeck(
