@@ -196,6 +196,11 @@ export const createAdapter = {
   },
 };
 
+type SaveDeckResult = {
+  deck: Deck;
+  undo: UndoEntry;
+};
+
 export const updateAdapter = {
   formatPropertyPatch(state: StoreState, deckId: DeckId, patch: Partial<Deck>) {
     const deck = state.data.decks[deckId];
@@ -209,13 +214,13 @@ export const updateAdapter = {
     updateDeckVersion(nextDeck);
     return { deck: nextDeck, undo: undefined };
   },
-  formatSave(state: StoreState, deckId: DeckId) {
+  formatSave(state: StoreState, deckId: DeckId): SaveDeckResult {
     const metadata = selectMetadata(state);
 
     const edits = state.deckEdits[deckId];
 
     const deck = state.data.decks[deckId];
-    if (!deck) return deck;
+    assert(deck, `Deck ${deckId} does not exist.`);
 
     const resolveState: [
       Parameters<typeof resolveDeck>[0],

@@ -360,7 +360,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
   },
   async saveDeck(client, deckId) {
     const state = get();
-    const { deck, undo } = updateAdapter.formatSave(get(), deckId);
+    const { deck, undo } = updateAdapter.formatSave(state, deckId);
 
     const canonicalDeck = await updateAdapter.persist(
       client,
