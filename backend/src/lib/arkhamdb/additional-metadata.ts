@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import type { DeckWritePayload } from "@arkham-build/shared";
 import { HTTPException } from "hono/http-exception";
+import { NoResultError } from "kysely";
 import type { Database } from "../../db/db.ts";
 import type { ArkhamdbDeckAdditionalMetadata } from "../../db/schema.types.ts";
+import { fetchWithTimeout } from "../fetch-with-timeout.ts";
 import { isEmpty } from "../is-empty.ts";
 import type { ArkhamDbRemoteDeck } from "./api-client/core/dtos.ts";
 import { applyHiddenSlots, extractHiddenSlots } from "./hidden-slots.ts";
@@ -82,9 +84,14 @@ export async function findAdditionalMetadata(db: Database, id: string) {
   return parseAdditionalMetadata(row.data);
 }
 
+type MergeAdditionalMetaOptions = {
+  legacyApiBaseUrl?: string;
+};
+
 export async function mergeAdditionalMeta(
   database: Database,
   deck: ArkhamDbRemoteDeck,
+  options: MergeAdditionalMetaOptions = {},
 ): Promise<ArkhamDbRemoteDeck> {
   const meta = decodeDeckMeta(deck.meta ?? "");
   let mergedDeck = { ...deck };
@@ -95,11 +102,24 @@ export async function mergeAdditionalMeta(
     if (typeof amk !== "string") {
       mergedDeck = { ...mergedDeck, meta: JSON.stringify(rest) };
     } else {
-      const additionalMeta = await findAdditionalMetadata(database, amk);
+      const additionalMeta = await findAdditionalMetadata(database, amk).catch(
+        async (error) => {
+          if (error instanceof NoResultError) {
+            return await fetchLegacyAdditionalMetadata(
+              options.legacyApiBaseUrl,
+              amk,
+            );
+          }
+
+          throw error;
+        },
+      );
+
+      const mergedMeta = additionalMeta ? { ...rest, ...additionalMeta } : rest;
 
       mergedDeck = {
         ...mergedDeck,
-        meta: JSON.stringify({ ...rest, ...additionalMeta }),
+        meta: JSON.stringify(mergedMeta),
       };
     }
   }
@@ -107,6 +127,28 @@ export async function mergeAdditionalMeta(
   applyHiddenSlots(mergedDeck);
 
   return mergedDeck;
+}
+
+async function fetchLegacyAdditionalMetadata(
+  legacyApiBaseUrl: string | undefined,
+  id: string,
+) {
+  if (!legacyApiBaseUrl) return undefined;
+
+  const url = new URL(
+    `/v1/public/additional_metadata/${encodeURIComponent(id)}`,
+    legacyApiBaseUrl,
+  );
+
+  const res = await fetchWithTimeout(url, {
+    headers: { accept: "application/json" },
+  });
+
+  if (res.status === 404) return undefined;
+  if (!res.ok) return undefined;
+
+  const data = (await res.json()) as ArkhamdbDeckAdditionalMetadata["data"];
+  return parseAdditionalMetadata(data);
 }
 
 type AdditionalMetadataInput = {

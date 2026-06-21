@@ -849,6 +849,86 @@ describe("Auth routes", () => {
       ]);
     });
 
+    test("reuses existing onboarding folder and settings state", async ({
+      dependencies,
+    }) => {
+      const { app, config, db } = dependencies;
+
+      const account = await db
+        .insertInto("account")
+        .values({
+          name: "provider_existing_uploads",
+          profile_completed_at: null,
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      await db
+        .insertInto("account_folder")
+        .values({
+          account_id: account.id,
+          state: {
+            deckFolders: { existingDeck: "existingFolder" },
+            folders: {
+              existingFolder: { id: "existingFolder", name: "Existing" },
+            },
+          },
+        })
+        .executeTakeFirstOrThrow();
+
+      await db
+        .insertInto("account_settings")
+        .values({
+          account_id: account.id,
+          collection: { core: 1 },
+          settings: { locale: "fr" },
+        })
+        .executeTakeFirstOrThrow();
+
+      const session = await createSession(db, account.id, 1);
+      const cookie = `${config.SESSION_COOKIE_NAME}=${session.token}`;
+
+      const res = await app.request("/v2/account/auth/complete-profile", {
+        method: "POST",
+        headers: { Cookie: cookie, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "complete-user-existing-upload",
+          uploads: {
+            folders: {
+              deckFolders: {},
+              folders: {},
+            },
+            settings: {
+              collection: { core: 2 },
+              settings: { locale: "en" },
+            },
+          },
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(
+        CompleteProfileResponseSchema.parse(await res.json()),
+      ).toMatchObject({
+        uploads: {
+          folders: {
+            revision: expect.any(String),
+            state: {
+              deckFolders: { existingDeck: "existingFolder" },
+              folders: {
+                existingFolder: { id: "existingFolder", name: "Existing" },
+              },
+            },
+          },
+          settings: {
+            collection: { core: 1 },
+            revision: expect.any(String),
+            settings: { locale: "fr" },
+          },
+        },
+      });
+    });
+
     test("remaps conflicting onboarding deck ids", async ({ dependencies }) => {
       const { app, config, db, sessionCookie } = dependencies;
 

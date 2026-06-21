@@ -252,12 +252,17 @@ async function uploadFolders(
     state: remapFolderState(folders, deckIdMap),
     table: "account_folder",
   });
+  const folderState =
+    row ?? (await findExistingAccountFolderState(db, accountId));
 
-  assert(row, "Folder state should be created for new account onboarding.");
+  assert(
+    folderState,
+    "Folder state should exist after new account onboarding.",
+  );
 
   return {
-    revision: row.revision,
-    state: row.state,
+    revision: folderState.revision,
+    state: folderState.state,
   };
 }
 
@@ -389,14 +394,41 @@ async function uploadSettings(
     settings: settings.settings,
     table: "account_settings",
   });
+  const accountSettings =
+    row ?? (await findExistingAccountSettings(db, accountId));
 
-  assert(row, "Settings should be created for new account onboarding.");
+  assert(
+    accountSettings,
+    "Settings should exist after new account onboarding.",
+  );
 
   return {
-    collection: row.collection,
-    revision: row.revision,
-    settings: row.settings,
+    collection: accountSettings.collection,
+    revision: accountSettings.revision,
+    settings: accountSettings.settings,
   };
+}
+
+async function findExistingAccountFolderState(
+  db: HonoEnv["Variables"]["db"],
+  accountId: string,
+) {
+  return await db
+    .selectFrom("account_folder")
+    .select(["revision", "state"])
+    .where("account_id", "=", accountId)
+    .executeTakeFirst();
+}
+
+async function findExistingAccountSettings(
+  db: HonoEnv["Variables"]["db"],
+  accountId: string,
+) {
+  return await db
+    .selectFrom("account_settings")
+    .select(["collection", "revision", "settings"])
+    .where("account_id", "=", accountId)
+    .executeTakeFirst();
 }
 
 function getConnectReturnTo(returnTo: string | undefined) {

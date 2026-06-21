@@ -29,7 +29,9 @@ export function fetchDeck(c: Context<SessionAuthHonoEnv>, id: string | number) {
 
     return {
       ...response,
-      data: await mergeAdditionalMeta(executor.db, response.data),
+      data: await mergeAdditionalMeta(executor.db, response.data, {
+        legacyApiBaseUrl: executor.context.get("config").LEGACY_API_BASE_URL,
+      }),
     };
   });
 }
@@ -77,7 +79,7 @@ export function syncDecks(
 
       return {
         ...response,
-        data: await mergeAdditionalMetadataForDecks(executor.db, response.data),
+        data: await mergeAdditionalMetadataForDecks(executor, response.data),
       };
     } catch (error) {
       await executor.patchIdentityFailure(error);
@@ -231,15 +233,23 @@ async function loadDeck(executor: ArkhamDbExecutor, id: string | number) {
 
   return {
     ...response,
-    data: await mergeAdditionalMeta(executor.db, response.data),
+    data: await mergeAdditionalMeta(executor.db, response.data, {
+      legacyApiBaseUrl: executor.context.get("config").LEGACY_API_BASE_URL,
+    }),
   };
 }
 
 async function mergeAdditionalMetadataForDecks(
-  db: ArkhamDbExecutor["db"],
+  executor: ArkhamDbExecutor,
   decks: ArkhamDbRemoteDeck[],
 ) {
-  return await Promise.all(decks.map((deck) => mergeAdditionalMeta(db, deck)));
+  const legacyApiBaseUrl = executor.context.get("config").LEGACY_API_BASE_URL;
+
+  return await Promise.all(
+    decks.map((deck) =>
+      mergeAdditionalMeta(executor.db, deck, { legacyApiBaseUrl }),
+    ),
+  );
 }
 
 function stringifyOptionalSlots(

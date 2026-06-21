@@ -20,7 +20,9 @@ export async function fetchDeck(
 
   return {
     ...response,
-    data: await mergeAdditionalMeta(c.get("db"), response.data),
+    data: await mergeAdditionalMeta(c.get("db"), response.data, {
+      legacyApiBaseUrl: c.get("config").LEGACY_API_BASE_URL,
+    }),
   };
 }
 
