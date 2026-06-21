@@ -219,13 +219,23 @@ async function uploadAccountDecks(
     .insertInto("deck")
     .values(
       remappedDecks.map((deck) => {
-        const { id, source: _, version, ...deckPayload } = deck;
+        const {
+          date_creation,
+          date_update,
+          id,
+          source: _,
+          version,
+          ...deckPayload
+        } = deck;
+        const now = new Date();
 
         return {
           ...mapDeckWriteDtoToInsert(deckPayload),
           account_id: accountId,
+          created_at: parseUploadedDeckTimestamp(date_creation, now),
           id: String(id),
           provider_type: ACCOUNT_PROVIDER_TYPE,
+          updated_at: parseUploadedDeckTimestamp(date_update, now),
           version,
         };
       }),
@@ -325,6 +335,11 @@ function assertUniqueUploadedDeckIds(decks: Deck[]) {
 
     ids.add(id);
   }
+}
+
+function parseUploadedDeckTimestamp(value: string, fallback: Date) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? fallback : date;
 }
 
 function remapDeck(deck: Deck, deckIdMap: Record<string, string>): Deck {

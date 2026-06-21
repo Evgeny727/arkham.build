@@ -798,6 +798,8 @@ describe("Auth routes", () => {
           uploads: {
             decks: [
               makeOnboardingDeck({
+                date_creation: "2025-01-02T03:04:05.000Z",
+                date_update: "2025-02-03T04:05:06.000Z",
                 id: "local-root",
                 next_deck: "local-upgrade",
               }),
@@ -829,7 +831,13 @@ describe("Auth routes", () => {
             "local-upgrade": "local-upgrade",
           },
           decks: [
-            { id: "local-root", next_deck: "local-upgrade", source: "account" },
+            {
+              date_creation: "2025-01-02T03:04:05.000Z",
+              date_update: "2025-02-03T04:05:06.000Z",
+              id: "local-root",
+              next_deck: "local-upgrade",
+              source: "account",
+            },
             {
               id: "local-upgrade",
               previous_deck: "local-root",
@@ -901,6 +909,56 @@ describe("Auth routes", () => {
         .executeTakeFirstOrThrow();
 
       expect(deck.meta).toEqual({});
+    });
+
+    test("falls back to now for invalid onboarding deck timestamps", async ({
+      dependencies,
+    }) => {
+      const { app, config, db } = dependencies;
+
+      const account = await db
+        .insertInto("account")
+        .values({
+          name: "provider_invalid_timestamp_upload",
+          profile_completed_at: null,
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const session = await createSession(db, account.id, 1);
+      const cookie = `${config.SESSION_COOKIE_NAME}=${session.token}`;
+      const beforeUpload = Date.now();
+
+      const res = await app.request("/v2/account/auth/complete-profile", {
+        method: "POST",
+        headers: { Cookie: cookie, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "complete-user-invalid-timestamp-upload",
+          uploads: {
+            decks: [
+              makeOnboardingDeck({
+                date_creation: "invalid",
+                date_update: "invalid",
+              }),
+            ],
+          },
+        }),
+      });
+
+      const afterUpload = Date.now();
+
+      expect(res.status).toBe(200);
+
+      const deck = await db
+        .selectFrom("deck")
+        .select(["created_at", "updated_at"])
+        .where("account_id", "=", account.id)
+        .executeTakeFirstOrThrow();
+
+      expect(deck.created_at.getTime()).toBeGreaterThanOrEqual(beforeUpload);
+      expect(deck.created_at.getTime()).toBeLessThanOrEqual(afterUpload);
+      expect(deck.updated_at.getTime()).toBeGreaterThanOrEqual(beforeUpload);
+      expect(deck.updated_at.getTime()).toBeLessThanOrEqual(afterUpload);
     });
 
     test("reuses existing onboarding folder and settings state", async ({
