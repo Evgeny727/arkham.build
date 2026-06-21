@@ -10,6 +10,7 @@ import { z } from "zod";
 import { getAccountIdentityByAccountIdAndProvider } from "../../auth/account-identities.ts";
 import type { SessionAuthHonoEnv } from "../../hono-env.ts";
 import { log } from "../../logger.ts";
+import { mergeAdditionalMeta } from "../additional-metadata.ts";
 import {
   createDeck,
   deleteDeck,
@@ -77,7 +78,13 @@ export async function fetchArkhamDbDeckBatch(
       throw new Error(`Deck ${id} not found in snapshot.`);
     }
 
-    decks.push(mapArkhamDbDeckToDto(snapshotDeck));
+    decks.push(
+      mapArkhamDbDeckToDto(
+        await mergeAdditionalMeta(c.get("db"), snapshotDeck, {
+          legacyApiBaseUrl: c.get("config").LEGACY_API_BASE_URL,
+        }),
+      ),
+    );
   }
 
   return decks;
