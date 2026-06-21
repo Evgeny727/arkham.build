@@ -160,6 +160,13 @@ async function refreshArkhamDbAccessTokenForConnection(
   try {
     const token = await refreshAccessToken(executor.context, refreshToken);
     await upsertOAuthToken(executor.db, executor.connection.identity.id, token);
+
+    executor.connection.token.access_token = token.access_token;
+    executor.connection.token.refresh_token = token.refresh_token;
+    executor.connection.token.token_expires_at = new Date(
+      Date.now() + token.expires_in * 1000,
+    );
+
     await patchArkhamDbIdentityState(executor, {
       lastError: null,
       status: "healthy",
