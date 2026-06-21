@@ -7,7 +7,7 @@ export async function listAccountDecksForManifest(
 ) {
   return await db
     .selectFrom("deck")
-    .selectAll()
+    .select(["id", "updated_at", "version"])
     .where("account_id", "=", accountId)
     .where("provider_type", "=", ACCOUNT_PROVIDER_TYPE)
     .orderBy("id")

@@ -7,7 +7,6 @@ import {
   type DeckDeleteRequest,
   DeckDeleteRequestSchema,
   type DeckManifestItem,
-  DeckManifestItemSchema,
   DeckManifestResponseSchema,
   DeckSchema,
   type DeckSyncTarget,
@@ -84,14 +83,12 @@ routes.get("/manifest", sessionAuth(), async (c) => {
 
   const accountDecks = await listAccountDecksForManifest(db, accountId);
 
-  const accountDeckManifest = accountDecks.map((deck) =>
-    DeckManifestItemSchema.parse({
-      provider: ACCOUNT_PROVIDER_TYPE,
-      id: deck.id,
-      updatedAt: deck.updated_at.toISOString(),
-      version: deck.version ?? "",
-    }),
-  );
+  const accountDeckManifest: DeckManifestItem[] = accountDecks.map((deck) => ({
+    provider: ACCOUNT_PROVIDER_TYPE,
+    id: deck.id,
+    updatedAt: deck.updated_at.toISOString(),
+    version: deck.version ?? "",
+  }));
 
   const decks = [...accountDeckManifest, ...arkhamdbDeckManifest];
 
