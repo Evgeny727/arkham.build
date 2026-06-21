@@ -6,7 +6,7 @@ import {
   CompleteProfileResponseSchema,
   type Deck,
 } from "@arkham-build/shared";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { arkhamdbOAuthProvider } from "../../../lib/arkhamdb/oauth-provider.ts";
 import { getAccountIdentityByProviderUserId } from "../../../lib/auth/account-identities.ts";
@@ -101,7 +101,13 @@ arkhamdbOAuthRoutes.get(
     }),
 );
 
-arkhamdbOAuthRoutes.get("/callback", async (c) => {
+export const arkhamdbOAuthCallbackRoutes = new Hono<HonoEnv>();
+arkhamdbOAuthCallbackRoutes.get("/callback", handleArkhamDbOAuthCallback);
+arkhamdbOAuthRoutes.get("/callback", handleArkhamDbOAuthCallback);
+
+export default routes;
+
+async function handleArkhamDbOAuthCallback(c: Context<HonoEnv>) {
   const db = c.get("db");
   const config = c.get("config");
   const code = c.req.query("code");
@@ -169,9 +175,7 @@ arkhamdbOAuthRoutes.get("/callback", async (c) => {
   } catch (error) {
     return redirectToOAuthError(c, returnTo, error);
   }
-});
-
-export default routes;
+}
 
 async function applyCompleteProfileUploads(
   db: HonoEnv["Variables"]["db"],

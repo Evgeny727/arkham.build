@@ -6,6 +6,7 @@ import additionalMetadataRouter from "./features/additional-metadata/routes.ts";
 import adminRouter from "./features/admin/routes.ts";
 import arkhamDbDecklistsRouter from "./features/arkhamdb-decklists/routes.ts";
 import authRouter, {
+  arkhamdbOAuthCallbackRoutes,
   arkhamdbOAuthRoutes,
 } from "./features/auth/routes/index.ts";
 import cacheRouter from "./features/cache/routes.ts";
@@ -89,6 +90,7 @@ export function appFactory(
   app.route("/v2/account", v2Account);
 
   app.route("/admin", adminRouter);
+  app.route("/auth", arkhamdbOAuthCallbackRoutes);
   app.route("/auth/arkhamdb", arkhamdbOAuthRoutes);
 
   app.onError(errorHandler);

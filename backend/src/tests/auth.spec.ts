@@ -312,7 +312,7 @@ describe("Auth routes", () => {
     });
   });
 
-  describe("GET /auth/arkhamdb/callback", () => {
+  describe("GET OAuth callback", () => {
     test("completes oauth signup for a new account", async ({
       dependencies,
     }) => {
@@ -322,7 +322,7 @@ describe("Auth routes", () => {
       mockArkhamDbOAuth(12345);
 
       const res = await app.request(
-        `/auth/arkhamdb/callback?code=test-code&state=${oauth.state}`,
+        `/auth/callback?code=test-code&state=${oauth.state}`,
         {
           method: "GET",
           headers: { Cookie: oauth.cookie },
