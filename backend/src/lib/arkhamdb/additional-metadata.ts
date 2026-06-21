@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import type { DeckWritePayload } from "@arkham-build/shared";
-import { HTTPException } from "hono/http-exception";
 import { NoResultError } from "kysely";
 import type { Database } from "../../db/db.ts";
 import type { ArkhamdbDeckAdditionalMetadata } from "../../db/schema.types.ts";
@@ -53,14 +52,9 @@ export async function storeAdditionalMetadata<T extends DeckWritePayload>(
   extractHiddenSlots(preparedDeck);
 
   const meta = decodeDeckMeta(preparedDeck.meta ?? "");
+  const { amk: _amk, ...metaWithoutAmk } = meta;
 
-  if (meta["amk"]) {
-    throw new HTTPException(400, {
-      message: "amk is already present in this deck's meta.",
-    });
-  }
-
-  const { additionalMeta, deckMeta } = partitionDeckMeta(meta);
+  const { additionalMeta, deckMeta } = partitionDeckMeta(metaWithoutAmk);
   if (isEmpty(additionalMeta)) return preparedDeck;
 
   const amk = await upsertAdditionalMetadata(database, {
