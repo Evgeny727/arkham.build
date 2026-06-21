@@ -60,6 +60,21 @@ describe("GET /v1/public/arkhamdb/:type/:id", () => {
     const data = (await res.json()) as Array<{ meta: string }>;
     expect(data[0]?.meta).toBe("{}");
   });
+
+  test("preserves ArkhamDB taboo ids", async ({ dependencies }) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Response.json({ ...deck(123), taboo_id: 6 })),
+    );
+
+    const res = await dependencies.app.request(
+      "/v1/public/arkhamdb/decklist/123",
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Array<{ taboo_id: number | null }>;
+    expect(data[0]?.taboo_id).toBe(6);
+  });
 });
 
 function deck(id: number, previousDeck?: number, nextDeck?: number) {

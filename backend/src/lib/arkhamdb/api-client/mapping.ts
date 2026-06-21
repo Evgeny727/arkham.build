@@ -24,7 +24,7 @@ export function mapArkhamDbDeckToDto(deck: ArkhamDbRemoteDeck): Deck {
     sideSlots: parseOptionalSlots(deck.sideSlots),
     slots: SlotsSchema.parse(deck.slots),
     source: ARKHAMDB_PROVIDER_TYPE,
-    taboo_id: deck.taboo ?? null,
+    taboo_id: deck.taboo_id ?? deck.taboo ?? null,
     tags: deck.tags ?? "",
     user_id: deck.user_id ?? null,
     version: deck.version,

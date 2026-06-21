@@ -26,6 +26,7 @@ export const ArkhamDbRemoteDeckSchema = z.object({
   sideSlots: SafeSlotsSchema,
   slots: SafeRequiredSlotsSchema,
   taboo: z.number().nullish(),
+  taboo_id: z.number().nullish(),
   tags: z.string().nullish(),
   user_id: z.number().nullish(),
   version: z.string(),
