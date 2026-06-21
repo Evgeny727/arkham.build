@@ -160,6 +160,47 @@ describe("sync slice", () => {
     ).toMatchObject({ code: "fan-investigator" });
   });
 
+  it("normalizes ArkhamDB deck problems before reconciliation", async () => {
+    const remoteDeck = makeTestDeck({
+      id: 123,
+      problem: "arkhamdb nonsense",
+      source: "arkhamdb",
+      version: "2",
+    });
+
+    vi.mocked(deckRequests.fetchDeckManifest).mockResolvedValue({
+      version: "2",
+      decks: [
+        {
+          provider: "arkhamdb",
+          id: 123,
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          version: "2",
+        },
+      ],
+      arkhamdbSyncToken: "snapshot",
+      providers: {
+        account: { available: true },
+        arkhamdb: { available: true },
+      },
+    });
+    vi.mocked(deckRequests.fetchDeckBatch).mockResolvedValue([remoteDeck]);
+
+    store.setState({
+      auth: makeAuthenticatedAuth(),
+      refreshSession: vi.fn().mockResolvedValue(undefined),
+      sync: makeSyncState({
+        deckItems: {},
+        deckStatus: "idle",
+        manifestVersion: "1",
+      }),
+    });
+
+    await store.getState().syncDecks(getMockHttpClient());
+
+    expect(store.getState().data.decks[123]?.problem).toBe("too_few_cards");
+  });
+
   it("refreshes a conflicted deck with the remote deck", async () => {
     const remoteDeck = makeTestDeck({
       id: "remote",

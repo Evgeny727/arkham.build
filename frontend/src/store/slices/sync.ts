@@ -8,6 +8,7 @@ import type { StateCreator } from "zustand";
 import { assert } from "@/utils/assert";
 import { ARCHIVE_FOLDER_ID } from "@/utils/constants";
 import { isEmpty } from "@/utils/is-empty";
+import { normalizeArkhamDbDeck } from "../lib/arkhamdb-decks";
 import { deleteAdapter } from "../lib/deck-crud";
 import {
   updateDeckSyncConflictError,
@@ -371,14 +372,14 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
         syncDecks,
       });
 
-      const remoteDecks = await fetchDecksInBatches(
+      const fetchedDecks = await fetchDecksInBatches(
         client,
         plan.fetchTargets,
         manifest.arkhamdbSyncToken,
       );
 
       const remoteDeckTargets = new Set(
-        remoteDecks.map((deck) =>
+        fetchedDecks.map((deck) =>
           getDeckTargetKey({
             provider: getSyncedDeckProvider(deck.source),
             id: deck.id,
@@ -398,11 +399,12 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
 
       if (!isCurrentAccount(get(), accountId)) return;
 
-      if (remoteDecks.length) {
-        get().cacheFanMadeContent(remoteDecks);
+      if (fetchedDecks.length) {
+        get().cacheFanMadeContent(fetchedDecks);
       }
 
       const current = get();
+      const remoteDecks = normalizeSyncedArkhamDbDecks(current, fetchedDecks);
 
       const result = applyRemoteDeckReconciliation({
         accountId,
@@ -539,6 +541,15 @@ function getSyncedDeckProvider(
 
 function getDeckTargetKey(target: DeckSyncTarget) {
   return `${target.provider}:${String(target.id)}`;
+}
+
+function normalizeSyncedArkhamDbDecks(
+  state: StoreState,
+  decks: StoreState["data"]["decks"][string][],
+) {
+  return decks.map((deck) =>
+    deck.source === "arkhamdb" ? normalizeArkhamDbDeck(deck, state) : deck,
+  );
 }
 
 function applyRemoteDeck(
