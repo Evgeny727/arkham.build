@@ -49,6 +49,7 @@ proxy:
   host: api.arkham.build
   # Proxy connects to your container on port 80 by default.
   app_port: 3000
+  response_timeout: 100
   healthcheck:
     path: /admin/up
 
