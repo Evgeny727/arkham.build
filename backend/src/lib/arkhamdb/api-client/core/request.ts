@@ -17,7 +17,7 @@ export type WrappedResponse<T> = {
   status: number;
 };
 
-const ARKHAMDB_REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+const ARKHAMDB_REQUEST_TIMEOUT_MS = 90_000;
 
 export async function request<T, E extends HonoEnv = HonoEnv>(
   c: Context<E>,
