@@ -6,8 +6,7 @@ import type {
   DeckWritePayload,
 } from "@arkham-build/shared";
 import type { Context } from "hono";
-import type { Database } from "../../../db/db.ts";
-import type { ArkhamdbDeckSnapshot } from "../../../db/schema.types.ts";
+import { z } from "zod";
 import { getAccountIdentityByAccountIdAndProvider } from "../../auth/account-identities.ts";
 import type { SessionAuthHonoEnv } from "../../hono-env.ts";
 import {
@@ -20,8 +19,15 @@ import {
 } from "./api-user.ts";
 import {
   type ArkhamDbRemoteDeck,
+  ArkhamDbRemoteDeckSchema,
   ArkhamDbRemoteDecksSchema,
 } from "./core/dtos.ts";
+import {
+  createArkhamDbDeckSnapshot,
+  deleteArkhamDbDeckSnapshotsByAccountIdentityId,
+  findArkhamDbDeckSnapshotByAccountIdAndId,
+  findLatestArkhamDbDeckSnapshotByAccountIdentityId,
+} from "./deck-snapshots.ts";
 import { mapArkhamDbDeckToDto } from "./mapping.ts";
 
 export async function fetchArkhamDbDeck(
@@ -104,23 +110,25 @@ export async function fetchArkhamDbDeckManifest(
   );
 
   if (response.status === 200) {
+    assert(response.data, "Missing deck data for successful sync.");
+
     const createdSnapshot = await createArkhamDbDeckSnapshot(
       db,
       identity.id,
       response.headers["last-modified"] ?? null,
-      response.data ?? [],
+      response.data,
     );
-    const remoteDecks = ArkhamDbRemoteDecksSchema.parse(createdSnapshot.decks);
-
     return {
       arkhamdbSyncToken: createdSnapshot.id,
-      decks: remoteDecks.map(mapArkhamDbDeckToManifestItem),
+      decks: response.data.map(mapArkhamDbDeckToManifestItem),
     };
   }
 
   assert(snapshot, "Missing ArkhamDB snapshot for 304 response.");
 
-  const remoteDecks = ArkhamDbRemoteDecksSchema.parse(snapshot.decks);
+  const remoteDecks = ArkhamDbRemoteDeckManifestSourcesSchema.parse(
+    snapshot.decks,
+  );
 
   return {
     arkhamdbSyncToken: snapshot.id,
@@ -175,17 +183,37 @@ export async function deleteArkhamDbDeck(
   await invalidateArkhamDbDeckSnapshots(c);
 }
 
-function mapArkhamDbDeckToManifestItem(
-  deck: ArkhamDbRemoteDeck,
-): DeckManifestItem {
-  const dto = mapArkhamDbDeckToDto(deck);
+const ArkhamDbRemoteDeckManifestSourceSchema = ArkhamDbRemoteDeckSchema.pick({
+  date_creation: true,
+  date_update: true,
+  id: true,
+  version: true,
+});
+const ArkhamDbRemoteDeckManifestSourcesSchema = z.array(
+  ArkhamDbRemoteDeckManifestSourceSchema,
+);
 
+type ArkhamDbRemoteDeckManifestSource = Pick<
+  ArkhamDbRemoteDeck,
+  "date_creation" | "date_update" | "id" | "version"
+>;
+
+function mapArkhamDbDeckToManifestItem(
+  deck: ArkhamDbRemoteDeckManifestSource,
+): DeckManifestItem {
   return {
     provider: "arkhamdb",
-    id: dto.id,
-    updatedAt: dto.date_update,
-    version: dto.version,
+    id: deck.id,
+    updatedAt: toArkhamDbDeckTimestamp(deck.date_update, deck.date_creation),
+    version: deck.version,
   };
+}
+
+function toArkhamDbDeckTimestamp(
+  primary: string | null | undefined,
+  fallback: string | null | undefined,
+) {
+  return primary ?? fallback ?? new Date().toISOString();
 }
 
 async function invalidateArkhamDbDeckSnapshots(c: Context<SessionAuthHonoEnv>) {
@@ -197,61 +225,8 @@ async function invalidateArkhamDbDeckSnapshots(c: Context<SessionAuthHonoEnv>) {
 
   assert(identity, "Missing ArkhamDB identity for account.");
 
-  await c
-    .get("db")
-    .deleteFrom("arkhamdb_deck_snapshot")
-    .where("account_identity_id", "=", identity.id)
-    .execute();
-}
-
-async function createArkhamDbDeckSnapshot(
-  db: Database,
-  accountIdentityId: string,
-  lastModified: string | null,
-  decks: ArkhamdbDeckSnapshot["decks"],
-) {
-  return await db
-    .insertInto("arkhamdb_deck_snapshot")
-    .values({
-      account_identity_id: accountIdentityId,
-      decks: JSON.stringify(decks),
-      last_modified: lastModified,
-    })
-    .returning(["id", "decks", "last_modified"])
-    .executeTakeFirstOrThrow();
-}
-
-async function findLatestArkhamDbDeckSnapshotByAccountIdentityId(
-  db: Database,
-  accountIdentityId: string,
-) {
-  return await db
-    .selectFrom("arkhamdb_deck_snapshot")
-    .select(["id", "decks", "last_modified"])
-    .where("account_identity_id", "=", accountIdentityId)
-    .orderBy("created_at", "desc")
-    .executeTakeFirst();
-}
-
-async function findArkhamDbDeckSnapshotByAccountIdAndId(
-  db: Database,
-  accountId: string,
-  snapshotId: string,
-) {
-  return await db
-    .selectFrom("arkhamdb_deck_snapshot")
-    .innerJoin(
-      "account_identity",
-      "account_identity.id",
-      "arkhamdb_deck_snapshot.account_identity_id",
-    )
-    .select([
-      "arkhamdb_deck_snapshot.id",
-      "arkhamdb_deck_snapshot.decks",
-      "arkhamdb_deck_snapshot.last_modified",
-    ])
-    .where("account_identity.account_id", "=", accountId)
-    .where("account_identity.provider", "=", "arkhamdb")
-    .where("arkhamdb_deck_snapshot.id", "=", snapshotId)
-    .executeTakeFirst();
+  await deleteArkhamDbDeckSnapshotsByAccountIdentityId(
+    c.get("db"),
+    identity.id,
+  );
 }

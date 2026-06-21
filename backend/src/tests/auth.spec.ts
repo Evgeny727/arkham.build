@@ -342,6 +342,7 @@ describe("Auth routes", () => {
         .innerJoin("account", "account.id", "account_identity.account_id")
         .select([
           "account.profile_completed_at",
+          "account_identity.id",
           "account_identity.provider",
           "account_identity.provider_user_id",
         ])
@@ -354,6 +355,20 @@ describe("Auth routes", () => {
         provider: "arkhamdb",
         provider_user_id: "12345",
       });
+      assert(identity, "Missing ArkhamDB identity");
+
+      const snapshot = await db
+        .selectFrom("arkhamdb_deck_snapshot")
+        .select(["decks", "last_modified"])
+        .where("account_identity_id", "=", identity.id)
+        .executeTakeFirstOrThrow();
+
+      expect(snapshot).toMatchObject({
+        last_modified: null,
+      });
+      expect(snapshot.decks).toEqual([
+        expect.objectContaining({ user_id: 12345 }),
+      ]);
 
       const sessionSetCookie = res.headers
         .getSetCookie()
@@ -847,6 +862,45 @@ describe("Auth routes", () => {
         { id: "local-root", next_deck: "local-upgrade", prev_deck: null },
         { id: "local-upgrade", next_deck: null, prev_deck: "local-root" },
       ]);
+    });
+
+    test("stores invalid onboarding deck meta as empty metadata", async ({
+      dependencies,
+    }) => {
+      const { app, config, db } = dependencies;
+
+      const account = await db
+        .insertInto("account")
+        .values({
+          name: "provider_invalid_meta_upload",
+          profile_completed_at: null,
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const session = await createSession(db, account.id, 1);
+      const cookie = `${config.SESSION_COOKIE_NAME}=${session.token}`;
+
+      const res = await app.request("/v2/account/auth/complete-profile", {
+        method: "POST",
+        headers: { Cookie: cookie, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: "complete-user-invalid-meta-upload",
+          uploads: {
+            decks: [makeOnboardingDeck({ meta: "{alternate_back:90024}" })],
+          },
+        }),
+      });
+
+      expect(res.status).toBe(200);
+
+      const deck = await db
+        .selectFrom("deck")
+        .select(["meta"])
+        .where("account_id", "=", account.id)
+        .executeTakeFirstOrThrow();
+
+      expect(deck.meta).toEqual({});
     });
 
     test("reuses existing onboarding folder and settings state", async ({

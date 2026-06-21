@@ -1,11 +1,15 @@
 import assert from "node:assert";
 import type { Database } from "../../../db/db.ts";
+import { createArkhamDbDeckSnapshot } from "../../../lib/arkhamdb/api-client/deck-snapshots.ts";
 import {
   getAccountIdentityByAccountIdAndProvider,
   updateAccountIdentityState,
 } from "../../../lib/auth/account-identities.ts";
 import { upsertOAuthToken } from "../../../lib/auth/oauth-tokens.ts";
-import type { OAuthAccessToken } from "../../../lib/oauth.ts";
+import type {
+  OAuthAccessToken,
+  OAuthProviderIdentity,
+} from "../../../lib/oauth.ts";
 
 export async function createEmailIdentity(
   db: Database,
@@ -32,6 +36,7 @@ export interface ConnectOAuthIdentityToAccountParams {
   provider: string;
   providerUserId: string;
   accessToken: OAuthAccessToken;
+  initialArkhamDbDeckSnapshot?: OAuthProviderIdentity["initialArkhamDbDeckSnapshot"];
 }
 
 export async function connectOAuthIdentityToAccount(
@@ -55,6 +60,7 @@ export async function connectOAuthIdentityToAccount(
 
       await upsertOAuthToken(tx, existingIdentity.id, params.accessToken);
       await updateAccountIdentityState(tx, existingIdentity.id, null);
+      await createInitialArkhamDbDeckSnapshot(tx, existingIdentity.id, params);
       return existingIdentity;
     }
 
@@ -70,6 +76,7 @@ export async function connectOAuthIdentityToAccount(
       .executeTakeFirstOrThrow();
 
     await upsertOAuthToken(tx, accountIdentity.id, params.accessToken);
+    await createInitialArkhamDbDeckSnapshot(tx, accountIdentity.id, params);
 
     return accountIdentity;
   });
@@ -180,6 +187,21 @@ export async function updateAccountIdentityPasswordHash(
     .where("provider", "=", "email")
     .where("id", "=", accountIdentityId)
     .executeTakeFirst();
+}
+
+async function createInitialArkhamDbDeckSnapshot(
+  db: Database,
+  accountIdentityId: string,
+  params: ConnectOAuthIdentityToAccountParams,
+) {
+  if (!params.initialArkhamDbDeckSnapshot) return;
+
+  await createArkhamDbDeckSnapshot(
+    db,
+    accountIdentityId,
+    params.initialArkhamDbDeckSnapshot.lastModified,
+    params.initialArkhamDbDeckSnapshot.decks,
+  );
 }
 
 function assertOAuthProvider(provider: string) {

@@ -1,9 +1,13 @@
 import type { Database } from "../../../db/db.ts";
+import { createArkhamDbDeckSnapshot } from "../../../lib/arkhamdb/api-client/deck-snapshots.ts";
 import { getAccountIdentityByProviderUserId } from "../../../lib/auth/account-identities.ts";
 import { upsertOAuthToken } from "../../../lib/auth/oauth-tokens.ts";
 import { createSession } from "../../../lib/auth/sessions.ts";
 import type { Config } from "../../../lib/config.ts";
-import type { OAuthAccessToken } from "../../../lib/oauth.ts";
+import type {
+  OAuthAccessToken,
+  OAuthProviderIdentity,
+} from "../../../lib/oauth.ts";
 
 export interface CreateAccountParams {
   name: string;
@@ -15,6 +19,7 @@ export interface CreateAccountParams {
 export interface CreateAccountFromOAuthParams {
   accessToken: OAuthAccessToken;
   config: Config;
+  initialArkhamDbDeckSnapshot?: OAuthProviderIdentity["initialArkhamDbDeckSnapshot"];
   provider: string;
   providerUserId: string;
 }
@@ -80,6 +85,15 @@ export async function upsertAccountFromOAuth(
     }
 
     await upsertOAuthToken(tx, accountIdentity.id, params.accessToken);
+
+    if (params.initialArkhamDbDeckSnapshot) {
+      await createArkhamDbDeckSnapshot(
+        tx,
+        accountIdentity.id,
+        params.initialArkhamDbDeckSnapshot.lastModified,
+        params.initialArkhamDbDeckSnapshot.decks,
+      );
+    }
 
     const session = await createSession(
       tx,

@@ -4,11 +4,16 @@ import {
 } from "@arkham-build/shared";
 import type { Context } from "hono";
 import type { OAuthAccessToken as ArkhamOAuthAccessToken } from "./arkhamdb/api-client/api-oauth.ts";
+import type { ArkhamDbRemoteDeck } from "./arkhamdb/api-client/core/dtos.ts";
 
 // use arkhamdb format as canonical
 export type OAuthAccessToken = ArkhamOAuthAccessToken;
 
 export type OAuthProviderIdentity = {
+  initialArkhamDbDeckSnapshot?: {
+    decks: ArkhamDbRemoteDeck[];
+    lastModified: string | null;
+  };
   providerUserId: string;
 };
 

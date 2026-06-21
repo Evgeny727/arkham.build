@@ -372,6 +372,12 @@ describe("Deck routes", () => {
         .returning(["id"])
         .executeTakeFirstOrThrow();
 
+      await db
+        .updateTable("arkhamdb_deck_snapshot")
+        .set({ created_at: new Date("2026-06-04T12:00:00.000Z") })
+        .where("id", "=", snapshot.id)
+        .executeTakeFirstOrThrow();
+
       const fetch = vi.fn<typeof globalThis.fetch>((input, init) => {
         const url = input instanceof Request ? input.url : input.toString();
         expect(url).toBe("https://arkhamdb.com/api/oauth2/decks");
@@ -391,6 +397,54 @@ describe("Deck routes", () => {
         expect.objectContaining({
           id: 321,
           version: "2.0",
+        }),
+      ]);
+      expect(fetch).toHaveBeenCalledOnce();
+    });
+
+    test("checks arkhamdb before reusing a fresh snapshot", async ({
+      dependencies,
+    }) => {
+      const { app, db, sessionCookie } = dependencies;
+      const identity = await insertArkhamDbConnection(db);
+      const lastModified = "Thu, 04 Jun 2026 12:00:00 GMT";
+
+      const snapshot = await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          created_at: new Date(),
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 654,
+              name: "Fresh Arkham Deck",
+              version: "1.0",
+            }),
+          ]),
+          last_modified: lastModified,
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const fetch = vi.fn<typeof globalThis.fetch>((input, init) => {
+        const url = input instanceof Request ? input.url : input.toString();
+        expect(url).toBe("https://arkhamdb.com/api/oauth2/decks");
+        expect(new Headers(init?.headers).get("If-Modified-Since")).toBe(
+          lastModified,
+        );
+        return Promise.resolve(new Response(null, { status: 304 }));
+      });
+      vi.stubGlobal("fetch", fetch);
+
+      const res = await getManifest(app, sessionCookie);
+      expect(res.status).toBe(200);
+
+      const manifest = DeckManifestResponseSchema.parse(await res.json());
+      expect(manifest.arkhamdbSyncToken).toBe(snapshot.id);
+      expect(manifest.decks).toEqual([
+        expect.objectContaining({
+          id: 654,
+          version: "1.0",
         }),
       ]);
       expect(fetch).toHaveBeenCalledOnce();
@@ -508,6 +562,7 @@ describe("Deck routes", () => {
           decks: JSON.stringify([
             buildArkhamDbApiDeck({
               id: 123,
+              meta: "{alternate_back:90024}",
               name: "Snapshot deck",
               version: "1.1",
             }),
@@ -536,6 +591,7 @@ describe("Deck routes", () => {
       expect(body).toMatchObject([
         {
           id: 123,
+          meta: "{}",
           name: "Snapshot deck",
           source: "arkhamdb",
           version: "1.1",

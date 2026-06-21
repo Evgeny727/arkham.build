@@ -153,6 +153,7 @@ async function handleArkhamDbOAuthCallback(c: Context<HonoEnv>) {
       await connectOAuthIdentityToAccount(db, {
         accountId: validatedOAuthContext.accountId,
         accessToken,
+        initialArkhamDbDeckSnapshot: identity.initialArkhamDbDeckSnapshot,
         provider: arkhamdbOAuthProvider.name,
         providerUserId: identity.providerUserId,
       });
@@ -165,6 +166,7 @@ async function handleArkhamDbOAuthCallback(c: Context<HonoEnv>) {
     const { existing, session } = await upsertAccountFromOAuth(db, {
       accessToken,
       config,
+      initialArkhamDbDeckSnapshot: identity.initialArkhamDbDeckSnapshot,
       provider: arkhamdbOAuthProvider.name,
       providerUserId: identity.providerUserId,
     });
