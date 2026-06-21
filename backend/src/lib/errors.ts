@@ -6,17 +6,18 @@ import type { HonoEnv } from "./hono-env.ts";
 
 export function errorHandler(err: unknown, c: Context<HonoEnv>) {
   if (err instanceof HTTPException) {
-    return c.json(formatError(err), err.status);
+    const body = formatError(err);
+    if (err.status === 400) logBadRequest(c, body);
+    return c.json(body, err.status);
   }
 
   if (err instanceof ZodError) {
-    return c.json(
-      {
-        message: "Validation Error",
-        cause: formatErrorCause(err),
-      },
-      400,
-    );
+    const body = {
+      message: "Validation Error",
+      cause: formatErrorCause(err),
+    };
+    logBadRequest(c, body);
+    return c.json(body, 400);
   }
 
   const config = c.get("config");
@@ -31,6 +32,18 @@ export function errorHandler(err: unknown, c: Context<HonoEnv>) {
   }
 
   return c.json({ message: STATUS_CODES[500] as string }, 500);
+}
+
+function logBadRequest(
+  c: Context<HonoEnv>,
+  body: { message: string; cause?: unknown },
+) {
+  c.get("logger")("warn", "Bad request", {
+    method: c.req.method,
+    path: c.req.path,
+    error: body.message,
+    cause: body.cause,
+  });
 }
 
 function formatError(err: HTTPException & { cause?: unknown }) {
