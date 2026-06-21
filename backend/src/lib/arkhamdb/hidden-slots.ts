@@ -7,6 +7,7 @@ import type { ArkhamDbRemoteDeck } from "./api-client/core/dtos.ts";
 
 export function extractHiddenSlots(deck: DeckWritePayload) {
   const meta = decodeDeckMeta(deck.meta);
+  const previousHiddenSlots = meta.hidden_slots;
   const investigatorCode = deck.investigator_code;
 
   const hiddenSlots: DeckFanMadeContentSlots = {
@@ -24,8 +25,9 @@ export function extractHiddenSlots(deck: DeckWritePayload) {
 
     for (const [code, quantity] of slots) {
       const isFanMade = meta.fan_made_content?.cards?.[code];
+      const isPreviouslyHidden = previousHiddenSlots?.[key]?.[code] != null;
 
-      if (isFanMade || isPreview(code)) {
+      if (isFanMade || isPreviouslyHidden || isPreview(code)) {
         hiddenSlots[key] ??= {};
         hiddenSlots[key][code] = quantity;
         delete deck[key]?.[code];
@@ -37,6 +39,7 @@ export function extractHiddenSlots(deck: DeckWritePayload) {
   if (
     investigatorCode &&
     (meta.fan_made_content?.cards[investigatorCode] ||
+      previousHiddenSlots?.investigator_code === investigatorCode ||
       isPreview(investigatorCode))
   ) {
     hiddenSlots.investigator_code = investigatorCode;
@@ -45,7 +48,13 @@ export function extractHiddenSlots(deck: DeckWritePayload) {
     changed = true;
   }
 
-  if (!changed) return;
+  if (!changed) {
+    if (previousHiddenSlots) {
+      delete meta.hidden_slots;
+      deck.meta = JSON.stringify(meta);
+    }
+    return;
+  }
 
   meta.hidden_slots = hiddenSlots;
   deck.meta = JSON.stringify(meta);
@@ -80,8 +89,6 @@ export function applyHiddenSlots(deck: ArkhamDbRemoteDeck) {
       deck.investigator_name ??
       null;
   }
-
-  delete meta.hidden_slots;
 
   deck.meta = JSON.stringify(meta);
 }
