@@ -1605,7 +1605,7 @@
           "user_id": "Nutzer-ID"
         },
         "privacy_rights": {
-          "body": "Du kannst deine Daten über den Support-Tab exportieren und dein Konto unten löschen. Für DSGVO-Anfragen, die nicht per Selbstbedienung möglich sind, wie Anfragen zur Einschränkung oder zum Widerspruch, kontaktiere <privacyEmail>{{adminEmail}}</privacyEmail>.",
+          "body": "Du kannst deine Daten über den Support-Tab exportieren und dein Konto unten löschen. Für DSGVO-Anfragen, die nicht per Selbstbedienung möglich sind, wie Anfragen zur Einschränkung oder zum Widerspruch, kontaktiere <privacyEmail />.",
           "title": "Datenschutz und Datenrechte"
         },
         "profile": {

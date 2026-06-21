@@ -1605,7 +1605,7 @@
           "user_id": "User ID"
         },
         "privacy_rights": {
-          "body": "You can export your data from the Support tab and delete your account below. For GDPR requests that are not self-service, such as restriction or objection requests, contact <privacyEmail>{{adminEmail}}</privacyEmail>.",
+          "body": "You can export your data from the Support tab and delete your account below. For GDPR requests that are not self-service, such as restriction or objection requests, contact <privacyEmail />.",
           "title": "Privacy and data rights"
         },
         "profile": {

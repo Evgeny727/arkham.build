@@ -52,9 +52,6 @@ export function AccountPrivacy() {
             components={{
               privacyEmail: <a href={`mailto:${adminEmail}`}>{adminEmail}</a>,
             }}
-            values={{
-              adminEmail,
-            }}
           />
         </p>
       </Notice>
