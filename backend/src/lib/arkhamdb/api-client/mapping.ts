@@ -16,7 +16,7 @@ export function mapArkhamDbDeckToDto(deck: ArkhamDbRemoteDeck): Deck {
     ignoreDeckLimitSlots: parseOptionalSlots(deck.ignoreDeckLimitSlots),
     investigator_code: deck.investigator_code,
     investigator_name: deck.investigator_name ?? "",
-    meta: deck.meta,
+    meta: normalizeDeckMeta(deck.meta),
     name: deck.name,
     next_deck: deck.next_deck ?? null,
     previous_deck: deck.previous_deck ?? null,
@@ -44,6 +44,19 @@ function parseOptionalSlots(value: Record<string, number> | null | undefined) {
   }
 
   return SlotsSchema.parse(value);
+}
+
+function normalizeDeckMeta(meta: string) {
+  try {
+    const parsed = JSON.parse(meta);
+    return typeof parsed === "object" &&
+      parsed != null &&
+      !Array.isArray(parsed)
+      ? meta
+      : "{}";
+  } catch {
+    return "{}";
+  }
 }
 
 function toArkhamDbDeckTimestamp(

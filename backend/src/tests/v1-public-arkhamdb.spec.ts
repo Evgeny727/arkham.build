@@ -43,6 +43,23 @@ describe("GET /v1/public/arkhamdb/:type/:id", () => {
     expect(await res.json()).toEqual([deck(123)]);
     expect(fetchMock).toHaveBeenCalledOnce();
   });
+
+  test("normalizes invalid ArkhamDB deck meta", async ({ dependencies }) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Response.json({ ...deck(123), meta: "{alternate_back:90024}" }),
+      ),
+    );
+
+    const res = await dependencies.app.request(
+      "/v1/public/arkhamdb/decklist/123",
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Array<{ meta: string }>;
+    expect(data[0]?.meta).toBe("{}");
+  });
 });
 
 function deck(id: number, previousDeck?: number, nextDeck?: number) {

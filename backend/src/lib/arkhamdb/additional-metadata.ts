@@ -12,7 +12,7 @@ import { applyHiddenSlots, extractHiddenSlots } from "./hidden-slots.ts";
 export function decodeDeckMeta(meta: string): Record<string, unknown> {
   try {
     const metaJson = JSON.parse(meta);
-    return typeof metaJson === "object" && metaJson != null ? metaJson : {};
+    return isMetaObject(metaJson) ? metaJson : {};
   } catch {
     return {};
   }
@@ -94,7 +94,7 @@ export async function mergeAdditionalMeta(
   options: MergeAdditionalMetaOptions = {},
 ): Promise<ArkhamDbRemoteDeck> {
   const meta = decodeDeckMeta(deck.meta ?? "");
-  let mergedDeck = { ...deck };
+  let mergedDeck = { ...deck, meta: JSON.stringify(meta) };
 
   if (meta["amk"]) {
     const { amk, ...rest } = meta;
@@ -186,6 +186,10 @@ function parseDeckId(deckId: string | number) {
 function parseAdditionalMetadata(
   data: ArkhamdbDeckAdditionalMetadata["data"],
 ): Record<string, unknown> {
-  assert(data && typeof data === "object" && !Array.isArray(data));
+  assert(isMetaObject(data));
   return data;
+}
+
+function isMetaObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value != null && !Array.isArray(value);
 }

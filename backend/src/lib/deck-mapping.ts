@@ -85,7 +85,17 @@ export function mapDeckWriteDtoToInsert(
 
 function parseJsonString(value: string): Json | null {
   if (!value) return null;
-  return JSON.parse(value) as Json;
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return typeof parsed === "object" &&
+      parsed != null &&
+      !Array.isArray(parsed)
+      ? (parsed as Json)
+      : {};
+  } catch {
+    return {};
+  }
 }
 
 function toNullableJson(value: Record<string, number> | null | undefined) {
