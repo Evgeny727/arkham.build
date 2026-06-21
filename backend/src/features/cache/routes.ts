@@ -81,6 +81,11 @@ export default router;
 
 type DataVersion = Awaited<ReturnType<typeof getDataVersionByLocale>>;
 
+type TabooSetCard = {
+  code: string;
+  real_name: string;
+};
+
 type CachedResponseOptions<T> = {
   locale: string;
   resource: CacheResource;
@@ -203,7 +208,7 @@ async function metadataResponse(db: Database, locale: string) {
   };
 }
 
-async function tabooSetsWithCardsResponse(db: Database, locale: string) {
+async function tabooSetsWithCardsResponse(db: Database, _locale: string) {
   const tabooSets = await db
     .selectFrom("taboo_set")
     .selectAll()
@@ -221,7 +226,7 @@ async function tabooSetsWithCardsResponse(db: Database, locale: string) {
         .execute()
     : [];
 
-  const cardsByTabooSetId = groupCardsByTabooSetId(cards, locale);
+  const cardsByTabooSetId = groupCardsByTabooSetId(cards);
 
   return {
     data: {
@@ -248,19 +253,16 @@ function versionResponse(_db: Database, _locale: string, version: DataVersion) {
   });
 }
 
-function groupCardsByTabooSetId(records: Selectable<Card>[], locale: string) {
-  return records.reduce<Record<number, Record<string, unknown>[]>>(
-    (acc, curr) => {
-      const tabooSetId = curr.taboo_set_id;
-      if (!tabooSetId) return acc;
+function groupCardsByTabooSetId(records: Selectable<Card>[]) {
+  return records.reduce<Record<number, TabooSetCard[]>>((acc, curr) => {
+    const tabooSetId = curr.taboo_set_id;
+    if (!tabooSetId) return acc;
 
-      const cards = acc[tabooSetId] ?? [];
-      cards.push(applyLocaleTranslations(mapCardRowToV1Card(curr), locale));
-      acc[tabooSetId] = cards;
-      return acc;
-    },
-    {},
-  );
+    const cards = acc[tabooSetId] ?? [];
+    cards.push({ code: curr.code, real_name: curr.name });
+    acc[tabooSetId] = cards;
+    return acc;
+  }, {});
 }
 
 function groupScenarioCodesByCampaign(records: Selectable<CampaignScenario>[]) {
