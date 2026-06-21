@@ -71,9 +71,15 @@ export async function assertTurnstileToken(
   const result = turnstileVerifyResponseSchema.parse(await response.json());
 
   if (!result.success) {
+    const errorCodes = result["error-codes"] ?? [];
+
+    c.get("logger")("warn", "Turnstile verification failed", {
+      errorCodes,
+    });
+
     throw new HTTPException(400, {
       message: "Captcha verification failed",
-      cause: { errorCodes: result["error-codes"] ?? [] },
+      cause: { errorCodes },
     });
   }
 }
