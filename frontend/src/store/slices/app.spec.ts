@@ -95,6 +95,52 @@ describe("app deck write-through actions", () => {
     });
   });
 
+  it("normalizes ArkhamDB deck problems after save", async () => {
+    const slots = {
+      "01000": 1,
+      "01006": 1,
+      "01007": 1,
+      "01016": 2,
+      "01017": 2,
+      "01018": 2,
+      "01019": 2,
+      "01020": 2,
+      "01021": 2,
+      "01022": 2,
+      "01023": 2,
+      "01024": 2,
+      "01025": 2,
+      "01030": 2,
+      "01087": 2,
+      "01088": 2,
+      "01089": 2,
+      "01090": 2,
+    };
+    const deck = makeTestDeck({
+      id: "remote",
+      problem: null,
+      slots,
+      source: "arkhamdb",
+      version: "1",
+    });
+    const remoteDeck = makeTestDeck({
+      ...deck,
+      problem: "too_few_cards",
+      version: "2",
+    });
+
+    vi.mocked(deckRequests.putDeck).mockResolvedValue(remoteDeck);
+    store.setState({
+      auth: makeAuthenticatedAuth(),
+      data: makeData({ decks: { remote: deck }, history: { remote: [] } }),
+      sync: makeSyncState({ deckItems: { remote: makeSyncItem() } }),
+    });
+
+    await store.getState().saveDeck(client, "remote");
+
+    expect(store.getState().data.decks.remote.problem).toBeNull();
+  });
+
   it("keeps account decks when backend deletion fails", async () => {
     const deck = makeTestDeck({
       id: "remote",

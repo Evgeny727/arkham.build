@@ -29,6 +29,7 @@ import {
 import type { StoreState } from "../slices";
 import type { DeckUpgradePayload } from "../slices/app.types";
 import type { UndoEntry } from "../slices/data.types";
+import { normalizeArkhamDbDeck } from "./arkhamdb-decks";
 import { applyCardChanges } from "./card-edits";
 import { applyDeckEdits, getChangeRecord } from "./deck-edits";
 import { makeDeck } from "./deck-factory";
@@ -160,9 +161,9 @@ export const createAdapter = {
     deck.source = provider ?? "local";
     return deck;
   },
-  async persist(client: HttpClient, _state: StoreState, deck: Deck) {
+  async persist(client: HttpClient, state: StoreState, deck: Deck) {
     return isSyncedStorageProvider(deck.source)
-      ? await postDeck(client, deck)
+      ? normalizeArkhamDbResponse(state, await postDeck(client, deck))
       : deck;
   },
   transition(set: StoreApi<StoreState>["setState"], deck: Deck) {
@@ -271,7 +272,7 @@ export const updateAdapter = {
         expectedVersion,
         source: provider,
       });
-      return remoteDeck;
+      return normalizeArkhamDbResponse(get(), remoteDeck);
     } catch (error) {
       set((prev) => ({
         sync: updateDeckSyncError(prev.sync, deck.id, error, "update"),
@@ -454,8 +455,8 @@ export const uploadAdapter = {
 
     return { ...deck, source: provider };
   },
-  async persist(client: HttpClient, _state: StoreState, deck: Deck) {
-    return await postDeck(client, deck);
+  async persist(client: HttpClient, state: StoreState, deck: Deck) {
+    return normalizeArkhamDbResponse(state, await postDeck(client, deck));
   },
   transition(
     set: StoreApi<StoreState>["setState"],
@@ -644,11 +645,14 @@ export const upgradeAdapter = {
     }));
 
     try {
-      return await postDeckUpgrade(client, deck.id, {
-        deck: upgrade,
-        expectedVersion,
-        provider: deck.source,
-      });
+      return normalizeArkhamDbResponse(
+        get(),
+        await postDeckUpgrade(client, deck.id, {
+          deck: upgrade,
+          expectedVersion,
+          provider: deck.source,
+        }),
+      );
     } catch (error) {
       set((prev) => ({
         sync: updateDeckSyncError(prev.sync, deck.id, error, "upgrade"),
@@ -700,6 +704,10 @@ export const upgradeAdapter = {
     });
   },
 };
+
+function normalizeArkhamDbResponse(state: StoreState, deck: Deck) {
+  return deck.source === "arkhamdb" ? normalizeArkhamDbDeck(deck, state) : deck;
+}
 
 function updateValidation(
   state: StoreState,
