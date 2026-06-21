@@ -157,7 +157,7 @@ export function useCompleteProfileOnboardingMutation() {
 
       applyCompleteProfileResponse(response);
       await refreshSession(client);
-      await syncDecks(client);
+      void syncDecks(client).catch(console.error);
     },
     onSuccess: () => {
       queryClient.setQueryData(
