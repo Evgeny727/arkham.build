@@ -9,6 +9,7 @@ import type { Context } from "hono";
 import { z } from "zod";
 import { getAccountIdentityByAccountIdAndProvider } from "../../auth/account-identities.ts";
 import type { SessionAuthHonoEnv } from "../../hono-env.ts";
+import { log } from "../../logger.ts";
 import {
   createDeck,
   deleteDeck,
@@ -103,11 +104,17 @@ export async function fetchArkhamDbDeckManifest(
 
   const syncedAt = new Date();
 
+  log("info", "arkhamdb_sync_start");
+
   const response = await syncDecks(
     c,
     syncedAt,
     snapshot?.last_modified ?? null,
   );
+
+  log("info", "arkhamdb_sync_success", {
+    status: response.status,
+  });
 
   if (response.status === 200) {
     assert(response.data, "Missing deck data for successful sync.");
