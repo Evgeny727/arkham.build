@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+kamal app logs --follow -c backend/config/deploy.yml 2>/dev/null |
+jq --unbuffered -Rr '
+  gsub("\r"; "")
+  | sub("^[^{]*"; "")
+  | fromjson?
+  | [.timestamp[11:23], .details.status, .details.duration_ms, .details.method, .details.url, (.details.error // "")]
+  | @tsv
+' |
+awk -F '\t' '
+  function c(x) { return "\033[" x "m" }
+  function sc(s) { return s >= 500 ? "31" : s >= 400 ? "33" : s >= 300 ? "36" : "32" }
+  function mc(m) { return m == "GET" ? "34" : m == "POST" ? "35" : m == "PUT" ? "33" : m == "DELETE" ? "31" : "37" }
+
+  {
+    error = $6 == "" ? "" : "  " c("31") $6 c("0")
+    printf "\033[2K\r%s%-12s%s %s%3s%s %s%7s%s %s%-7s%s %s%s\n",
+      c("90"), $1, c("0"),
+      c(sc($2)), $2, c("0"),
+      c("90"), $3 "ms", c("0"),
+      c(mc($4)), $4, c("0"),
+      $5,
+      error
+    fflush()
+  }
+'
