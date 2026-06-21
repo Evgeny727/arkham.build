@@ -50,9 +50,10 @@ routes.get("/:type/:id", async (c) => {
   const deck = await resolvePublicDeck(c, id, type);
   if (!deck) throw new HTTPException(404, { message: "Not found" });
 
-  const meta = deck.meta ? JSON.parse(deck.meta) : {};
+  const meta = parseDeckMeta(deck.meta);
   const title = deck.name;
-  const description = meta.intro_md ? markdownToText(meta.intro_md) : "";
+  const description =
+    typeof meta.intro_md === "string" ? markdownToText(meta.intro_md) : "";
 
   return c.json({
     title,
@@ -65,7 +66,7 @@ routes.get("/:type/:id", async (c) => {
 });
 
 function deckThumbnail(deck: Deck) {
-  const meta: DeckMeta = deck.meta ? JSON.parse(deck.meta) : {};
+  const meta = parseDeckMeta(deck.meta);
   if (meta.banner_url) return meta.banner_url;
 
   const code =
@@ -77,6 +78,17 @@ function deckThumbnail(deck: Deck) {
   if (fanMadeCard?.thumbnail_url) return fanMadeCard.thumbnail_url;
 
   return `https://assets.arkham.build/thumbnails/${code}.jpg`;
+}
+
+function parseDeckMeta(meta: string | null | undefined): DeckMeta {
+  try {
+    const parsed = JSON.parse(meta ?? "");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
 }
 
 export default routes;
