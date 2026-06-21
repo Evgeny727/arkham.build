@@ -79,7 +79,7 @@ env:
     CORS_ORIGINS: "https://arkham.build,*.arkham-build-prod.pages.dev,http://localhost:3000"
     DBMATE_MIGRATIONS_DIR: /app/backend/src/db/migrations
     DBMATE_SCHEMA_FILE: /app/backend/src/db/schema.sql
-    ENABLE_LEGACY_SHARE_HISTORY_PROXY: true
+    ENABLE_LEGACY_SHARE_HISTORY_PROXY: false
     INGEST_METADATA_REPO: arkham-build/arkhamlcg-metadata@main
     INGEST_JSON_DATA_REPO: Kamalisk/arkhamdb-json-data@master
     INGEST_TABOO_DATA_REPO: fspoettel/arkham-cards-data@master
