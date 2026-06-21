@@ -8,7 +8,11 @@ jq --unbuffered -Rr '
   gsub("\r"; "")
   | sub("^[^{]*"; "")
   | fromjson?
-  | [.timestamp[11:23], .details.status, .details.duration_ms, .details.method, .details.url, (.details.error // "")]
+  | if .details.method and .details.url then
+      ["http", .timestamp[11:23], .details.status, .details.duration_ms, .details.method, .details.url, (.details.error // "")]
+    else
+      ["log", .timestamp[11:23], (.name // .message // "-"), ((.details // {}) | tojson)]
+    end
   | @tsv
 ' |
 awk -F '\t' '
@@ -16,15 +20,23 @@ awk -F '\t' '
   function sc(s) { return s >= 500 ? "31" : s >= 400 ? "33" : s >= 300 ? "36" : "32" }
   function mc(m) { return m == "GET" ? "34" : m == "POST" ? "35" : m == "PUT" ? "33" : m == "DELETE" ? "31" : "37" }
 
-  {
-    error = $6 == "" ? "" : "  " c("31") $6 c("0")
+  $1 == "http" {
+    error = $7 == "" ? "" : "  " c("31") $7 c("0")
     printf "\033[2K\r%s%-12s%s %s%3s%s %s%7s%s %s%-7s%s %s%s\n",
-      c("90"), $1, c("0"),
-      c(sc($2)), $2, c("0"),
-      c("90"), $3 "ms", c("0"),
-      c(mc($4)), $4, c("0"),
-      $5,
+      c("90"), $2, c("0"),
+      c(sc($3)), $3, c("0"),
+      c("90"), $4 "ms", c("0"),
+      c(mc($5)), $5, c("0"),
+      $6,
       error
+    fflush()
+  }
+
+  $1 == "log" {
+    printf "\033[2K\r%s%-12s%s %s%-24s%s %s\n",
+      c("90"), $2, c("0"),
+      c("37"), $3, c("0"),
+      $4
     fflush()
   }
 '
