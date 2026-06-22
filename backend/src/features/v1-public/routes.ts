@@ -73,10 +73,6 @@ routes.get("/arkhamdb/:type/:id", async (c) => {
 });
 
 async function fetchLegacyShareHistory(c: Context<HonoEnv>) {
-  if (c.get("config").ENABLE_LEGACY_SHARE_HISTORY_PROXY) {
-    return proxyLegacyApiRequest(c);
-  }
-
   const incomingUrl = new URL(c.req.url);
   const upstreamUrl = new URL(
     `${incomingUrl.pathname}${incomingUrl.search}`,
