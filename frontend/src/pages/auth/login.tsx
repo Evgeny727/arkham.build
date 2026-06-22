@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Notice } from "@/components/ui/notice";
 import { useLoginMutation } from "@/queries/mutations/auth";
 import { ApiError } from "@/store/services/requests/shared";
 import { AuthForm } from "./auth-form";
@@ -42,6 +43,8 @@ function Login() {
       }
     >
       <AuthForm onSubmit={onSubmit}>
+        <Notice variant="info">{t("auth.email_delivery_notice")}</Notice>
+
         {loginMutation.error && (
           <ErrorBox>
             {errorMapper(loginMutation.error, t, (err) => {
