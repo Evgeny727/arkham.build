@@ -60,6 +60,8 @@ export {
   DeckUpdateRequestSchema,
   type DeckUpgradeRequest,
   DeckUpgradeRequestSchema,
+  type DeckUploadBatchRequest,
+  DeckUploadBatchRequestSchema,
   type DeckWritePayload,
   DeckWritePayloadSchema,
   type SyncedDeckProvider,

@@ -49,6 +49,21 @@ function postBatch(
   });
 }
 
+function uploadDeckBatch(
+  app: Hono<HonoEnv>,
+  cookie: string,
+  payload: { decks: unknown[] },
+) {
+  return app.request("/v2/account/decks/upload/batch", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: cookie,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 function createDeck(
   app: Hono<HonoEnv>,
   cookie: string,
@@ -631,6 +646,67 @@ describe("Deck routes", () => {
         },
       ]);
       expect(fetch).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("POST /v2/account/decks/upload/batch", () => {
+    test("uploads a deck chain", async ({ dependencies }) => {
+      const { app, db, sessionCookie } = dependencies;
+
+      const res = await uploadDeckBatch(app, sessionCookie, {
+        decks: [
+          baseDeckPayload({
+            id: "batch-root",
+            next_deck: "batch-upgrade",
+            source: "account",
+          }),
+          baseDeckPayload({
+            id: "batch-upgrade",
+            previous_deck: "batch-root",
+            source: "account",
+            version: "00000002",
+          }),
+        ],
+      });
+
+      expect(res.status).toBe(200);
+
+      const body = DeckBatchResponseSchema.parse(await res.json());
+      expect(body).toMatchObject([
+        { id: "batch-root", next_deck: "batch-upgrade" },
+        { id: "batch-upgrade", previous_deck: "batch-root" },
+      ]);
+
+      const rows = await db
+        .selectFrom("deck")
+        .select(["id", "next_deck", "prev_deck"])
+        .where("id", "in", ["batch-root", "batch-upgrade"])
+        .orderBy("id")
+        .execute();
+
+      expect(rows).toEqual([
+        { id: "batch-root", next_deck: "batch-upgrade", prev_deck: null },
+        { id: "batch-upgrade", next_deck: null, prev_deck: "batch-root" },
+      ]);
+    });
+
+    test("rejects missing deck chain references", async ({ dependencies }) => {
+      const { app, sessionCookie } = dependencies;
+
+      const res = await uploadDeckBatch(app, sessionCookie, {
+        decks: [
+          baseDeckPayload({
+            id: "batch-root",
+            next_deck: "missing-upgrade",
+            source: "account",
+          }),
+        ],
+      });
+
+      expect(res.status).toBe(400);
+      expect(await res.text()).toContain(
+        "Uploaded deck chains must include all referenced decks",
+      );
     });
   });
 

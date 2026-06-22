@@ -16,6 +16,7 @@ vi.mock("@/store/services/requests/decks", () => ({
   deleteDeck: vi.fn(),
   isDeckConflictError: vi.fn(() => false),
   postDeck: vi.fn(),
+  postDeckUploadBatch: vi.fn(),
   putDeck: vi.fn(),
 }));
 
@@ -48,7 +49,7 @@ describe("app deck write-through actions", () => {
     expect(store.getState().data.decks.local.source).toBeNull();
   });
 
-  it("does not upload upgraded decks", async () => {
+  it("does not upload upgraded decks to ArkhamDB", async () => {
     const deck = makeTestDeck({
       id: "local",
       previous_deck: "previous",
@@ -57,12 +58,26 @@ describe("app deck write-through actions", () => {
     });
 
     store.setState({
-      auth: makeAuthenticatedAuth(),
+      auth: makeAuthenticatedAuth({
+        identities: [
+          {
+            canDisconnect: true,
+            details: {
+              lastError: null,
+              lastSyncedAt: null,
+              status: "healthy",
+              username: "arkhamdb-user",
+            },
+            provider: "arkhamdb",
+            providerUserId: "1",
+          },
+        ],
+      }),
       data: makeData({ decks: { local: deck }, history: { local: [] } }),
     });
 
     await expect(
-      store.getState().uploadDeckToProvider(client, "local", "account"),
+      store.getState().uploadDeckToProvider(client, "local", "arkhamdb"),
     ).rejects.toThrow("Upgraded decks cannot be uploaded");
 
     expect(deckRequests.postDeck).not.toHaveBeenCalled();

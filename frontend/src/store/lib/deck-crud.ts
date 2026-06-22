@@ -13,7 +13,11 @@ import { randomId } from "@/utils/crypto";
 import { isEmpty } from "@/utils/is-empty";
 import { dehydrate } from "../persist";
 import { selectDeckCreateCardSets } from "../selectors/deck-create";
-import { selectDeckValid, selectLatestUpgrade } from "../selectors/decks";
+import {
+  findDeckHistory,
+  selectDeckValid,
+  selectLatestUpgrade,
+} from "../selectors/decks";
 import {
   selectLocaleSortingCollator,
   selectLookupTables,
@@ -24,6 +28,7 @@ import {
   deleteDeck,
   postDeck,
   postDeckUpgrade,
+  postDeckUploadBatch,
   putDeck,
 } from "../services/requests/decks";
 import type { StoreState } from "../slices";
@@ -448,77 +453,80 @@ export const uploadAdapter = {
       `Deck ${deckId} is already synced.`,
     );
 
-    assert(
-      !deck.previous_deck,
-      "Upgraded decks cannot be uploaded to a synced provider.",
-    );
+    if (provider === "arkhamdb") {
+      assert(
+        !deck.previous_deck && !deck.next_deck,
+        "Upgraded decks cannot be uploaded to ArkhamDB.",
+      );
 
-    return { ...deck, source: provider };
+      return [{ ...deck, source: provider }];
+    }
+
+    return collectLocalDeckChain(state, deck).map((item) => ({
+      ...item,
+      source: provider,
+    }));
   },
-  async persist(client: HttpClient, state: StoreState, deck: Deck) {
-    return normalizeArkhamDbResponse(state, await postDeck(client, deck));
+  async persist(client: HttpClient, state: StoreState, decks: Deck[]) {
+    if (decks.length === 1) {
+      const deck = decks[0];
+      assert(deck, "Missing deck to upload.");
+      return [normalizeArkhamDbResponse(state, await postDeck(client, deck))];
+    }
+
+    return await postDeckUploadBatch(client, { decks });
   },
   transition(
     set: StoreApi<StoreState>["setState"],
-    previousDeck: Deck,
-    deck: Deck,
+    previousDecks: Deck[],
+    uploadedDecks: Deck[],
   ) {
     return set((prev) => {
-      const patch: Partial<StoreState> = {
-        sync: updateDeckSyncSuccess(
-          prev.sync,
-          deck.id,
-          deck.version,
-          Date.now(),
-        ),
-      };
+      assert(
+        previousDecks.length === uploadedDecks.length,
+        "Uploaded deck count must match local deck count.",
+      );
 
-      const decks = {
-        ...prev.data.decks,
-      };
-
-      delete decks[previousDeck.id];
-      decks[deck.id] = deck;
-
-      const idChanged = previousDeck.id !== deck.id;
-      if (!idChanged) {
-        return {
-          ...patch,
-          data: {
-            ...prev.data,
-            decks: { ...decks },
-          },
-        };
-      }
-
-      for (const [id, value] of Object.entries(decks)) {
-        if (value.previous_deck === previousDeck.id) {
-          decks[id] = { ...value, previous_deck: deck.id };
-        }
-        if (value.next_deck === previousDeck.id) {
-          decks[id] = { ...value, next_deck: deck.id };
-        }
-      }
-
+      const decks = { ...prev.data.decks };
       const deckFolders = { ...prev.data.deckFolders };
-      if (deckFolders[previousDeck.id]) {
-        deckFolders[deck.id] = deckFolders[previousDeck.id];
-        delete deckFolders[previousDeck.id];
-      }
+      const deckEdits = { ...prev.deckEdits };
 
       const undoHistory = prev.data.undoHistory
         ? { ...prev.data.undoHistory }
         : undefined;
 
-      if (undoHistory) {
-        undoHistory[deck.id] = undoHistory[previousDeck.id];
-        delete undoHistory[previousDeck.id];
-      }
+      const uploadedById = new Map(
+        uploadedDecks.map((deck) => [deck.id, deck]),
+      );
 
-      const deckEdits = { ...prev.deckEdits };
-      if (deckEdits[previousDeck.id]) {
-        deckEdits[deck.id] = deckEdits[previousDeck.id];
+      const now = Date.now();
+      let sync = prev.sync;
+
+      for (const previousDeck of previousDecks) {
+        const deck =
+          previousDecks.length === 1
+            ? // single deck uploads can change id (arkhamdb)
+              uploadedDecks[0]
+            : // multi deck uploads are always stable (ours)
+              uploadedById.get(previousDeck.id);
+
+        assert(deck, `Missing uploaded deck ${String(previousDeck.id)}.`);
+
+        assert(
+          deck.id === previousDeck.id || previousDecks.length === 1,
+          "Batch uploaded deck ids must not change.",
+        );
+
+        if (deckFolders[previousDeck.id]) {
+          deckFolders[deck.id] = deckFolders[previousDeck.id];
+          delete deckFolders[previousDeck.id];
+        }
+
+        delete decks[previousDeck.id];
+        decks[deck.id] = deck;
         delete deckEdits[previousDeck.id];
+        delete undoHistory?.[previousDeck.id];
+        sync = updateDeckSyncSuccess(sync, deck.id, deck.version, now);
       }
 
       return {
@@ -529,12 +537,8 @@ export const uploadAdapter = {
           history: rebuildDeckHistory(decks),
           undoHistory,
         },
-        sync: updateDeckSyncSuccess(
-          prev.sync,
-          deck.id,
-          deck.version,
-          Date.now(),
-        ),
+        deckEdits,
+        sync,
       };
     });
   },
@@ -707,6 +711,22 @@ export const upgradeAdapter = {
 
 function normalizeArkhamDbResponse(state: StoreState, deck: Deck) {
   return deck.source === "arkhamdb" ? normalizeArkhamDbDeck(deck, state) : deck;
+}
+
+function collectLocalDeckChain(state: StoreState, deck: Deck) {
+  const ids = findDeckHistory(deck, state.data).reverse();
+  assert(ids.length, `Missing deck history for ${String(deck.id)}.`);
+
+  return ids.map((id) => {
+    const item = state.data.decks[id];
+    assert(item, `Missing deck ${String(id)}.`);
+    assert(
+      !isSyncedStorageProvider(item.source),
+      `Deck ${String(item.id)} is already synced.`,
+    );
+
+    return item;
+  });
 }
 
 function updateValidation(

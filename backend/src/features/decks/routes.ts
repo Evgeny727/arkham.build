@@ -14,6 +14,7 @@ import {
   DeckUpdateRequestSchema,
   type DeckUpgradeRequest,
   DeckUpgradeRequestSchema,
+  DeckUploadBatchRequestSchema,
   type Deck as SharedDeck,
   type SyncedDeckProvider,
 } from "@arkham-build/shared";
@@ -162,6 +163,21 @@ routes.post(
   },
 );
 
+routes.post(
+  "/upload/batch",
+  sessionAuth(),
+  zodValidator("json", DeckUploadBatchRequestSchema),
+  async (c) => {
+    const { decks } = c.req.valid("json");
+
+    assertUploadedDeckReferencesAreIncluded(decks);
+
+    const uploadedDecks = await localCrud.createBatch(c, decks);
+
+    return c.json(DeckBatchResponseSchema.parse(uploadedDecks));
+  },
+);
+
 routes.post("/", sessionAuth(), zodValidator("json", DeckSchema), async (c) => {
   const payload = c.req.valid("json");
 
@@ -246,10 +262,36 @@ function isArkhamDbManifestUnavailableError(error: unknown): error is Error {
 }
 
 function assertDeckCanBeUploaded(deck: SharedDeck) {
-  if (deck.previous_deck) {
+  if (deck.previous_deck || deck.next_deck) {
     throw new HTTPException(400, {
       message: "Upgraded decks cannot be uploaded to a synced provider",
     });
+  }
+}
+
+function assertUploadedDeckReferencesAreIncluded(decks: SharedDeck[]) {
+  const ids = new Set<string>();
+
+  for (const deck of decks) {
+    const id = String(deck.id);
+
+    if (ids.has(id)) {
+      throw new HTTPException(400, {
+        message: "Uploaded decks must have unique ids",
+      });
+    }
+
+    ids.add(id);
+  }
+
+  for (const deck of decks) {
+    for (const id of [deck.previous_deck, deck.next_deck]) {
+      if (id != null && !ids.has(String(id))) {
+        throw new HTTPException(400, {
+          message: "Uploaded deck chains must include all referenced decks",
+        });
+      }
+    }
   }
 }
 
@@ -272,6 +314,34 @@ const localCrud = {
       .executeTakeFirstOrThrow();
 
     return mapDeckRowToDto(deck);
+  },
+
+  async createBatch(c: DeckContext, payload: SharedDeck[]) {
+    if (!payload.length) return [];
+
+    const db = c.get("db");
+    const accountId = c.get("account").id;
+
+    const decks = await db.transaction().execute(async (tx) => {
+      return await tx
+        .insertInto("deck")
+        .values(
+          payload.map((deck) => {
+            const { id, source: _, version, ...deckPayload } = deck;
+            return {
+              ...mapDeckWriteDtoToInsert(deckPayload),
+              account_id: accountId,
+              id: String(id),
+              provider_type: ACCOUNT_PROVIDER_TYPE,
+              version,
+            };
+          }),
+        )
+        .returningAll()
+        .execute();
+    });
+
+    return decks.map(mapDeckRowToDto);
   },
 
   async update(c: DeckContext, deckId: string, payload: DeckUpdateRequest) {

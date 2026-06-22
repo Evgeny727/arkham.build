@@ -55,6 +55,22 @@ test.describe("account deck sync", () => {
     await expect(page.getByTestId("view-edit")).toBeVisible();
     await expectDeckInNewSession(browser, baseURL, account, "Le Diamond");
   });
+
+  test("uploads a local deck chain", async ({ baseURL, browser, page }) => {
+    const account = await createAuthenticatedAccount(page);
+    await importDeckFromFile(page, "hunch_deck.json", { navigate: "view" });
+    await upgradeLocalCurrentDeck(page, 5);
+
+    await uploadCurrentDeckChainToAccount(page);
+    await reloadAndSyncAccount(page);
+
+    await expect(page.getByTestId("latest-upgrade-summary")).toContainText(
+      "0 of 5 XP spent",
+    );
+    await expectDeckInNewSession(browser, baseURL, account, "Le Diamond", {
+      latestUpgrade: "0 of 5 XP spent",
+    });
+  });
 });
 
 test.describe("ArkhamDB deck sync", () => {
@@ -92,6 +108,15 @@ test.describe("ArkhamDB deck sync", () => {
     await reloadAndSyncAccount(page);
     await expect(page.getByTestId("view-edit")).toBeVisible();
     await expectDeckInNewSession(browser, baseURL, account, "Le Diamond");
+  });
+
+  test("blocks uploading a local deck chain", async ({ page }) => {
+    await createConnectedAccount(page);
+    await importDeckFromFile(page, "hunch_deck.json", { navigate: "view" });
+    await upgradeLocalCurrentDeck(page, 5);
+    await page.getByTestId("view-more-actions").click();
+    await page.getByTestId("view-upload-arkhamdb").click();
+    await expect(page.getByText("Failed to upload deck to")).toBeVisible();
   });
 });
 
@@ -329,6 +354,16 @@ async function upgradeCurrentDeck(page: Page, xp: number) {
   );
 }
 
+async function upgradeLocalCurrentDeck(page: Page, xp: number) {
+  await page.getByTestId("view-upgrade").click();
+  await page.getByTestId("upgrade-xp").fill(String(xp));
+  await page.getByTestId("upgrade-save-close").click();
+
+  await expect(page.getByTestId("latest-upgrade-summary")).toContainText(
+    `0 of ${xp} XP spent`,
+  );
+}
+
 async function deleteCurrentUpgrade(page: Page) {
   page.once("dialog", (dialog) => {
     void dialog.accept();
@@ -378,6 +413,26 @@ async function uploadDeck(
   await expect(page).toHaveURL(
     (url) => url.pathname === `/deck/view/${uploadedDeck.id}`,
   );
+  await expect(page.getByTestId("view-edit")).toBeVisible();
+}
+
+async function uploadCurrentDeckChainToAccount(page: Page) {
+  const response = waitForDeckResponse(
+    page,
+    "POST",
+    `${apiUrl}/v2/account/decks/upload/batch`,
+  );
+  await page.getByTestId("view-more-actions").click();
+  await page.getByTestId("view-upload-account").click();
+
+  const decks = (await (await response).json()) as Deck[];
+  expect(decks).toHaveLength(2);
+
+  const root = decks.find((deck) => deck.previous_deck == null);
+  const upgrade = decks.find((deck) => deck.next_deck == null);
+  expect(root?.next_deck).toBe(upgrade?.id);
+  expect(upgrade?.previous_deck).toBe(root?.id);
+
   await expect(page.getByTestId("view-edit")).toBeVisible();
 }
 

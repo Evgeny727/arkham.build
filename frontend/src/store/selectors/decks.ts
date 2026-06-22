@@ -332,7 +332,7 @@ function selectDeckHistory(
   return deckHistory;
 }
 
-function findDeckHistory(deck: Deck, dataSlice: StoreState["data"]) {
+export function findDeckHistory(deck: Deck, dataSlice: StoreState["data"]) {
   if (dataSlice.history[deck.id]) {
     const history = [...dataSlice.history[deck.id]];
     history.unshift(deck.id);

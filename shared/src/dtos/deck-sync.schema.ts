@@ -69,6 +69,13 @@ export type DeckUpgradeRequest = z.infer<typeof DeckUpgradeRequestSchema>;
 export const DeckBatchResponseSchema = z.array(DeckSchema);
 export type DeckBatchResponse = z.infer<typeof DeckBatchResponseSchema>;
 
+export const DeckUploadBatchRequestSchema = z.object({
+  decks: z.array(DeckSchema),
+});
+export type DeckUploadBatchRequest = z.infer<
+  typeof DeckUploadBatchRequestSchema
+>;
+
 export const DeckConflictResponseSchema = z.object({
   remoteDeck: DeckSchema.nullish(),
   remoteVersion: z.string().nullable(),

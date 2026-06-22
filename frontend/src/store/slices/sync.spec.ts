@@ -19,6 +19,7 @@ vi.mock("@/store/services/requests/decks", () => ({
   isDeckConflictError: vi.fn(() => false),
   postDeck: vi.fn(),
   postDeckUpgrade: vi.fn(),
+  postDeckUploadBatch: vi.fn(),
   putDeck: vi.fn(),
 }));
 

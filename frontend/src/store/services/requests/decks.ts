@@ -15,6 +15,8 @@ import {
   DeckUpdateRequestSchema,
   type DeckUpgradeRequest,
   DeckUpgradeRequestSchema,
+  type DeckUploadBatchRequest,
+  DeckUploadBatchRequestSchema,
 } from "@arkham-build/shared";
 import type { HttpClient } from "../http-client";
 import { ApiError } from "./shared";
@@ -65,6 +67,20 @@ export async function postDeck(
   });
 
   return DeckSchema.parse(await res.json());
+}
+
+export async function postDeckUploadBatch(
+  client: HttpClient,
+  payload: DeckUploadBatchRequest,
+): Promise<Deck[]> {
+  const res = await client.request("/v2/account/decks/upload/batch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(DeckUploadBatchRequestSchema.parse(payload)),
+    credentials: "include",
+  });
+
+  return DeckBatchResponseSchema.parse(await res.json());
 }
 
 export async function putDeck(

@@ -244,12 +244,20 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
   },
   async uploadDeckToProvider(client, deckId, provider) {
     const state = get();
-    const deck = uploadAdapter.format(state, deckId, provider);
-    const canonicalDeck = await uploadAdapter.persist(client, state, deck);
-    const shouldSyncFolders =
-      deck.id !== canonicalDeck.id && state.data.deckFolders[deck.id] != null;
 
-    uploadAdapter.transition(set, deck, canonicalDeck);
+    const decks = uploadAdapter.format(state, deckId, provider);
+    const canonicalDecks = await uploadAdapter.persist(client, state, decks);
+
+    const canonicalDeck = decks.find((deck) => deck.id === deckId);
+    assert(canonicalDeck, `Missing uploaded deck ${String(deckId)}.`);
+
+    const shouldSyncFolders = decks.some(
+      (deck, index) =>
+        deck.id !== canonicalDecks[index]?.id &&
+        state.data.deckFolders[deck.id] != null,
+    );
+
+    uploadAdapter.transition(set, decks, canonicalDecks);
     await dehydrate(get(), "app", "edits");
 
     if (shouldSyncFolders && get().auth.status === "authenticated") {
