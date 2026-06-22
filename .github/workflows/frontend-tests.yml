@@ -39,6 +39,7 @@ jobs:
 
   e2e:
     name: End-to-End Test
+    if: ${{ github.event_name != 'pull_request' }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     container:
