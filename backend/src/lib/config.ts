@@ -15,6 +15,7 @@ export const configSchema = z.object({
   INGEST_URL_ARKHAMDB_DECKLISTS: z.string(),
   CORS_ORIGINS: z.string(),
   FROM_EMAIL: z.email(),
+  FROM_NAME: z.string().min(1).default("arkham.build"),
   FRONTEND_URL: z.url(),
   LEGACY_API_BASE_URL: z.url(),
   HOSTNAME: z.string().default("localhost"),

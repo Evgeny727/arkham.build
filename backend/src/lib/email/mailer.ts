@@ -8,6 +8,7 @@ export interface Mailer {
 export class SMTPMailer implements Mailer {
   private transporter: Transporter;
   private fromEmail: string;
+  private fromName: string;
 
   constructor(config: Config) {
     this.transporter = createTransport({
@@ -20,11 +21,15 @@ export class SMTPMailer implements Mailer {
       },
     });
     this.fromEmail = config.FROM_EMAIL;
+    this.fromName = config.FROM_NAME;
   }
 
   async send(to: string, subject: string, body: string): Promise<void> {
     await this.transporter.sendMail({
-      from: this.fromEmail,
+      from: {
+        address: this.fromEmail,
+        name: this.fromName,
+      },
       to,
       subject,
       text: body,

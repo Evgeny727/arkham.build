@@ -90,6 +90,7 @@ env:
     POSTGRES_HOST: api-arkham-build-db
     FRONTEND_URL: https://arkham.build
     FROM_EMAIL: noreply@arkham.build
+    FROM_NAME: arkham.build
     SMTP_PORT: 465
     SMTP_SECURE: true
   secret:
