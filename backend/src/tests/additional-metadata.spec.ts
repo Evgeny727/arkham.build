@@ -65,7 +65,10 @@ describe("GET /v1/public/additional_metadata/:id", () => {
       }),
     );
     expect(deck.slots).toEqual({ "01001": 1, "01006": 1 });
-    expect(JSON.parse(deck.meta)).toEqual({ foo: "bar" });
+    expect(JSON.parse(deck.meta)).toEqual({
+      foo: "bar",
+      hidden_slots: { slots: { "01001": 1 } },
+    });
 
     fetch.mockRestore();
   });
