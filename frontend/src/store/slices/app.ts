@@ -248,8 +248,14 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
     const decks = uploadAdapter.format(state, deckId, provider);
     const canonicalDecks = await uploadAdapter.persist(client, state, decks);
 
-    const canonicalDeck = decks.find((deck) => deck.id === deckId);
-    assert(canonicalDeck, `Missing uploaded deck ${String(deckId)}.`);
+    const canonicalDeckIndex = decks.findIndex((deck) => deck.id === deckId);
+    assert(
+      canonicalDeckIndex !== -1,
+      `Missing uploaded deck ${String(deckId)}.`,
+    );
+
+    const canonicalDeck = canonicalDecks[canonicalDeckIndex];
+    assert(canonicalDeck, `Missing canonical deck ${String(deckId)}.`);
 
     const shouldSyncFolders = decks.some(
       (deck, index) =>

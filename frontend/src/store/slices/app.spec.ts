@@ -203,7 +203,9 @@ describe("app deck write-through actions", () => {
       saveFolders,
     });
 
-    await store.getState().uploadDeckToProvider(client, "local", "account");
+    await expect(
+      store.getState().uploadDeckToProvider(client, "local", "account"),
+    ).resolves.toBe("remote");
 
     expect(store.getState().data.deckFolders.local).toBeUndefined();
     expect(store.getState().data.deckFolders.remote).toBe("folder");
