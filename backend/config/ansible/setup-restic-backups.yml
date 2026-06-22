@@ -62,7 +62,12 @@
           docker exec "$POSTGRES_CONTAINER" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc |
             restic backup --stdin --stdin-filename "${POSTGRES_DB}-${timestamp}.dump"
 
-          restic forget --keep-within 30d --prune
+          restic forget \
+            --keep-hourly 48 \
+            --keep-daily 30 \
+            --keep-weekly 8 \
+            --keep-monthly 12 \
+            --prune
 
     - name: Initialize restic repository
       shell: |
@@ -110,19 +115,27 @@
         mode: '0644'
         content: |
           [Unit]
-          Description=Nightly api-arkham-build Postgres backup
+          Description=Hourly api-arkham-build Postgres backup
 
           [Timer]
-          OnCalendar=*-*-* 03:00:00
+          OnCalendar=hourly
           Persistent=true
-          RandomizedDelaySec=30m
+          RandomizedDelaySec=10m
 
           [Install]
           WantedBy=timers.target
+      notify: Restart backup timer
 
     - name: Enable backup timer
       systemd:
         name: api-arkham-build-postgres-backup.timer
         enabled: yes
         state: started
+        daemon_reload: yes
+
+  handlers:
+    - name: Restart backup timer
+      systemd:
+        name: api-arkham-build-postgres-backup.timer
+        state: restarted
         daemon_reload: yes
