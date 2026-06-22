@@ -27,7 +27,6 @@ import { Button } from "./ui/button";
 import { DropdownButton, DropdownItem, DropdownMenu } from "./ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { StatusBubble } from "./ui/status-bubble";
-import { useToast } from "./ui/toast.hooks";
 import { Avatar } from "./user-account/avatar";
 
 type Props = {
@@ -215,12 +214,8 @@ function AccountMenu(props: {
     (state) => state.toggleKeyboardShortcuts,
   );
   const syncStatus = useAccountSyncStatus();
-
-  const { isPending: isSyncPending, onSyncAccount } = useAccountSyncAction();
-
-  const displayedSyncStatus: SyncStatus = isSyncPending
-    ? "loading"
-    : syncStatus;
+  const isSyncPending = isPendingSyncStatus(syncStatus);
+  const onSyncAccount = useAccountSyncAction();
 
   const logoutMutation = useLogoutMutation();
 
@@ -257,10 +252,10 @@ function AccountMenu(props: {
             <RefreshCwIcon />
             {t("auth.menu.sync_account")}
           </DropdownButton>
-          {isProblemSyncStatus(displayedSyncStatus) && (
+          {isProblemSyncStatus(syncStatus) && (
             <DropdownItem>
               <p className={css["sync-status"]}>
-                {t(`auth.menu.sync_status.${displayedSyncStatus}`)}
+                {t(`auth.menu.sync_status.${syncStatus}`)}
               </p>
             </DropdownItem>
           )}
@@ -346,9 +341,9 @@ function AccountMenu(props: {
           >
             <Avatar account={session.account}>
               <StatusBubble
-                data-sync-status={displayedSyncStatus}
+                data-sync-status={syncStatus}
                 data-testid="masthead-account-sync-status"
-                variant={syncStatusToBubbleVariant(displayedSyncStatus)}
+                variant={syncStatusToBubbleVariant(syncStatus)}
               />
             </Avatar>
           </Button>
@@ -441,32 +436,14 @@ const ACCOUNT_SYNC_STATUS_PRIORITY: Record<SyncStatus, number> = {
   conflict: 4,
 };
 
+function isPendingSyncStatus(status: SyncStatus) {
+  return status === "loading" || status === "saving";
+}
+
 function useAccountSyncAction() {
-  const { t } = useTranslation();
-  const toast = useToast();
-  const accountSyncMutation = useAccountSyncMutation();
+  const { mutateAsync } = useAccountSyncMutation();
 
-  const onSyncAccount = useCallback(async () => {
-    const toastId = toast.show({
-      children: t("auth.menu.syncing"),
-      variant: "loading",
-    });
-
-    try {
-      await accountSyncMutation.mutateAsync();
-      toast.dismiss(toastId);
-    } catch (err) {
-      toast.dismiss(toastId);
-      console.error(err);
-      toast.show({
-        children: t("auth.menu.sync_error", { error: (err as Error).message }),
-        variant: "error",
-      });
-    }
-  }, [accountSyncMutation, t, toast]);
-
-  return {
-    isPending: accountSyncMutation.isPending,
-    onSyncAccount,
-  };
+  return useCallback(() => {
+    void mutateAsync().catch(console.error);
+  }, [mutateAsync]);
 }

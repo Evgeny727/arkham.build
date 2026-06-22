@@ -113,17 +113,21 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
       get().clearAccountState();
     }
 
-    const settingsResults = await Promise.allSettled([
-      state.loadRemoteSettings(client),
-    ]);
-    const syncResults = await Promise.allSettled([
-      get().loadRemoteFolders(client),
-      get().syncDecks(client),
-    ]);
+    const errors: unknown[] = [];
 
-    const errors = [...settingsResults, ...syncResults].flatMap((result) =>
-      result.status === "rejected" ? [result.reason] : [],
-    );
+    try {
+      await state.loadRemoteSettings(client);
+    } catch (error) {
+      errors.push(error);
+    }
+
+    void get().syncDecks(client).catch(console.error);
+
+    try {
+      await get().loadRemoteFolders(client);
+    } catch (error) {
+      errors.push(error);
+    }
 
     if (errors.length === 1) {
       throw errors[0];
