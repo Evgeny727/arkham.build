@@ -174,7 +174,9 @@ export function CardListContainer(props: Props) {
 
 function getInitialScanMaxColumns() {
   return clampScanMaxColumns(
-    Number(localStorage.getItem(LIST_SCAN_MAX_COLUMNS_KEY)),
+    localStorage.getItem(LIST_SCAN_MAX_COLUMNS_KEY)
+      ? Number(localStorage.getItem(LIST_SCAN_MAX_COLUMNS_KEY))
+      : LIST_SCAN_MAX_COLUMNS_DEFAULT,
   );
 }
 
