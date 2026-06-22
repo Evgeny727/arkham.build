@@ -1,5 +1,9 @@
+import type { DeckWritePayload } from "@arkham-build/shared";
 import { describe, expect, vi } from "vitest";
-import { mergeAdditionalMeta } from "../lib/arkhamdb/additional-metadata.ts";
+import {
+  mergeAdditionalMeta,
+  storeAdditionalMetadata,
+} from "../lib/arkhamdb/additional-metadata.ts";
 import type { ArkhamDbRemoteDeck } from "../lib/arkhamdb/api-client/core/dtos.ts";
 import { test } from "./test-utils.ts";
 
@@ -34,6 +38,51 @@ describe("GET /v1/public/additional_metadata/:id", () => {
     const res = await app.request("/v1/public/additional_metadata/missing");
 
     expect(res.status).toBe(404);
+  });
+
+  test("preserves pre-extracted hidden slots while storing metadata", async ({
+    dependencies,
+  }) => {
+    const storedDeck = await storeAdditionalMetadata(
+      dependencies.db,
+      456,
+      makeDeckWritePayload({
+        investigator_code: "89001",
+        investigator_name: "Subject 5U-21",
+        meta: JSON.stringify({
+          fan_made_content: {
+            cards: {
+              "fan-investigator": { name: "Don Francisco Amato" },
+            },
+          },
+          hidden_slots: {
+            slots: { "fan-signature": 1 },
+            sideSlots: null,
+            ignoreDeckLimitSlots: null,
+            investigator_code: "fan-investigator",
+          },
+        }),
+        slots: { "01000": 1 },
+      }),
+      { extractHiddenSlots: false },
+    );
+
+    expect(JSON.parse(storedDeck.meta)).toEqual({ amk: expect.any(String) });
+
+    const deck = await mergeAdditionalMeta(
+      dependencies.db,
+      makeRemoteDeck({
+        id: 456,
+        investigator_code: "89001",
+        investigator_name: "Subject 5U-21",
+        meta: storedDeck.meta,
+        slots: { "01000": 1 },
+      }),
+    );
+
+    expect(deck.investigator_code).toBe("fan-investigator");
+    expect(deck.investigator_name).toBe("Don Francisco Amato");
+    expect(deck.slots).toEqual({ "01000": 1, "fan-signature": 1 });
   });
 
   test("loads stale amk refs from the legacy API while merging deck metadata", async ({
@@ -73,6 +122,33 @@ describe("GET /v1/public/additional_metadata/:id", () => {
     fetch.mockRestore();
   });
 });
+
+function makeDeckWritePayload(
+  overrides: Partial<DeckWritePayload>,
+): DeckWritePayload {
+  return {
+    description_md: "",
+    exile_string: null,
+    id: 123,
+    ignoreDeckLimitSlots: null,
+    investigator_code: "01001",
+    investigator_name: "Roland Banks",
+    meta: "{}",
+    name: "Deck",
+    next_deck: null,
+    previous_deck: null,
+    problem: null,
+    sideSlots: null,
+    slots: { "01006": 1 },
+    taboo_id: null,
+    tags: "",
+    version: "1.0",
+    xp: null,
+    xp_adjustment: null,
+    xp_spent: null,
+    ...overrides,
+  };
+}
 
 function makeRemoteDeck(overrides: Partial<ArkhamDbRemoteDeck>) {
   return {

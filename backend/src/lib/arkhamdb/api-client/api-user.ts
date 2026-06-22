@@ -150,6 +150,7 @@ export function createDeck(
       executor.db,
       operation.msg,
       deck,
+      { extractHiddenSlots: false },
     );
 
     const { data: saveOperation } = await executor.request(

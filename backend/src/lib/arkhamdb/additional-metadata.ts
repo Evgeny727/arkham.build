@@ -42,14 +42,21 @@ export function partitionDeckMeta(meta: Record<string, unknown>) {
   return { additionalMeta, deckMeta };
 }
 
+type StoreAdditionalMetadataOptions = {
+  extractHiddenSlots?: boolean;
+};
+
 export async function storeAdditionalMetadata<T extends DeckWritePayload>(
   database: Database,
   id: string | number,
   deck: T,
+  options: StoreAdditionalMetadataOptions = {},
 ): Promise<T> {
   const preparedDeck = { ...deck };
 
-  extractHiddenSlots(preparedDeck);
+  if (options.extractHiddenSlots ?? true) {
+    extractHiddenSlots(preparedDeck);
+  }
 
   const meta = decodeDeckMeta(preparedDeck.meta ?? "");
   const { amk: _amk, ...metaWithoutAmk } = meta;
