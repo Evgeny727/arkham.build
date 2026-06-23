@@ -3,6 +3,18 @@ import { describe, expect, vi } from "vitest";
 import { test } from "./test-utils.ts";
 
 describe("legacy proxy", () => {
+  test("serves starter decks without proxying", async ({ dependencies }) => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await dependencies.app.request("/v1/public/share/2624931");
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { id: number };
+    expect(body.id).toBe(2624931);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test("proxies missing shares from the legacy api", async ({
     dependencies,
   }) => {
