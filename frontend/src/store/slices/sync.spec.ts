@@ -75,6 +75,28 @@ describe("sync slice", () => {
     expect(syncDecks).toHaveBeenCalledOnce();
   });
 
+  it("passes sync options during authenticated bootstrap", async () => {
+    const client = getMockHttpClient();
+    const loadRemoteSettings = vi.fn().mockResolvedValue(undefined);
+    const loadRemoteFolders = vi.fn().mockResolvedValue(undefined);
+    const syncDecks = vi.fn().mockResolvedValue(undefined);
+
+    store.setState({
+      auth: makeAuthenticatedAuth(),
+      loadRemoteSettings,
+      loadRemoteFolders,
+      syncDecks,
+    });
+
+    await store
+      .getState()
+      .bootstrapAuthenticatedState(client, { forceArkhamdbSync: true });
+
+    expect(syncDecks).toHaveBeenCalledWith(client, {
+      forceArkhamdbSync: true,
+    });
+  });
+
   it("refreshes the session after syncing decks", async () => {
     const refreshSession = vi.fn().mockResolvedValue(undefined);
 

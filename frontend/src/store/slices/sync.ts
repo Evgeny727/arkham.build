@@ -100,7 +100,7 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
 ) => ({
   ...getInitialSyncState(),
 
-  async bootstrapAuthenticatedState(client) {
+  async bootstrapAuthenticatedState(client, opts) {
     const state = get();
     const accountId = state.auth.session?.account.id;
 
@@ -121,7 +121,7 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
       errors.push(error);
     }
 
-    void get().syncDecks(client).catch(console.error);
+    void get().syncDecks(client, opts).catch(console.error);
 
     try {
       await get().loadRemoteFolders(client);
@@ -337,7 +337,7 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
     }
   },
 
-  async syncDecks(client) {
+  async syncDecks(client, opts) {
     const state = get();
 
     const accountId = state.auth.session?.account.id;
@@ -350,7 +350,7 @@ export const createSyncSlice: StateCreator<StoreState, [], [], SyncSlice> = (
     });
 
     try {
-      const manifest = await fetchDeckManifest(client);
+      const manifest = await fetchDeckManifest(client, opts);
 
       if (!isCurrentAccount(get(), accountId)) return;
 

@@ -444,6 +444,6 @@ function useAccountSyncAction() {
   const { mutateAsync } = useAccountSyncMutation();
 
   return useCallback(() => {
-    void mutateAsync().catch(console.error);
+    void mutateAsync({ forceArkhamdbSync: true }).catch(console.error);
   }, [mutateAsync]);
 }

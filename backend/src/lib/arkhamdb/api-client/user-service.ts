@@ -1,9 +1,10 @@
 import assert from "node:assert";
-import type {
-  Deck,
-  DeckId,
-  DeckManifestItem,
-  DeckWritePayload,
+import {
+  ArkhamDbIdentityStateSchema,
+  type Deck,
+  type DeckId,
+  type DeckManifestItem,
+  type DeckWritePayload,
 } from "@arkham-build/shared";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -92,6 +93,7 @@ export async function fetchArkhamDbDeckBatch(
 
 export async function fetchArkhamDbDeckManifest(
   c: Context<SessionAuthHonoEnv>,
+  opts: { force?: boolean } = {},
 ): Promise<{ arkhamdbSyncToken: string; decks: DeckManifestItem[] }> {
   const db = c.get("db");
   const accountId = c.get("account").id;
@@ -108,6 +110,14 @@ export async function fetchArkhamDbDeckManifest(
     db,
     identity.id,
   );
+
+  if (
+    snapshot &&
+    !opts.force &&
+    isFreshArkhamDbSnapshot(identity.state, snapshot)
+  ) {
+    return getArkhamDbManifestFromSnapshot(snapshot);
+  }
 
   const syncedAt = new Date();
 
@@ -140,14 +150,7 @@ export async function fetchArkhamDbDeckManifest(
 
   assert(snapshot, "Missing ArkhamDB snapshot for 304 response.");
 
-  const remoteDecks = ArkhamDbRemoteDeckManifestSourcesSchema.parse(
-    snapshot.decks,
-  );
-
-  return {
-    arkhamdbSyncToken: snapshot.id,
-    decks: remoteDecks.map(mapArkhamDbDeckToManifestItem),
-  };
+  return getArkhamDbManifestFromSnapshot(snapshot);
 }
 
 export async function saveArkhamDbDeck(
@@ -211,6 +214,46 @@ type ArkhamDbRemoteDeckManifestSource = Pick<
   ArkhamDbRemoteDeck,
   "date_creation" | "date_update" | "id" | "version"
 >;
+
+type ArkhamDbDeckSnapshotRow = NonNullable<
+  Awaited<ReturnType<typeof findLatestArkhamDbDeckSnapshotByAccountIdentityId>>
+>;
+
+const ARKHAMDB_SYNC_INTERVAL_MS = 60 * 60 * 1000;
+
+function getArkhamDbManifestFromSnapshot(snapshot: ArkhamDbDeckSnapshotRow) {
+  const remoteDecks = ArkhamDbRemoteDeckManifestSourcesSchema.parse(
+    snapshot.decks,
+  );
+
+  return {
+    arkhamdbSyncToken: snapshot.id,
+    decks: remoteDecks.map(mapArkhamDbDeckToManifestItem),
+  };
+}
+
+function isFreshArkhamDbSnapshot(
+  state: unknown,
+  snapshot: ArkhamDbDeckSnapshotRow,
+) {
+  return (
+    Date.now() - getLastArkhamDbSyncedAt(state, snapshot).getTime() <
+    ARKHAMDB_SYNC_INTERVAL_MS
+  );
+}
+
+function getLastArkhamDbSyncedAt(
+  state: unknown,
+  snapshot: ArkhamDbDeckSnapshotRow,
+) {
+  const parsed = ArkhamDbIdentityStateSchema.safeParse(state);
+  const syncedAt = parsed.success ? parsed.data.lastSyncedAt : null;
+  const date = syncedAt ? new Date(syncedAt) : snapshot.created_at;
+
+  assert(!Number.isNaN(date.getTime()), "Invalid ArkhamDB sync timestamp.");
+
+  return date;
+}
 
 function mapArkhamDbDeckToManifestItem(
   deck: ArkhamDbRemoteDeckManifestSource,

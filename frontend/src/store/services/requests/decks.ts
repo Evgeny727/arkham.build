@@ -33,8 +33,13 @@ class DeckConflictError extends ApiError {
 
 export async function fetchDeckManifest(
   client: HttpClient,
+  opts: { forceArkhamdbSync?: boolean } = {},
 ): Promise<DeckManifestResponse> {
-  const res = await client.request("/v2/account/decks/manifest", {
+  const path = opts.forceArkhamdbSync
+    ? "/v2/account/decks/manifest?forceArkhamdbSync=true"
+    : "/v2/account/decks/manifest";
+
+  const res = await client.request(path, {
     credentials: "include",
   });
 

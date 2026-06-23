@@ -60,7 +60,8 @@ export function useAccountSyncMutation() {
 
   return useMutation({
     mutationKey: ["auth", "sync-account"],
-    mutationFn: () => bootstrapAuthenticatedState(client),
+    mutationFn: (opts?: { forceArkhamdbSync?: boolean }) =>
+      bootstrapAuthenticatedState(client, opts),
   });
 }
 

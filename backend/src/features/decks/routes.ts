@@ -52,6 +52,7 @@ const routes = new Hono<HonoEnv>();
 routes.get("/manifest", sessionAuth(), async (c) => {
   const db = c.get("db");
   const accountId = c.get("account").id;
+  const forceArkhamdbSync = c.req.query("forceArkhamdbSync") === "true";
 
   const arkhamdbIdentity = await getAccountIdentityByAccountIdAndProvider(
     db,
@@ -65,7 +66,9 @@ routes.get("/manifest", sessionAuth(), async (c) => {
 
   if (arkhamdbIdentity) {
     try {
-      const remoteManifest = await fetchArkhamDbDeckManifest(c);
+      const remoteManifest = await fetchArkhamDbDeckManifest(c, {
+        force: forceArkhamdbSync,
+      });
       arkhamdbDeckManifest = remoteManifest.decks;
       arkhamdbSyncToken = remoteManifest.arkhamdbSyncToken;
       arkhamdbAvailable = true;

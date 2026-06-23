@@ -68,7 +68,10 @@ type DeckConflictResolutionResult = {
 };
 
 export type SyncSlice = SyncState & {
-  bootstrapAuthenticatedState(client: HttpClient): Promise<void>;
+  bootstrapAuthenticatedState(
+    client: HttpClient,
+    opts?: { forceArkhamdbSync?: boolean },
+  ): Promise<void>;
   clearAccountState(auth?: AuthState): void;
   setSettingsSync(payload: Partial<SettingsSyncState>): void;
   setDecksSync(payload: Partial<DecksSyncState>): void;
@@ -80,7 +83,10 @@ export type SyncSlice = SyncState & {
     client: HttpClient,
     opts?: { expectedRevision?: string | null },
   ): Promise<void>;
-  syncDecks(client: HttpClient): Promise<void>;
+  syncDecks(
+    client: HttpClient,
+    opts?: { forceArkhamdbSync?: boolean },
+  ): Promise<void>;
   resolveDeckConflictWithRefresh(
     client: HttpClient,
     id: Id,

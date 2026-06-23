@@ -11,14 +11,21 @@ import type { Database } from "../db/db.ts";
 import type { HonoEnv } from "../lib/hono-env.ts";
 import { TEST_ACCOUNT, test } from "./test-utils.ts";
 
-function getManifest(app: Hono<HonoEnv>, cookie?: string) {
+function getManifest(
+  app: Hono<HonoEnv>,
+  cookie?: string,
+  opts: { forceArkhamdbSync?: boolean } = {},
+) {
   const headers: Record<string, string> = {};
+  const path = opts.forceArkhamdbSync
+    ? "/v2/account/decks/manifest?forceArkhamdbSync=true"
+    : "/v2/account/decks/manifest";
 
   if (cookie) {
     headers["Cookie"] = cookie;
   }
 
-  return app.request("/v2/account/decks/manifest", {
+  return app.request(path, {
     method: "GET",
     ...(Object.keys(headers).length ? { headers } : {}),
   });
@@ -415,11 +422,55 @@ describe("Deck routes", () => {
         }),
       ]);
       expect(fetch).toHaveBeenCalledOnce();
+
+      fetch.mockClear();
+
+      const secondRes = await getManifest(app, sessionCookie);
+      expect(secondRes.status).toBe(200);
+      expect(fetch).not.toHaveBeenCalled();
     });
 
-    test("checks arkhamdb before reusing a fresh snapshot", async ({
+    test("reuses a fresh arkhamdb snapshot without checking arkhamdb", async ({
       dependencies,
     }) => {
+      const { app, db, sessionCookie } = dependencies;
+      const identity = await insertArkhamDbConnection(db);
+
+      const snapshot = await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          created_at: new Date(),
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 654,
+              name: "Fresh Arkham Deck",
+              version: "1.0",
+            }),
+          ]),
+          last_modified: "Thu, 04 Jun 2026 12:00:00 GMT",
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const fetch = vi.fn<typeof globalThis.fetch>();
+      vi.stubGlobal("fetch", fetch);
+
+      const res = await getManifest(app, sessionCookie);
+      expect(res.status).toBe(200);
+
+      const manifest = DeckManifestResponseSchema.parse(await res.json());
+      expect(manifest.arkhamdbSyncToken).toBe(snapshot.id);
+      expect(manifest.decks).toEqual([
+        expect.objectContaining({
+          id: 654,
+          version: "1.0",
+        }),
+      ]);
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    test("checks arkhamdb when sync is forced", async ({ dependencies }) => {
       const { app, db, sessionCookie } = dependencies;
       const identity = await insertArkhamDbConnection(db);
       const lastModified = "Thu, 04 Jun 2026 12:00:00 GMT";
@@ -451,7 +502,9 @@ describe("Deck routes", () => {
       });
       vi.stubGlobal("fetch", fetch);
 
-      const res = await getManifest(app, sessionCookie);
+      const res = await getManifest(app, sessionCookie, {
+        forceArkhamdbSync: true,
+      });
       expect(res.status).toBe(200);
 
       const manifest = DeckManifestResponseSchema.parse(await res.json());
