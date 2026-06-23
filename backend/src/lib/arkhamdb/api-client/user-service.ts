@@ -219,7 +219,7 @@ type ArkhamDbDeckSnapshotRow = NonNullable<
   Awaited<ReturnType<typeof findLatestArkhamDbDeckSnapshotByAccountIdentityId>>
 >;
 
-const ARKHAMDB_SYNC_INTERVAL_MS = 60 * 60 * 1000;
+const ARKHAMDB_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 function getArkhamDbManifestFromSnapshot(snapshot: ArkhamDbDeckSnapshotRow) {
   const remoteDecks = ArkhamDbRemoteDeckManifestSourcesSchema.parse(

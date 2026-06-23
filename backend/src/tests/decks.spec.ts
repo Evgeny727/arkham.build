@@ -430,7 +430,7 @@ describe("Deck routes", () => {
       expect(fetch).not.toHaveBeenCalled();
     });
 
-    test("reuses a fresh arkhamdb snapshot without checking arkhamdb", async ({
+    test("reuses a 23-hour-old arkhamdb snapshot without checking arkhamdb", async ({
       dependencies,
     }) => {
       const { app, db, sessionCookie } = dependencies;
@@ -440,7 +440,7 @@ describe("Deck routes", () => {
         .insertInto("arkhamdb_deck_snapshot")
         .values({
           account_identity_id: identity.id,
-          created_at: new Date(),
+          created_at: new Date(Date.now() - 23 * 60 * 60 * 1000),
           decks: JSON.stringify([
             buildArkhamDbApiDeck({
               id: 654,
