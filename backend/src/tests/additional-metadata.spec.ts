@@ -85,6 +85,41 @@ describe("GET /v1/public/additional_metadata/:id", () => {
     expect(deck.slots).toEqual({ "01000": 1, "fan-signature": 1 });
   });
 
+  test("keeps restored hidden investigator hidden on save", async ({
+    dependencies,
+  }) => {
+    const deck = await mergeAdditionalMeta(
+      dependencies.db,
+      makeRemoteDeck({
+        investigator_code: "89001",
+        investigator_name: "Subject 5U-21",
+        meta: JSON.stringify({
+          hidden_slots: {
+            slots: {},
+            sideSlots: null,
+            ignoreDeckLimitSlots: null,
+            investigator_code: "01001",
+          },
+        }),
+      }),
+    );
+
+    expect(deck.investigator_code).toBe("01001");
+    expect(JSON.parse(deck.meta).hidden_slots?.investigator_code).toBe("01001");
+
+    const storedDeck = await storeAdditionalMetadata(
+      dependencies.db,
+      789,
+      makeDeckWritePayload({
+        investigator_code: deck.investigator_code,
+        investigator_name: deck.investigator_name,
+        meta: deck.meta,
+      }),
+    );
+
+    expect(storedDeck.investigator_code).toBe("89001");
+  });
+
   test("loads stale amk refs from the legacy API while merging deck metadata", async ({
     dependencies,
   }) => {
@@ -116,7 +151,6 @@ describe("GET /v1/public/additional_metadata/:id", () => {
     expect(deck.slots).toEqual({ "01001": 1, "01006": 1 });
     expect(JSON.parse(deck.meta)).toEqual({
       foo: "bar",
-      hidden_slots: { slots: { "01001": 1 } },
     });
 
     fetch.mockRestore();

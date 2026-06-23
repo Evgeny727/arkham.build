@@ -7,14 +7,13 @@ import type { ArkhamDbRemoteDeck } from "./api-client/core/dtos.ts";
 
 export function extractHiddenSlots(deck: DeckWritePayload) {
   const meta = decodeDeckMeta(deck.meta);
-  const previousHiddenSlots = meta.hidden_slots;
   const investigatorCode = deck.investigator_code;
 
   const hiddenSlots: DeckFanMadeContentSlots = {
     slots: {},
     sideSlots: null,
     ignoreDeckLimitSlots: null,
-    investigator_code: investigatorCode ?? "89001",
+    investigator_code: null,
   };
 
   let changed = false;
@@ -25,9 +24,8 @@ export function extractHiddenSlots(deck: DeckWritePayload) {
 
     for (const [code, quantity] of slots) {
       const isFanMade = meta.fan_made_content?.cards?.[code];
-      const isPreviouslyHidden = previousHiddenSlots?.[key]?.[code] != null;
 
-      if (isFanMade || isPreviouslyHidden || isPreview(code)) {
+      if (isFanMade || isPreview(code)) {
         hiddenSlots[key] ??= {};
         hiddenSlots[key][code] = quantity;
         delete deck[key]?.[code];
@@ -38,8 +36,8 @@ export function extractHiddenSlots(deck: DeckWritePayload) {
 
   if (
     investigatorCode &&
-    (meta.fan_made_content?.cards[investigatorCode] ||
-      previousHiddenSlots?.investigator_code === investigatorCode ||
+    (meta.hidden_slots?.investigator_code === investigatorCode ||
+      meta.fan_made_content?.cards[investigatorCode] ||
       isPreview(investigatorCode))
   ) {
     hiddenSlots.investigator_code = investigatorCode;
@@ -48,13 +46,7 @@ export function extractHiddenSlots(deck: DeckWritePayload) {
     changed = true;
   }
 
-  if (!changed) {
-    if (previousHiddenSlots) {
-      delete meta.hidden_slots;
-      deck.meta = JSON.stringify(meta);
-    }
-    return;
-  }
+  if (!changed) return;
 
   meta.hidden_slots = hiddenSlots;
   deck.meta = JSON.stringify(meta);
@@ -82,15 +74,40 @@ export function applyHiddenSlots(deck: ArkhamDbRemoteDeck) {
     }
   }
 
-  if (hiddenSlots.investigator_code !== deck.investigator_code) {
-    deck.investigator_code = hiddenSlots.investigator_code;
+  const hasHiddenInvestigator =
+    !!hiddenSlots.investigator_code &&
+    hiddenSlots.investigator_code !== deck.investigator_code;
+
+  if (hasHiddenInvestigator) {
+    deck.investigator_code = hiddenSlots.investigator_code as string;
     deck.investigator_name =
-      meta.fan_made_content?.cards?.[hiddenSlots.investigator_code]?.name ??
+      meta.fan_made_content?.cards?.[hiddenSlots.investigator_code as string]
+        ?.name ??
       deck.investigator_name ??
       null;
   }
 
+  if (
+    hiddenSlots.investigator_code &&
+    (hasHiddenInvestigator || !hasHiddenSlotEntries(hiddenSlots))
+  ) {
+    meta.hidden_slots = {
+      slots: {},
+      sideSlots: null,
+      ignoreDeckLimitSlots: null,
+      investigator_code: hiddenSlots.investigator_code,
+    };
+  } else {
+    delete meta.hidden_slots;
+  }
+
   deck.meta = JSON.stringify(meta);
+}
+
+function hasHiddenSlotEntries(hiddenSlots: DeckFanMadeContentSlots) {
+  return (["slots", "sideSlots", "ignoreDeckLimitSlots"] as const).some(
+    (key) => Object.keys(hiddenSlots[key] ?? {}).length > 0,
+  );
 }
 
 function decodeDeckMeta(meta: string | null | undefined): DeckMeta {
