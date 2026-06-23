@@ -1,8 +1,9 @@
-import type {
-  Deck,
-  DeckMeta,
-  SealedDeckResponse,
-  Slots,
+import {
+  type Deck,
+  type DeckMeta,
+  type SealedDeckResponse,
+  type Slots,
+  SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
 import type { AttachmentQuantities } from "@/store/slices/deck-edits.types";
 import type { Metadata } from "@/store/slices/metadata.types";
@@ -242,11 +243,16 @@ export function decodeSealedDeck(deckMeta: DeckMeta) {
 
   if (!entries?.length) return undefined;
 
-  const cards = entries.reduce<Record<string, number>>((acc, curr) => {
-    const [code, quantity] = curr.split(":");
-    acc[code] = Number.parseInt(quantity, 10);
-    return acc;
-  }, {});
+  const cards = entries.reduce<Record<string, number>>(
+    (acc, curr) => {
+      const [code, quantity] = curr.split(":");
+      acc[code] = Number.parseInt(quantity, 10);
+      return acc;
+    },
+    {
+      [SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS]: 99,
+    },
+  );
 
   return {
     name: deckMeta.sealed_deck_name ?? "Sealed Deck",
