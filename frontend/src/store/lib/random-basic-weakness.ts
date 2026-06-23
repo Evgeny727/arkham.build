@@ -80,7 +80,12 @@ export function randomBasicWeaknessForDeck(
       return acc;
     }
 
-    const codes = Array.from({ length: ownedCount }, () => code);
+    const codes = Array.from(
+      {
+        length: Math.min(ownedCount, card.deck_limit ?? 0),
+      },
+      () => code,
+    );
     acc.push(...codes);
 
     return acc;
