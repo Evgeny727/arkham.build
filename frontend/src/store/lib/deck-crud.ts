@@ -350,6 +350,7 @@ export const deleteAdapter = {
     set: StoreApi<StoreState>["setState"],
     deck: Deck,
     expectedVersion: string | undefined | null,
+    all: boolean,
   ) {
     if (!isSyncedStorageProvider(deck.source)) return deck;
 
@@ -361,6 +362,7 @@ export const deleteAdapter = {
 
     try {
       await deleteDeck(client, deck.id, {
+        all,
         expectedVersion,
         provider: deck.source,
       });

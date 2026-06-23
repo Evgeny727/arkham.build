@@ -234,6 +234,11 @@ describe("app deck write-through actions", () => {
 
     await store.getState().deleteDeck(client, "remote");
 
+    expect(deckRequests.deleteDeck).toHaveBeenCalledWith(client, "remote", {
+      all: true,
+      expectedVersion: "1",
+      provider: "account",
+    });
     expect(store.getState().data.deckFolders.remote).toBeUndefined();
     expect(saveFolders).toHaveBeenCalledWith(client);
   });
@@ -272,6 +277,11 @@ describe("app deck write-through actions", () => {
 
     await store.getState().deleteUpgrade(client, "remote");
 
+    expect(deckRequests.deleteDeck).toHaveBeenCalledWith(client, "remote", {
+      all: false,
+      expectedVersion: "1",
+      provider: "account",
+    });
     expect(store.getState().data.deckFolders.remote).toBeUndefined();
     expect(saveFolders).toHaveBeenCalledWith(client);
   });

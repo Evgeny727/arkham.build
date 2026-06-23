@@ -54,6 +54,7 @@ export const DeckUpdateRequestSchema = DeckWritePayloadSchema.extend({
 export type DeckUpdateRequest = z.infer<typeof DeckUpdateRequestSchema>;
 
 export const DeckDeleteRequestSchema = z.object({
+  all: z.boolean().optional(),
   expectedVersion: z.string(),
   provider: SyncedDeckProviderSchema,
 });

@@ -108,6 +108,7 @@ function deleteDeck(
   id: string,
   expectedVersion: string,
   provider = "account",
+  all?: boolean,
 ) {
   return app.request(`/v2/account/decks/${id}`, {
     method: "DELETE",
@@ -115,7 +116,7 @@ function deleteDeck(
       "Content-Type": "application/json",
       Cookie: cookie,
     },
-    body: JSON.stringify({ expectedVersion, provider }),
+    body: JSON.stringify({ all, expectedVersion, provider }),
   });
 }
 
@@ -1008,6 +1009,44 @@ describe("Deck routes", () => {
       expect(manifest.decks).toEqual([]);
     });
 
+    test("deletes a deck history when all is true", async ({
+      dependencies,
+    }) => {
+      const { app, db, sessionCookie } = dependencies;
+      await insertTestDeck(db, {
+        id: "deck-delete-previous",
+        version: "prev0001",
+      });
+      await insertTestDeck(db, {
+        id: "deck-delete-current",
+        previousDeck: "deck-delete-previous",
+        version: "curr0001",
+      });
+      await db
+        .updateTable("deck")
+        .set({ next_deck: "deck-delete-current" })
+        .where("id", "=", "deck-delete-previous")
+        .executeTakeFirst();
+
+      const res = await deleteDeck(
+        app,
+        sessionCookie,
+        "deck-delete-current",
+        "curr0001",
+        "account",
+        true,
+      );
+      expect(res.status).toBe(204);
+
+      const decks = await db
+        .selectFrom("deck")
+        .select(["id"])
+        .where("id", "in", ["deck-delete-current", "deck-delete-previous"])
+        .execute();
+
+      expect(decks).toEqual([]);
+    });
+
     test("returns 409 on delete version conflict", async ({ dependencies }) => {
       const { app, db, sessionCookie } = dependencies;
       await insertTestDeck(db, {
@@ -1284,25 +1323,23 @@ describe("Deck routes", () => {
         version: "1.1",
       });
 
-      vi.stubGlobal(
-        "fetch",
-        vi
-          .fn()
-          // GET /api/oauth2/deck/load/123
-          .mockResolvedValueOnce(
-            jsonResponse(
-              buildArkhamDbApiDeck({
-                id: 123,
-                name: "Remote deck",
-                version: "1.1",
-              }),
-            ),
-          )
-          // DELETE /api/oauth2/deck/delete/123
-          .mockResolvedValueOnce(jsonResponse({ success: true }))
-          // GET /api/oauth2/decks
-          .mockResolvedValueOnce(jsonResponse([])),
-      );
+      const fetch = vi
+        .fn()
+        // GET /api/oauth2/deck/load/123
+        .mockResolvedValueOnce(
+          jsonResponse(
+            buildArkhamDbApiDeck({
+              id: 123,
+              name: "Remote deck",
+              version: "1.1",
+            }),
+          ),
+        )
+        // DELETE /api/oauth2/deck/delete/123
+        .mockResolvedValueOnce(jsonResponse({ success: true }))
+        // GET /api/oauth2/decks
+        .mockResolvedValueOnce(jsonResponse([]));
+      vi.stubGlobal("fetch", fetch);
 
       const res = await deleteDeck(
         app,
@@ -1310,8 +1347,12 @@ describe("Deck routes", () => {
         "123",
         "1.1",
         "arkhamdb",
+        true,
       );
       expect(res.status).toBe(204);
+      expect(fetch.mock.calls[1]?.[0].toString()).toBe(
+        "https://arkhamdb.com/api/oauth2/deck/delete/123?all=true",
+      );
 
       const deleted = await db
         .selectFrom("deck")

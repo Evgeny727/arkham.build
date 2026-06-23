@@ -284,6 +284,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
       set,
       deck,
       state.sync.decks.items[id]?.version,
+      true,
     );
 
     cb?.();
@@ -318,6 +319,7 @@ export const createAppSlice: StateCreator<StoreState, [], [], AppSlice> = (
       set,
       deck,
       state.sync.decks.items[id]?.version,
+      false,
     );
 
     cb?.(previousId);

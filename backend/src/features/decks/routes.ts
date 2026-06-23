@@ -20,7 +20,9 @@ import {
 } from "@arkham-build/shared";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { Transaction } from "kysely";
 import type { Database } from "../../db/db.ts";
+import type { DB } from "../../db/schema.types.ts";
 import { ApiError } from "../../lib/arkhamdb/api-client/core/errors.ts";
 import { ARKHAMDB_PROVIDER_TYPE } from "../../lib/arkhamdb/api-client/mapping.ts";
 import {
@@ -381,24 +383,38 @@ const localCrud = {
     const db = c.get("db");
     const accountId = c.get("account").id;
 
-    const deleted = await db
-      .deleteFrom("deck")
-      .where("account_id", "=", accountId)
-      .where("id", "=", deckId)
-      .where("provider_type", "=", ACCOUNT_PROVIDER_TYPE)
-      .where((eb) =>
-        payload.expectedVersion === ""
-          ? eb.or([eb("version", "is", null), eb("version", "=", "")])
-          : eb("version", "=", payload.expectedVersion),
-      )
-      .returning(["id"])
-      .executeTakeFirst();
+    await db.transaction().execute(async (tx) => {
+      const lockedCurrent = await tx
+        .selectFrom("deck")
+        .selectAll()
+        .where("account_id", "=", accountId)
+        .where("id", "=", deckId)
+        .where("provider_type", "=", ACCOUNT_PROVIDER_TYPE)
+        .forUpdate()
+        .executeTakeFirst();
 
-    if (deleted) {
-      return;
-    }
+      if (!lockedCurrent) {
+        throwDeckConflict(null, null);
+      }
 
-    await throwCurrentLocalDeckConflict(db, accountId, deckId);
+      const current = mapDeckRowToDto(lockedCurrent);
+      assertExpectedDeckVersion(
+        current,
+        payload.expectedVersion,
+        lockedCurrent.version ?? null,
+      );
+
+      const deleteIds = payload.all
+        ? await collectLocalDeckHistoryIds(tx, accountId, lockedCurrent)
+        : [lockedCurrent.id];
+
+      await tx
+        .deleteFrom("deck")
+        .where("account_id", "=", accountId)
+        .where("provider_type", "=", ACCOUNT_PROVIDER_TYPE)
+        .where("id", "in", deleteIds)
+        .execute();
+    });
   },
 
   async upgrade(
@@ -473,7 +489,7 @@ const arkhamdbCrud = {
 
   async delete(c: DeckContext, deckId: string, payload: DeckDeleteRequest) {
     await fetchMatchingArkhamDbDeck(c, deckId, payload.expectedVersion);
-    await deleteArkhamDbDeck(c, deckId);
+    await deleteArkhamDbDeck(c, deckId, payload.all);
   },
 
   async upgrade(
@@ -549,6 +565,37 @@ async function fetchMatchingArkhamDbDeck(
 
   assertExpectedDeckVersion(current, expectedVersion);
   return current;
+}
+
+async function collectLocalDeckHistoryIds(
+  tx: Transaction<DB>,
+  accountId: string,
+  deck: { id: string; prev_deck: string | null },
+) {
+  const ids = [deck.id];
+  const seen = new Set(ids);
+  let previousId = deck.prev_deck;
+
+  while (previousId) {
+    const previous = await tx
+      .selectFrom("deck")
+      .select(["id", "prev_deck"])
+      .where("account_id", "=", accountId)
+      .where("id", "=", previousId)
+      .where("provider_type", "=", ACCOUNT_PROVIDER_TYPE)
+      .forUpdate()
+      .executeTakeFirst();
+
+    if (!previous) break;
+
+    assert(!seen.has(previous.id), "Deck history contains a cycle.");
+
+    ids.push(previous.id);
+    seen.add(previous.id);
+    previousId = previous.prev_deck;
+  }
+
+  return ids;
 }
 
 function assertExpectedDeckVersion(
