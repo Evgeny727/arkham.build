@@ -40,14 +40,18 @@ export function randomBasicWeaknessForDeck(
   ).reduce<string[]>((acc, code) => {
     const card = metadata.cards[code];
 
-    const ownedCount = ownedCardCount({
-      card,
+    const opts = {
       metadata,
       lookupTables,
       collection,
       showAllCards: !useLimitedPool && settings.showAllCards,
       strict:
         useLimitedPool || settings.cardListsDefaultContentType === "official",
+    };
+
+    const ownedCount = ownedCardCount({
+      card,
+      ...opts,
     });
 
     if (
@@ -57,6 +61,16 @@ export function randomBasicWeaknessForDeck(
       deck.slots[code] >= cardLimit(card)
     ) {
       return acc;
+    }
+
+    if (card.reprint_of) {
+      const reprinted = metadata.cards[card.reprint_of];
+      const ownedBase = ownedCardCount({
+        card: reprinted,
+        ...opts,
+      });
+
+      if (ownedBase > 0) return acc;
     }
 
     if (

@@ -8,9 +8,9 @@ import type { LookupTables } from "./lookup-tables.types";
 
 export type CardOwnershipOptions = {
   card: Card;
-  metadata: Metadata;
-  lookupTables: LookupTables;
   collection: Collection;
+  lookupTables: LookupTables;
+  metadata: Metadata;
   showAllCards?: boolean;
   strict?: boolean;
 };
