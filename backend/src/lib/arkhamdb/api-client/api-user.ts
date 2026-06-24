@@ -21,19 +21,7 @@ import {
 } from "./core/execute-with-lock.ts";
 
 export function fetchDeck(c: Context<SessionAuthHonoEnv>, id: string | number) {
-  return withArkhamDbExecutor(c, async (executor) => {
-    const response = await executor.request(
-      `/deck/load/${id}`,
-      ArkhamDbRemoteDeckSchema,
-    );
-
-    return {
-      ...response,
-      data: await mergeAdditionalMeta(executor.db, response.data, {
-        legacyApiBaseUrl: executor.context.get("config").LEGACY_API_BASE_URL,
-      }),
-    };
-  });
+  return withArkhamDbExecutor(c, (executor) => loadDeck(executor, id));
 }
 
 export function syncDecks(
