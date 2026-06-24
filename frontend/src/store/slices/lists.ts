@@ -1,6 +1,5 @@
 import {
   type Card,
-  type DecklistConfig,
   type Settings as SettingsState,
   SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
@@ -16,6 +15,7 @@ import {
   filterPreviews,
   filterType,
 } from "../lib/filtering";
+import { SORTING_PRESETS, sortPresetId } from "../lib/list-display";
 import type { ResolvedDeck } from "../lib/types";
 import { selectBuildQlInterpreter } from "../selectors/shared";
 import type { StoreState } from ".";
@@ -42,6 +42,7 @@ import type {
   LevelFilter,
   List,
   ListDisplay,
+  ListDisplaySettings,
   ListsSlice,
   OwnershipFilter,
   PropertiesFilter,
@@ -78,6 +79,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
   get,
 ) => ({
   activeList: getInitialList(),
+  listDisplaySettings: {},
   lists: {},
 
   resetFilters() {
@@ -138,8 +140,29 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       set({ activeList: undefined });
     } else {
       set((state) => {
-        assert(state.lists[value], `list ${value} not defined.`);
-        return { activeList: value };
+        const list = state.lists[value];
+        assert(list, `list ${value} not defined.`);
+
+        const displaySettings = list.displaySettingsKey
+          ? state.listDisplaySettings[list.displaySettingsKey]
+          : undefined;
+
+        if (!displaySettings) return { activeList: value };
+
+        return {
+          activeList: value,
+          lists: {
+            ...state.lists,
+            [value]: {
+              ...list,
+              display: applyListDisplaySettings(
+                list.initialState.display,
+                displaySettings,
+              ),
+              displaySortSelection: displaySettings.displaySortSelection,
+            },
+          },
+        };
       });
     }
   },
@@ -499,6 +522,11 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       assert(list, `list ${state.activeList} not defined.`);
 
       return {
+        listDisplaySettings: updateListDisplaySettings(
+          state.listDisplaySettings,
+          list,
+          { viewMode },
+        ),
         lists: {
           ...state.lists,
           [state.activeList]: {
@@ -534,7 +562,16 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
         };
       }
 
+      const displaySortSelection = config
+        ? sortPresetId(config)
+        : DEFAULT_LIST_SORT_ID;
+
       return {
+        listDisplaySettings: updateListDisplaySettings(
+          state.listDisplaySettings,
+          list,
+          { displaySortSelection },
+        ),
         lists: {
           ...state.lists,
           [state.activeList]: {
@@ -543,9 +580,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
               ...list.display,
               ...preset,
             },
-            displaySortSelection: config
-              ? sortPresetId(config)
-              : DEFAULT_LIST_SORT_ID,
+            displaySortSelection,
           },
         },
       };
@@ -570,14 +605,27 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
 
       const values = mergeInitialValues(initialValues ?? {}, state.settings);
 
-      const display = {
+      let display: ListDisplay = {
         ...getDisplaySettings(values, state.settings),
         ...opts.display,
       };
 
+      let displaySortSelection = DEFAULT_LIST_SORT_ID;
+
+      const displaySettings = opts.displaySettingsKey
+        ? state.listDisplaySettings[opts.displaySettingsKey]
+        : undefined;
+
+      if (displaySettings) {
+        display = applyListDisplaySettings(display, displaySettings);
+        displaySortSelection = displaySettings.displaySortSelection;
+      }
+
       lists[key] = makeList({
         fanMadeCycleCodes: opts.fanMadeCycleCodes,
         display,
+        displaySortSelection,
+        displaySettingsKey: opts.displaySettingsKey,
         filters: cardsFilters({
           additionalFilters: opts.additionalFilters ?? ["illustrator"],
           showOwnershipFilter: opts.showOwnershipFilter,
@@ -639,6 +687,54 @@ function makeSearch(): Search {
     includeGameText: false,
     includeName: true,
   };
+}
+
+function applyListDisplaySettings(
+  display: ListDisplay,
+  displaySettings: ListDisplaySettings,
+): ListDisplay {
+  const preset = getSortPreset(displaySettings.displaySortSelection);
+
+  return {
+    ...display,
+    ...(preset
+      ? {
+          grouping: preset.group,
+          sorting: preset.sort,
+        }
+      : {}),
+    viewMode: displaySettings.viewMode,
+  };
+}
+
+function updateListDisplaySettings(
+  settings: Record<string, ListDisplaySettings>,
+  list: List,
+  patch: Partial<ListDisplaySettings>,
+) {
+  if (!list.displaySettingsKey) return settings;
+
+  const current = settings[list.displaySettingsKey] ?? {
+    displaySortSelection: list.displaySortSelection,
+    viewMode: list.display.viewMode,
+  };
+
+  return {
+    ...settings,
+    [list.displaySettingsKey]: {
+      ...current,
+      ...patch,
+    },
+  };
+}
+
+function getSortPreset(id: string) {
+  if (id === DEFAULT_LIST_SORT_ID) return undefined;
+
+  const preset = SORTING_PRESETS.find((preset) => sortPresetId(preset) === id);
+  assert(preset, `unknown list sort preset ${id}.`);
+
+  return preset;
 }
 
 function makeFilterObject<K extends FilterKey>(
@@ -861,6 +957,8 @@ function makeFilterValue(
 type MakeListOptions = {
   fanMadeCycleCodes?: string[];
   display: ListDisplay;
+  displaySettingsKey?: string;
+  displaySortSelection?: string;
   filters: FilterKey[];
   initialValues?: Partial<Record<FilterKey, unknown>>;
   key: string;
@@ -874,6 +972,8 @@ function makeList({
   key,
   filters,
   display,
+  displaySettingsKey,
+  displaySortSelection = DEFAULT_LIST_SORT_ID,
   systemFilter,
   initialValues,
   search,
@@ -889,7 +989,8 @@ function makeList({
     }, {}),
     filtersEnabled: true,
     display,
-    displaySortSelection: DEFAULT_LIST_SORT_ID,
+    displaySettingsKey,
+    displaySortSelection,
     key,
     systemFilter,
     search: search ?? makeSearch(),
@@ -1094,8 +1195,4 @@ function getDisplaySettings(
       };
     }
   }
-}
-
-export function sortPresetId(config: DecklistConfig): string {
-  return [...config.group, ...config.sort].join("|");
 }

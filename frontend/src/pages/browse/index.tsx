@@ -55,6 +55,7 @@ export function Browse() {
           fan_made_content: "all",
         },
         {
+          displaySettingsKey: "browse",
           systemFilter: browseChapterSystemFilter(activeChapterTab),
         },
       );

@@ -160,6 +160,11 @@ export type ListDisplay = {
   viewMode: ViewMode;
 };
 
+export type ListDisplaySettings = {
+  displaySortSelection: string;
+  viewMode: ViewMode;
+};
+
 export type List = {
   // Unowned fan-made content (in cache) is filtered from lists by default.
   // For fan-made content preview pages, we need to cache and "whitelist" the fan-made data
@@ -174,6 +179,7 @@ export type List = {
   };
   initialState: Omit<List, "initialState">;
   key: string;
+  displaySettingsKey?: string;
   // Applied before any kind of other filtering is applied to card list.
   systemFilter?: Filter;
   search: Search;
@@ -185,6 +191,7 @@ type Lists = {
 
 export type ListsSlice = {
   activeList?: string;
+  listDisplaySettings: Record<string, ListDisplaySettings>;
   lists: Lists;
 
   addList(
@@ -193,6 +200,7 @@ export type ListsSlice = {
     opts?: {
       additionalFilters?: FilterKey[];
       display?: Partial<ListDisplay>;
+      displaySettingsKey?: string;
       fanMadeCycleCodes?: string[];
       lockedFilters?: Set<FilterKey>;
       search?: string;
