@@ -121,6 +121,7 @@ routes.post(
     const accountIds = targets
       .filter((target) => target.provider === ACCOUNT_PROVIDER_TYPE)
       .map((target) => String(target.id));
+
     const arkhamdbIds = targets
       .filter((target) => target.provider === ARKHAMDB_PROVIDER_TYPE)
       .map((target) => target.id);

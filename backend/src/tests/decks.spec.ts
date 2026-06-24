@@ -713,12 +713,14 @@ describe("Deck routes", () => {
             id: "batch-root",
             next_deck: "batch-upgrade",
             source: "account",
+            taboo_id: 8,
           }),
           baseDeckPayload({
             id: "batch-upgrade",
             previous_deck: "batch-root",
             source: "account",
             version: "00000002",
+            taboo_id: 9,
           }),
         ],
       });
@@ -727,20 +729,30 @@ describe("Deck routes", () => {
 
       const body = DeckBatchResponseSchema.parse(await res.json());
       expect(body).toMatchObject([
-        { id: "batch-root", next_deck: "batch-upgrade" },
-        { id: "batch-upgrade", previous_deck: "batch-root" },
+        { id: "batch-root", next_deck: "batch-upgrade", taboo_id: 8 },
+        { id: "batch-upgrade", previous_deck: "batch-root", taboo_id: 9 },
       ]);
 
       const rows = await db
         .selectFrom("deck")
-        .select(["id", "next_deck", "prev_deck"])
+        .select(["id", "next_deck", "prev_deck", "taboo_set_id"])
         .where("id", "in", ["batch-root", "batch-upgrade"])
         .orderBy("id")
         .execute();
 
       expect(rows).toEqual([
-        { id: "batch-root", next_deck: "batch-upgrade", prev_deck: null },
-        { id: "batch-upgrade", next_deck: null, prev_deck: "batch-root" },
+        {
+          id: "batch-root",
+          next_deck: "batch-upgrade",
+          prev_deck: null,
+          taboo_set_id: 8,
+        },
+        {
+          id: "batch-upgrade",
+          next_deck: null,
+          prev_deck: "batch-root",
+          taboo_set_id: 9,
+        },
       ]);
     });
 
