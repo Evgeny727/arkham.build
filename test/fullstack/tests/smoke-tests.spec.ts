@@ -4,7 +4,7 @@ import {
   assertEditorDeckQuantity,
   fillSearch,
   importDeckFromFile,
-} from "./actions";
+} from "../../e2e/tests/actions.ts";
 
 async function checkDeckVisible(page: Page) {
   const deckNode = page.getByTestId("collection-deck");

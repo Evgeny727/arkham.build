@@ -82,6 +82,7 @@ services:
       E2E_ARKHAMDB_BASE_URL: http://arkhamdb
       E2E_ARKHAMDB_TEST_API_KEY: test-arkhamdb-api-key
       E2E_MAILCRAB_URL: http://mailcrab:1080
+      E2E_PLAYWRIGHT_GREP: ${E2E_PLAYWRIGHT_GREP:-}
       E2E_POSTGRES_HOST: postgres
       E2E_POSTGRES_PASSWORD: postgres
       E2E_POSTGRES_PORT: 5432
