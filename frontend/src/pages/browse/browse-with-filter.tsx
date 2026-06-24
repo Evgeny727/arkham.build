@@ -1,11 +1,9 @@
 import { useEffect } from "react";
 import { CardListContainer } from "@/components/card-list/card-list-container";
-import { CardModalProvider } from "@/components/card-modal/card-modal-provider";
 import { Filters } from "@/components/filters/filters";
 import { PageTitle } from "@/components/ui/page-title";
 import { useTabUrlState } from "@/components/ui/tabs.hooks";
 import { ListLayout } from "@/layouts/list-layout";
-import { ListLayoutContextProvider } from "@/layouts/list-layout-context-provider";
 import { useStore } from "@/store";
 import { selectIsInitialized } from "@/store/selectors/shared";
 import type { FilterKey, FilterMapping } from "@/store/slices/lists.types";
@@ -78,25 +76,23 @@ export function BrowseWithFilter(props: Props) {
   }
 
   return (
-    <CardModalProvider>
+    <>
       <PageTitle>{title}</PageTitle>
-      <ListLayoutContextProvider>
-        <ListLayout
-          noFade
-          filters={<Filters targetDeck={undefined} />}
-          sidebar={
-            <SetTree
-              activeCode={activeCode}
-              activeType={filterKey}
-              chapterTab={chapterTab}
-              onChapterTabChange={setChapterTab}
-            />
-          }
-          sidebarWidthMax="var(--sidebar-width-one-col)"
-        >
-          {(props) => <CardListContainer {...props} />}
-        </ListLayout>
-      </ListLayoutContextProvider>
-    </CardModalProvider>
+      <ListLayout
+        noFade
+        filters={<Filters targetDeck={undefined} />}
+        sidebar={
+          <SetTree
+            activeCode={activeCode}
+            activeType={filterKey}
+            chapterTab={chapterTab}
+            onChapterTabChange={setChapterTab}
+          />
+        }
+        sidebarWidthMax="var(--sidebar-width-one-col)"
+      >
+        {(props) => <CardListContainer {...props} />}
+      </ListLayout>
+    </>
   );
 }

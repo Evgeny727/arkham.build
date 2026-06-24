@@ -96,22 +96,24 @@ export function SetTree({
   });
 
   return (
-    <Scroller className={css["tree"]} padded>
+    <Scroller className={css["tree"]}>
       <Tabs
         className={css["chapter-tabs"]}
         value={chapterTab}
         onValueChange={(value) => onChapterTabChange(value as ChapterTab)}
       >
         <TabsList>
-          <TabsTrigger value="all">{t("filters.all")}</TabsTrigger>
-          <TabsTrigger value="1">
+          <TabsTrigger className={css["chapter-tabs-item"]} value="all">
+            {t("filters.all")}
+          </TabsTrigger>
+          <TabsTrigger className={css["chapter-tabs-item"]} value="1">
             {t("settings.collection.chapter", { number: 1 })}
           </TabsTrigger>
-          <TabsTrigger value="2">
+          <TabsTrigger className={css["chapter-tabs-item"]} value="2">
             {t("settings.collection.chapter", { number: 2 })}
           </TabsTrigger>
           {hasFanMadeCycles && (
-            <TabsTrigger value="fan-made">
+            <TabsTrigger className={css["chapter-tabs-item"]} value="fan-made">
               {t("fan_made_content.short_title")}
             </TabsTrigger>
           )}

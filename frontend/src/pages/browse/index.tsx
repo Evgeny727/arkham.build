@@ -78,24 +78,22 @@ export function Browse() {
   }
 
   return (
-    <CardModalProvider>
+    <>
       <PageTitle>{t("browse.title")}</PageTitle>
-      <ListLayoutContextProvider>
-        <ListLayout
-          noFade
-          filters={<Filters targetDeck={undefined} />}
-          sidebar={
-            <SetTree
-              chapterTab={activeChapterTab}
-              onChapterTabChange={setChapterTab}
-            />
-          }
-          sidebarWidthMax="var(--sidebar-width-one-col)"
-        >
-          {(props) => <CardListContainer {...props} />}
-        </ListLayout>
-      </ListLayoutContextProvider>
-    </CardModalProvider>
+      <ListLayout
+        noFade
+        filters={<Filters targetDeck={undefined} />}
+        sidebar={
+          <SetTree
+            chapterTab={activeChapterTab}
+            onChapterTabChange={setChapterTab}
+          />
+        }
+        sidebarWidthMax="var(--sidebar-width-one-col)"
+      >
+        {(props) => <CardListContainer {...props} />}
+      </ListLayout>
+    </>
   );
 }
 
@@ -176,14 +174,18 @@ export function BrowseEncounterSet() {
 
 export default function BrowseRoutes() {
   return (
-    <Switch>
-      <Route component={Browse} path="/browse" />
-      <Route component={BrowsePack} path="/browse/pack/:pack_code" />
-      <Route component={BrowseCycle} path="/browse/cycle/:cycle_code" />
-      <Route
-        component={BrowseEncounterSet}
-        path="/browse/encounter_set/:encounter_code"
-      />
-    </Switch>
+    <CardModalProvider>
+      <ListLayoutContextProvider>
+        <Switch>
+          <Route component={Browse} path="/browse" />
+          <Route component={BrowsePack} path="/browse/pack/:pack_code" />
+          <Route component={BrowseCycle} path="/browse/cycle/:cycle_code" />
+          <Route
+            component={BrowseEncounterSet}
+            path="/browse/encounter_set/:encounter_code"
+          />
+        </Switch>
+      </ListLayoutContextProvider>
+    </CardModalProvider>
   );
 }

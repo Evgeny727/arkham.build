@@ -6,6 +6,10 @@
   background-color: var(--palette-0);
 }
 
+.chapter-tabs-item {
+  padding-block: 0.5rem;
+}
+
 .format-toggle {
   margin-bottom: 0.75rem;
   text-align: center;
@@ -17,13 +21,17 @@
   flex-flow: column nowrap;
   gap: 0.25rem;
   min-height: 0;
-  padding-block: 0.25rem;
+  padding-bottom: 0.25rem;
   position: relative;
   font-size: var(--text-sm);
 }
 
 .node {
   margin-left: calc(var(--depth, 0) * 0.5rem);
+}
+
+.node.depth-0 {
+  margin-inline: 0.625rem;
 }
 
 .node.depth-1 {

@@ -154,18 +154,9 @@ function AppInner() {
                     component={AccountMigration}
                     path="/account-migration"
                   />
-                  <Route component={BrowseRoutes} path="/browse" />
                   <Route
                     component={BrowseRoutes}
-                    path="/browse/pack/:pack_code"
-                  />
-                  <Route
-                    component={BrowseRoutes}
-                    path="/browse/cycle/:cycle_code"
-                  />
-                  <Route
-                    component={BrowseRoutes}
-                    path="/browse/encounter_set/:encounter_code"
+                    path={/^\/browse(?:\/.*)?$/}
                   />
                   <Route component={Search} path="/search" />
                   <Route component={CardView} path="/card/:code" />
