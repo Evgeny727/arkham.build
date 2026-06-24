@@ -525,6 +525,10 @@ function Sharing(props: {
                   <Button
                     key={provider}
                     onClick={() => onUpload(provider)}
+                    disabled={
+                      provider !== "account" &&
+                      !!(deck.previous_deck || deck.next_deck)
+                    }
                     size="sm"
                   >
                     <UploadIcon />
