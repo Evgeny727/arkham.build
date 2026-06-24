@@ -8,6 +8,7 @@ import {
 import type { Hono } from "hono";
 import { describe, expect, vi } from "vitest";
 import type { Database } from "../db/db.ts";
+import { ArkhamDbRemoteDecksSchema } from "../lib/arkhamdb/api-client/core/dtos.ts";
 import type { HonoEnv } from "../lib/hono-env.ts";
 import { TEST_ACCOUNT, test } from "./test-utils.ts";
 
@@ -272,6 +273,124 @@ describe("Deck routes", () => {
           }),
         ]),
       });
+    });
+
+    test("creates a new arkhamdb snapshot when syncing changes", async ({
+      dependencies,
+    }) => {
+      const { app, db, sessionCookie } = dependencies;
+      const identity = await insertArkhamDbConnection(db);
+      const lastModified = "Thu, 04 Jun 2026 12:00:00 GMT";
+
+      const oldestSnapshot = await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          created_at: new Date(Date.now() - 27 * 60 * 60 * 1000),
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 111,
+              name: "Oldest Arkham Deck",
+              version: "1.0",
+            }),
+          ]),
+          last_modified: "Tue, 02 Jun 2026 12:00:00 GMT",
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const middleSnapshot = await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          created_at: new Date(Date.now() - 26 * 60 * 60 * 1000),
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 222,
+              name: "Middle Arkham Deck",
+              version: "1.0",
+            }),
+          ]),
+          last_modified: "Wed, 03 Jun 2026 12:00:00 GMT",
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const snapshot = await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          created_at: new Date(Date.now() - 25 * 60 * 60 * 1000),
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 123,
+              name: "Stale Arkham Deck",
+              version: "1.0",
+            }),
+          ]),
+          last_modified: lastModified,
+        })
+        .returning(["id"])
+        .executeTakeFirstOrThrow();
+
+      const fetch = vi.fn<typeof globalThis.fetch>((input, init) => {
+        const url = input instanceof Request ? input.url : input.toString();
+        expect(url).toBe("https://arkhamdb.com/api/oauth2/decks");
+        expect(new Headers(init?.headers).get("If-Modified-Since")).toBe(
+          lastModified,
+        );
+        return Promise.resolve(
+          jsonResponse(
+            [
+              buildArkhamDbApiDeck({
+                id: 123,
+                name: "Fresh Arkham Deck",
+                version: "1.1",
+              }),
+            ],
+            { "Last-Modified": "Fri, 05 Jun 2026 12:00:00 GMT" },
+          ),
+        );
+      });
+      vi.stubGlobal("fetch", fetch);
+
+      const res = await getManifest(app, sessionCookie);
+      expect(res.status).toBe(200);
+
+      const manifest = DeckManifestResponseSchema.parse(await res.json());
+      expect(manifest.arkhamdbSyncToken).not.toBe(snapshot.id);
+      expect(manifest.decks).toEqual([
+        expect.objectContaining({
+          id: 123,
+          version: "1.1",
+        }),
+      ]);
+      await expect(countArkhamDbSnapshots(db, identity.id)).resolves.toBe(3);
+      await expect(findArkhamDbSnapshotDecks(db, identity.id)).resolves.toEqual(
+        [
+          expect.objectContaining({
+            id: 123,
+            name: "Fresh Arkham Deck",
+            version: "1.1",
+          }),
+        ],
+      );
+
+      const snapshotIds = await db
+        .selectFrom("arkhamdb_deck_snapshot")
+        .select("id")
+        .where("account_identity_id", "=", identity.id)
+        .execute();
+      expect(snapshotIds.map((item) => item.id)).toEqual(
+        expect.arrayContaining([
+          middleSnapshot.id,
+          snapshot.id,
+          manifest.arkhamdbSyncToken,
+        ]),
+      );
+      expect(snapshotIds.map((item) => item.id)).not.toContain(
+        oldestSnapshot.id,
+      );
     });
 
     test("refreshes an expired arkhamdb token and persists the new token", async ({
@@ -1167,13 +1286,27 @@ describe("Deck routes", () => {
       dependencies,
     }) => {
       const { app, db, sessionCookie } = dependencies;
-      await insertArkhamDbConnection(db);
+      const identity = await insertArkhamDbConnection(db);
       await insertTestDeck(db, {
         id: "123",
         name: "Original remote deck",
         providerType: "arkhamdb",
         version: "1.1",
       });
+      await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 123,
+              name: "Original remote deck",
+              version: "1.1",
+            }),
+          ]),
+          last_modified: "Thu, 04 Jun 2026 12:00:00 GMT",
+        })
+        .executeTakeFirstOrThrow();
 
       vi.stubGlobal(
         "fetch",
@@ -1233,19 +1366,44 @@ describe("Deck routes", () => {
         source: "arkhamdb",
         version: "1.2",
       });
+
+      await expect(findArkhamDbSnapshotDecks(db, identity.id)).resolves.toEqual(
+        [
+          expect.objectContaining({
+            id: 123,
+            name: "Updated remotely",
+            version: "1.2",
+          }),
+        ],
+      );
     });
 
     test("upgrades an ArkhamDB deck remotely and mirrors the new chain", async ({
       dependencies,
     }) => {
       const { app, db, sessionCookie } = dependencies;
-      await insertArkhamDbConnection(db);
+      const identity = await insertArkhamDbConnection(db);
       await insertTestDeck(db, {
         id: "123",
         name: "Base remote deck",
         providerType: "arkhamdb",
         version: "1.1",
       });
+      await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 123,
+              name: "Base remote deck",
+              version: "1.1",
+              xp: 5,
+            }),
+          ]),
+          last_modified: "Thu, 04 Jun 2026 12:00:00 GMT",
+        })
+        .executeTakeFirstOrThrow();
 
       const fetch = vi
         .fn()
@@ -1321,19 +1479,56 @@ describe("Deck routes", () => {
         version: "1.2",
         xp: 8,
       });
+
+      await expect(findArkhamDbSnapshotDecks(db, identity.id)).resolves.toEqual(
+        [
+          expect.objectContaining({
+            id: 123,
+            name: "Base remote deck",
+            next_deck: 124,
+          }),
+          expect.objectContaining({
+            id: 124,
+            name: "Upgraded remotely",
+            previous_deck: 123,
+            version: "1.2",
+          }),
+        ],
+      );
     });
 
     test("deletes an ArkhamDB deck remotely and removes the local mirror", async ({
       dependencies,
     }) => {
       const { app, db, sessionCookie } = dependencies;
-      await insertArkhamDbConnection(db);
+      const identity = await insertArkhamDbConnection(db);
       await insertTestDeck(db, {
         id: "123",
         name: "Remote deck",
         providerType: "arkhamdb",
         version: "1.1",
       });
+      await db
+        .insertInto("arkhamdb_deck_snapshot")
+        .values({
+          account_identity_id: identity.id,
+          decks: JSON.stringify([
+            buildArkhamDbApiDeck({
+              id: 122,
+              name: "Previous remote deck",
+              next_deck: 123,
+              version: "1.0",
+            }),
+            buildArkhamDbApiDeck({
+              id: 123,
+              name: "Remote deck",
+              previous_deck: 122,
+              version: "1.1",
+            }),
+          ]),
+          last_modified: "Thu, 04 Jun 2026 12:00:00 GMT",
+        })
+        .executeTakeFirstOrThrow();
 
       const fetch = vi
         .fn()
@@ -1364,6 +1559,9 @@ describe("Deck routes", () => {
       expect(res.status).toBe(204);
       expect(fetch.mock.calls[1]?.[0].toString()).toBe(
         "https://arkhamdb.com/api/oauth2/deck/delete/123?all=true",
+      );
+      await expect(findArkhamDbSnapshotDecks(db, identity.id)).resolves.toEqual(
+        [],
       );
 
       const deleted = await db
@@ -1476,6 +1674,31 @@ async function insertArkhamDbConnection(db: Database) {
     .executeTakeFirstOrThrow();
 
   return identity;
+}
+
+async function countArkhamDbSnapshots(db: Database, accountIdentityId: string) {
+  const row = await db
+    .selectFrom("arkhamdb_deck_snapshot")
+    .select((eb) => eb.fn.countAll<number>().as("count"))
+    .where("account_identity_id", "=", accountIdentityId)
+    .executeTakeFirstOrThrow();
+
+  return Number(row.count);
+}
+
+async function findArkhamDbSnapshotDecks(
+  db: Database,
+  accountIdentityId: string,
+) {
+  const snapshot = await db
+    .selectFrom("arkhamdb_deck_snapshot")
+    .select(["decks"])
+    .where("account_identity_id", "=", accountIdentityId)
+    .orderBy("created_at", "desc")
+    .orderBy("id", "desc")
+    .executeTakeFirstOrThrow();
+
+  return ArkhamDbRemoteDecksSchema.parse(snapshot.decks ?? []);
 }
 
 function buildArkhamDbApiDeck(

@@ -76,142 +76,134 @@ export function syncDecks(
   });
 }
 
-export function saveDeck(
-  c: Context<SessionAuthHonoEnv>,
+export async function saveDeck(
+  executor: ArkhamDbExecutor,
   id: string | number,
   deck: DeckWritePayload,
 ) {
-  return withArkhamDbExecutor(c, async (executor) => {
-    const storedDeck = await storeAdditionalMetadata(executor.db, id, deck);
+  const storedDeck = await storeAdditionalMetadata(executor.db, id, deck);
 
-    const { data: operation } = await executor.request(
-      `/deck/save/${id}`,
-      ArkhamDbOperationResponseSchema,
-      {
-        method: "PUT",
-        body: encodeParams({
-          description_md: storedDeck.description_md,
-          exile_string: storedDeck.exile_string ?? undefined,
-          ignored: stringifyOptionalSlots(storedDeck.ignoreDeckLimitSlots),
-          meta: storedDeck.meta,
-          name: storedDeck.name,
-          problem: storedDeck.problem,
-          side: stringifyOptionalSlots(storedDeck.sideSlots),
-          slots: JSON.stringify(SlotsSchema.parse(storedDeck.slots)),
-          taboo: storedDeck.taboo_id ?? undefined,
-          tags: storedDeck.tags,
-          xp_adjustment: storedDeck.xp_adjustment ?? undefined,
-          xp_spent: storedDeck.xp_spent ?? undefined,
-        }),
-      },
-    );
+  const { data: operation } = await executor.request(
+    `/deck/save/${id}`,
+    ArkhamDbOperationResponseSchema,
+    {
+      method: "PUT",
+      body: encodeParams({
+        description_md: storedDeck.description_md,
+        exile_string: storedDeck.exile_string ?? undefined,
+        ignored: stringifyOptionalSlots(storedDeck.ignoreDeckLimitSlots),
+        meta: storedDeck.meta,
+        name: storedDeck.name,
+        problem: storedDeck.problem,
+        side: stringifyOptionalSlots(storedDeck.sideSlots),
+        slots: JSON.stringify(SlotsSchema.parse(storedDeck.slots)),
+        taboo: storedDeck.taboo_id ?? undefined,
+        tags: storedDeck.tags,
+        xp_adjustment: storedDeck.xp_adjustment ?? undefined,
+        xp_spent: storedDeck.xp_spent ?? undefined,
+      }),
+    },
+  );
 
-    assertSuccessfulOperation(operation);
-    return await loadDeck(executor, operation.msg);
-  });
+  assertSuccessfulOperation(operation);
+  return await loadDeck(executor, operation.msg);
 }
 
-export function createDeck(
-  c: Context<SessionAuthHonoEnv>,
+export async function createDeck(
+  executor: ArkhamDbExecutor,
   _deck: DeckWritePayload,
 ) {
-  return withArkhamDbExecutor(c, async (executor) => {
-    const deck = { ..._deck };
-    extractHiddenSlots(deck);
+  const deck = { ..._deck };
+  extractHiddenSlots(deck);
 
-    const { data: operation } = await executor.request(
-      "/deck/new",
-      ArkhamDbOperationResponseSchema,
-      {
-        method: "POST",
-        body: encodeParams({
-          investigator: deck.investigator_code,
-          name: deck.name,
-          taboo: deck.taboo_id ?? undefined,
-        }),
-      },
-    );
+  const { data: operation } = await executor.request(
+    "/deck/new",
+    ArkhamDbOperationResponseSchema,
+    {
+      method: "POST",
+      body: encodeParams({
+        investigator: deck.investigator_code,
+        name: deck.name,
+        taboo: deck.taboo_id ?? undefined,
+      }),
+    },
+  );
 
-    assertSuccessfulOperation(operation);
+  assertSuccessfulOperation(operation);
 
-    const storedDeck = await storeAdditionalMetadata(
-      executor.db,
-      operation.msg,
-      deck,
-      { extractHiddenSlots: false },
-    );
+  const storedDeck = await storeAdditionalMetadata(
+    executor.db,
+    operation.msg,
+    deck,
+    { extractHiddenSlots: false },
+  );
 
-    const { data: saveOperation } = await executor.request(
-      `/deck/save/${operation.msg}`,
-      ArkhamDbOperationResponseSchema,
-      {
-        method: "PUT",
-        body: encodeParams({
-          description_md: storedDeck.description_md,
-          exile_string: storedDeck.exile_string ?? undefined,
-          ignored: stringifyOptionalSlots(storedDeck.ignoreDeckLimitSlots),
-          meta: storedDeck.meta,
-          name: storedDeck.name,
-          problem: storedDeck.problem,
-          side: stringifyOptionalSlots(storedDeck.sideSlots),
-          slots: JSON.stringify(SlotsSchema.parse(storedDeck.slots)),
-          taboo: storedDeck.taboo_id ?? undefined,
-          tags: storedDeck.tags,
-          xp_adjustment: storedDeck.xp_adjustment ?? undefined,
-          xp_spent: storedDeck.xp_spent ?? undefined,
-        }),
-      },
-    );
+  const { data: saveOperation } = await executor.request(
+    `/deck/save/${operation.msg}`,
+    ArkhamDbOperationResponseSchema,
+    {
+      method: "PUT",
+      body: encodeParams({
+        description_md: storedDeck.description_md,
+        exile_string: storedDeck.exile_string ?? undefined,
+        ignored: stringifyOptionalSlots(storedDeck.ignoreDeckLimitSlots),
+        meta: storedDeck.meta,
+        name: storedDeck.name,
+        problem: storedDeck.problem,
+        side: stringifyOptionalSlots(storedDeck.sideSlots),
+        slots: JSON.stringify(SlotsSchema.parse(storedDeck.slots)),
+        taboo: storedDeck.taboo_id ?? undefined,
+        tags: storedDeck.tags,
+        xp_adjustment: storedDeck.xp_adjustment ?? undefined,
+        xp_spent: storedDeck.xp_spent ?? undefined,
+      }),
+    },
+  );
 
-    assertSuccessfulOperation(saveOperation);
-    return await loadDeck(executor, saveOperation.msg);
-  });
+  assertSuccessfulOperation(saveOperation);
+  return await loadDeck(executor, saveOperation.msg);
 }
 
-export function upgradeDeck(
-  c: Context<SessionAuthHonoEnv>,
+export async function upgradeDeck(
+  executor: ArkhamDbExecutor,
   id: string | number,
   _deck: DeckWritePayload,
 ) {
-  return withArkhamDbExecutor(c, async (executor) => {
-    const deck = { ..._deck };
-    extractHiddenSlots(deck);
+  const deck = { ..._deck };
+  extractHiddenSlots(deck);
 
-    const { data: operation } = await executor.request(
-      `/deck/upgrade/${id}`,
-      ArkhamDbOperationResponseSchema,
-      {
-        method: "PUT",
-        body: encodeParams({
-          exiles: deck.exile_string ?? undefined,
-          meta: deck.meta,
-          xp: deck.xp ?? 0,
-        }),
-      },
-    );
+  const { data: operation } = await executor.request(
+    `/deck/upgrade/${id}`,
+    ArkhamDbOperationResponseSchema,
+    {
+      method: "PUT",
+      body: encodeParams({
+        exiles: deck.exile_string ?? undefined,
+        meta: deck.meta,
+        xp: deck.xp ?? 0,
+      }),
+    },
+  );
 
-    assertSuccessfulOperation(operation);
-    return await loadDeck(executor, operation.msg);
-  });
+  assertSuccessfulOperation(operation);
+  return await loadDeck(executor, operation.msg);
 }
 
-export function deleteDeck(
-  c: Context<SessionAuthHonoEnv>,
+export async function deleteDeck(
+  executor: ArkhamDbExecutor,
   deckId: string | number,
   all?: boolean,
 ) {
-  return withArkhamDbExecutor(c, async (executor) => {
-    const path = `/deck/delete/${deckId}`;
-    const { data: operation } = await executor.request(
-      all ? `${path}?all=true` : path,
-      ArkhamDbSuccessResponseSchema,
-      {
-        method: "DELETE",
-      },
-    );
+  const path = `/deck/delete/${deckId}`;
+  const { data: operation } = await executor.request(
+    all ? `${path}?all=true` : path,
+    ArkhamDbSuccessResponseSchema,
+    {
+      method: "DELETE",
+    },
+  );
 
-    assertSuccessfulOperation(operation);
-  });
+  assertSuccessfulOperation(operation);
 }
 
 async function loadDeck(executor: ArkhamDbExecutor, id: string | number) {

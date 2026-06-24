@@ -26,10 +26,15 @@ import {
   ArkhamDbRemoteDecksSchema,
 } from "./core/dtos.ts";
 import {
+  type ArkhamDbExecutor,
+  withArkhamDbExecutor,
+} from "./core/execute-with-lock.ts";
+import {
   createArkhamDbDeckSnapshot,
-  deleteArkhamDbDeckSnapshotsByAccountIdentityId,
+  deleteArkhamDbDeckFromSnapshots,
   findArkhamDbDeckSnapshotByAccountIdAndId,
   findLatestArkhamDbDeckSnapshotByAccountIdentityId,
+  upsertArkhamDbDeckInSnapshots,
 } from "./deck-snapshots.ts";
 import { mapArkhamDbDeckToDto } from "./mapping.ts";
 
@@ -158,24 +163,28 @@ export async function saveArkhamDbDeck(
   id: string | number,
   deck: DeckWritePayload,
 ): Promise<Deck> {
-  const response = await saveDeck(c, id, deck);
-  await invalidateArkhamDbDeckSnapshots(c);
-  return {
-    ...mapArkhamDbDeckToDto(response.data),
-    xp: response.data.xp ?? deck.xp ?? null,
-  };
+  return await withArkhamDbExecutor(c, async (executor) => {
+    const response = await saveDeck(executor, id, deck);
+    await upsertArkhamDbSnapshotDeck(executor, response.data);
+    return {
+      ...mapArkhamDbDeckToDto(response.data),
+      xp: response.data.xp ?? deck.xp ?? null,
+    };
+  });
 }
 
 export async function createArkhamDbDeck(
   c: Context<SessionAuthHonoEnv>,
   deck: DeckWritePayload,
 ): Promise<Deck> {
-  const response = await createDeck(c, deck);
-  await invalidateArkhamDbDeckSnapshots(c);
-  return {
-    ...mapArkhamDbDeckToDto(response.data),
-    xp: response.data.xp ?? deck.xp ?? null,
-  };
+  return await withArkhamDbExecutor(c, async (executor) => {
+    const response = await createDeck(executor, deck);
+    await upsertArkhamDbSnapshotDeck(executor, response.data);
+    return {
+      ...mapArkhamDbDeckToDto(response.data),
+      xp: response.data.xp ?? deck.xp ?? null,
+    };
+  });
 }
 
 export async function upgradeArkhamDbDeck(
@@ -183,12 +192,14 @@ export async function upgradeArkhamDbDeck(
   id: string | number,
   deck: DeckWritePayload,
 ): Promise<Deck> {
-  const response = await upgradeDeck(c, id, deck);
-  await invalidateArkhamDbDeckSnapshots(c);
-  return {
-    ...mapArkhamDbDeckToDto(response.data),
-    xp: response.data.xp ?? 0,
-  };
+  return await withArkhamDbExecutor(c, async (executor) => {
+    const response = await upgradeDeck(executor, id, deck);
+    await upsertArkhamDbSnapshotDeck(executor, response.data);
+    return {
+      ...mapArkhamDbDeckToDto(response.data),
+      xp: response.data.xp ?? 0,
+    };
+  });
 }
 
 export async function deleteArkhamDbDeck(
@@ -196,8 +207,10 @@ export async function deleteArkhamDbDeck(
   deckId: string | number,
   all?: boolean,
 ) {
-  await deleteDeck(c, deckId, all);
-  await invalidateArkhamDbDeckSnapshots(c);
+  await withArkhamDbExecutor(c, async (executor) => {
+    await deleteDeck(executor, deckId, all);
+    await deleteArkhamDbSnapshotDeck(executor, deckId, all ?? false);
+  });
 }
 
 const ArkhamDbRemoteDeckManifestSourceSchema = ArkhamDbRemoteDeckSchema.pick({
@@ -273,17 +286,26 @@ function toArkhamDbDeckTimestamp(
   return primary ?? fallback ?? new Date().toISOString();
 }
 
-async function invalidateArkhamDbDeckSnapshots(c: Context<SessionAuthHonoEnv>) {
-  const identity = await getAccountIdentityByAccountIdAndProvider(
-    c.get("db"),
-    c.get("account").id,
-    "arkhamdb",
+async function upsertArkhamDbSnapshotDeck(
+  executor: ArkhamDbExecutor,
+  deck: ArkhamDbRemoteDeck,
+) {
+  await upsertArkhamDbDeckInSnapshots(
+    executor.db,
+    executor.connection.identity.id,
+    deck,
   );
+}
 
-  assert(identity, "Missing ArkhamDB identity for account.");
-
-  await deleteArkhamDbDeckSnapshotsByAccountIdentityId(
-    c.get("db"),
-    identity.id,
+async function deleteArkhamDbSnapshotDeck(
+  executor: ArkhamDbExecutor,
+  deckId: string | number,
+  all: boolean,
+) {
+  await deleteArkhamDbDeckFromSnapshots(
+    executor.db,
+    executor.connection.identity.id,
+    deckId,
+    all,
   );
 }
