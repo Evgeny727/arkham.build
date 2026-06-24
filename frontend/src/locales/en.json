@@ -920,6 +920,7 @@
     },
     "deck_collection": {
       "archive": "Archive",
+      "arkhamdb_response_time_banner": "The ArkhamDB API is currently slow. If you are having trouble, upload decks directly to arkham.build instead.",
       "collection_empty": "Collection empty",
       "connect_arkhamdb": "Connect to ArkhamDB",
       "count": "{{count}} decks",

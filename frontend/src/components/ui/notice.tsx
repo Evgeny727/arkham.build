@@ -1,20 +1,23 @@
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, TriangleAlertIcon } from "lucide-react";
 import { cx } from "@/utils/cx";
 import css from "./notice.module.css";
 
-type Variant = "info";
+type Variant = "info" | "warning";
 
 type Props = {
   as?: React.JSX.ElementType;
   children: React.ReactNode;
   className?: string;
-  variant?: "info";
+  variant?: Variant;
 };
 
 function getIconForVariant(variant?: Variant) {
   switch (variant) {
     case "info":
       return <InfoIcon />;
+
+    case "warning":
+      return <TriangleAlertIcon />;
 
     default:
       return null;

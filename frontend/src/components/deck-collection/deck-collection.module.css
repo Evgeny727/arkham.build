@@ -6,6 +6,17 @@
   min-height: 0;
 }
 
+.banner {
+  flex: 0 0 auto;
+  align-items: center;
+  margin: 0.625rem var(--scrollbar-padding) 0;
+  font-size: var(--text-sm);
+}
+
+.banner + .header {
+  padding-top: 0;
+}
+
 .scroller {
   flex: 1 1 auto;
   padding-bottom: 0.75rem;

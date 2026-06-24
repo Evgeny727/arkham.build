@@ -1,4 +1,4 @@
-import type { DeckId } from "@arkham-build/shared";
+import { type DeckId, isArkhamDBIdentity } from "@arkham-build/shared";
 import { EllipsisIcon, PlusIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +18,7 @@ import {
   DropdownItem,
   DropdownMenu,
 } from "@/components/ui/dropdown-menu";
+import { Notice } from "@/components/ui/notice";
 import {
   Popover,
   PopoverContent,
@@ -49,6 +50,11 @@ export function DeckCollection() {
   const toast = useToast();
 
   const deckCollection = useStore(selectDecksDisplayList);
+  const hasArkhamDBConnection = useStore(
+    (state) =>
+      state.auth.status === "authenticated" &&
+      !!state.auth.session?.identities.some(isArkhamDBIdentity),
+  );
   const hasConnections = false; // XXX
 
   const importDecksMutation = useImportFromFilesMutation();
@@ -101,6 +107,11 @@ export function DeckCollection() {
 
   return (
     <div className={css["container"]}>
+      {hasArkhamDBConnection && (
+        <Notice className={css["banner"]} variant="warning">
+          {t("deck_collection.arkhamdb_response_time_banner")}
+        </Notice>
+      )}
       <header className={css["header"]}>
         <h2 className={css["title"]}>{t("deck_collection.title")}</h2>
         <div className={css["actions"]}>
