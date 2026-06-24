@@ -4,6 +4,7 @@ import type {
   DeckManifestResponse,
   DeckSyncTarget,
   Id,
+  SyncedDeckProvider,
 } from "@arkham-build/shared";
 import type { StoreState } from "../slices";
 import type {
@@ -42,16 +43,21 @@ type DeckReconciliationResult = {
 
 type RemoveRemoteAccountDecksOptions = {
   preserveDeckFolders?: boolean;
+  providers?: readonly SyncedDeckProvider[];
 };
 
 export function removeRemoteAccountDecks(
   { data, deckEdits }: Pick<StoreState, "data" | "deckEdits">,
-  { preserveDeckFolders = false }: RemoveRemoteAccountDecksOptions = {},
+  {
+    preserveDeckFolders = false,
+    providers = ["account", "arkhamdb"],
+  }: RemoveRemoteAccountDecksOptions = {},
 ) {
+  const providerSet = new Set(providers);
   const remoteDeckIdKeys = new Set<string>();
 
   for (const deck of Object.values(data.decks)) {
-    if (isSyncedStorageProvider(deck.source)) {
+    if (isSyncedStorageProvider(deck.source) && providerSet.has(deck.source)) {
       remoteDeckIdKeys.add(deckIdKey(deck.id));
     }
   }

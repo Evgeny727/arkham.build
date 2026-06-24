@@ -141,6 +141,29 @@ describe("sync reconciliation", () => {
       expect(result.data.undoHistory?.remote).toBeUndefined();
       expect(result.deckEdits.remote).toBeUndefined();
     });
+
+    it("removes only the selected remote provider", () => {
+      const result = removeRemoteAccountDecks(
+        {
+          data: makeData({
+            decks: {
+              account: makeDeck("account", "v1", { source: "account" }),
+              arkhamdb: makeDeck("arkhamdb", "v1", { source: "arkhamdb" }),
+            },
+            history: {
+              account: [],
+              arkhamdb: [],
+            },
+          }),
+          deckEdits: {},
+        },
+        { providers: ["arkhamdb"] },
+      );
+
+      expect(result.data.decks.account).toBeDefined();
+      expect(result.data.decks.arkhamdb).toBeUndefined();
+      expect(result.data.history).toEqual({ account: [] });
+    });
   });
 
   describe("applyRemoteDeckReconciliation", () => {

@@ -148,6 +148,35 @@ test.describe("deck sync edge cases", () => {
     ).toBeVisible();
   });
 
+  test("disconnecting ArkhamDB removes local ArkhamDB decks", async ({
+    page,
+  }) => {
+    await createConnectedAccount(page);
+    await createSyncedDeck(page, accountProvider, "Disconnect Account Deck");
+    await createSyncedDeck(page, arkhamDbProvider, "Disconnect ArkhamDB Deck");
+
+    await page.goto("/settings?tab=account");
+    const response = page.waitForResponse(
+      (response) =>
+        response.url() === `${apiUrl}/v2/account/auth/oauth/arkhamdb` &&
+        response.request().method() === "DELETE" &&
+        response.ok(),
+    );
+    await page.getByRole("button", { name: "Disconnect" }).click();
+    await response;
+    await expect(
+      page.getByRole("link", { exact: true, name: "Connect" }),
+    ).toBeVisible();
+
+    await page.goto("/");
+    await expect(
+      page.getByTestId("collection-deck-Disconnect Account Deck"),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("collection-deck-Disconnect ArkhamDB Deck"),
+    ).not.toBeVisible();
+  });
+
   test("missing ArkhamDB token keeps existing decks and marks sync partial", async ({
     page,
   }) => {

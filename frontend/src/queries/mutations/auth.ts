@@ -3,6 +3,8 @@ import { authKeys } from "@/queries/keys";
 import { useStore } from "@/store";
 import { toRemoteSettings } from "@/store/lib/settings-sync";
 import { isSyncedStorageProvider } from "@/store/lib/sync";
+import { removeRemoteAccountDecks } from "@/store/lib/sync-reconciliation";
+import { dehydrate } from "@/store/persist";
 import { useHttpClient } from "@/store/services/http-client.context";
 import {
   deletePendingEmailChange,
@@ -263,8 +265,17 @@ export function useDisconnectOAuthIdentityMutation() {
   return useMutation({
     mutationKey: ["auth", "disconnect-oauth-identity"],
     mutationFn: (provider: string) => disconnectOAuthIdentity(client, provider),
-    onSuccess: async () => {
+    onSuccess: async (_data, provider) => {
+      if (provider === "arkhamdb") {
+        useStore.setState((state) =>
+          removeRemoteAccountDecks(state, { providers: ["arkhamdb"] }),
+        );
+
+        await dehydrate(useStore.getState(), "app", "edits");
+      }
+
       await initSession(client);
+
       queryClient.setQueryData(
         authKeys.session(),
         useStore.getState().auth.session,
