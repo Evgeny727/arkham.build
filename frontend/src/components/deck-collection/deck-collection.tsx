@@ -32,6 +32,7 @@ import {
 import { useStore } from "@/store";
 import type { DeckSummary as DeckSummaryType } from "@/store/lib/types";
 import { selectDecksDisplayList } from "@/store/selectors/deck-collection";
+import { ARKHAMDB_WARNING_VISIBLE } from "@/utils/constants";
 import { useHotkey } from "@/utils/use-hotkey";
 import { FileInput } from "../ui/file-input";
 import css from "./deck-collection.module.css";
@@ -99,6 +100,11 @@ export function DeckCollection() {
 
   return (
     <div className={css["container"]}>
+      {ARKHAMDB_WARNING_VISIBLE && hasArkhamDBConnection && (
+        <Notice className={css["banner"]} variant="warning">
+          {t("deck_collection.arkhamdb_response_time_banner")}
+        </Notice>
+      )}
       <header className={css["header"]}>
         <h2 className={css["title"]}>{t("deck_collection.title")}</h2>
         <div className={css["actions"]}>

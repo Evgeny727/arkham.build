@@ -6,6 +6,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Notice } from "@/components/ui/notice";
 import { useLoginMutation } from "@/queries/mutations/auth";
 import { ApiError } from "@/store/services/requests/shared";
+import { ARKHAMDB_WARNING_VISIBLE } from "@/utils/constants";
 import { AuthForm } from "./auth-form";
 import { AuthLayout } from "./auth-layout";
 import { ErrorBox } from "./error-box";
@@ -43,8 +44,6 @@ function Login() {
       }
     >
       <AuthForm onSubmit={onSubmit}>
-        <Notice variant="info">{t("auth.email_delivery_notice")}</Notice>
-
         {loginMutation.error && (
           <ErrorBox>
             {errorMapper(loginMutation.error, t, (err) => {
@@ -101,7 +100,9 @@ function Login() {
         </Button>
 
         <OAuthSeparator />
-
+        {ARKHAMDB_WARNING_VISIBLE && (
+          <Notice variant="warning">{t("auth.arkhamdb_login_banner")}</Notice>
+        )}
         <Button
           as="a"
           href={`${import.meta.env.VITE_API_URL}/auth/arkhamdb/login`}

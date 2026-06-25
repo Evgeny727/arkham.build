@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Notice } from "@/components/ui/notice";
 import { useSignupMutation } from "@/queries/mutations/auth";
+import { ARKHAMDB_WARNING_VISIBLE } from "@/utils/constants";
 import { AuthForm } from "./auth-form";
 import { AuthLayout } from "./auth-layout";
 import { ErrorBox } from "./error-box";
@@ -138,7 +139,9 @@ function Signup() {
         </Button>
 
         <OAuthSeparator />
-
+        {ARKHAMDB_WARNING_VISIBLE && (
+          <Notice variant="warning">{t("auth.arkhamdb_signup_banner")}</Notice>
+        )}
         <Button
           as="a"
           href={`${import.meta.env.VITE_API_URL}/auth/arkhamdb/signup`}

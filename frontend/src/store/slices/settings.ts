@@ -133,8 +133,6 @@ export const createSettingsSlice: StateCreator<
   settings: getInitialSettings(),
   async applySettings(client, settings, { keepListState } = {}) {
     const state = get();
-    const resetLists =
-      !keepListState && shouldResetLists(state.settings, settings);
 
     if (settings.locale !== state.settings.locale) {
       // This has to happen first, since the constructed metadata in `init` depends on the locale in some places.
@@ -149,7 +147,7 @@ export const createSettingsSlice: StateCreator<
           refresh: true,
           locale: settings.locale,
           overrides: {
-            lists: resetLists ? makeLists(settings) : state.lists,
+            lists: keepListState ? state.lists : makeLists(settings),
             settings: {
               ...state.settings,
               ...settings,
@@ -161,7 +159,7 @@ export const createSettingsSlice: StateCreator<
     } else {
       set({
         settings,
-        ...(resetLists ? { lists: makeLists(settings) } : {}),
+        lists: makeLists(settings),
       });
 
       await dehydrate(get(), "app");
@@ -340,15 +338,6 @@ export const createSettingsSlice: StateCreator<
     await dehydrate(get(), "app");
   },
 });
-
-function shouldResetLists(prev: Settings, next: Settings) {
-  return (
-    prev.cardListsDefaultContentType !== next.cardListsDefaultContentType ||
-    prev.showAllCards !== next.showAllCards ||
-    prev.showPreviews !== next.showPreviews ||
-    JSON.stringify(prev.lists) !== JSON.stringify(next.lists)
-  );
-}
 
 function isCurrentAccount(state: StoreState, accountId: string) {
   return (

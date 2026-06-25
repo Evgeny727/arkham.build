@@ -38,6 +38,8 @@ export const LOCALES: Record<string, Locale> = {
 
 export const FLOATING_PORTAL_ID = "floating";
 
+export const ARKHAMDB_WARNING_VISIBLE = true;
+
 export const ISSUE_URL =
   "https://github.com/fspoettel/arkham.build/issues/new/choose";
 
