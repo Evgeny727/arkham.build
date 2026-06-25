@@ -39,6 +39,7 @@ import { Notice } from "../ui/notice";
 import css from "./deck-collection.module.css";
 import { DeckCollectionFilters } from "./deck-collection-filters";
 import { DeckCollectionFolder } from "./deck-collection-folder";
+import { DeckCollectionImport } from "./deck-collection-import";
 
 export function DeckCollection() {
   const { t } = useTranslation();
@@ -53,6 +54,10 @@ export function DeckCollection() {
 
   const importDecksMutation = useImportFromFilesMutation();
   const deleteAllDecksMutation = useDeleteAllDecksMutation();
+
+  const hasConnections = useStore(
+    (state) => state.auth.status === "authenticated",
+  );
 
   const hasArkhamDBConnection = useStore(
     (state) =>
@@ -115,6 +120,11 @@ export function DeckCollection() {
       <header className={css["header"]}>
         <h2 className={css["title"]}>{t("deck_collection.title")}</h2>
         <div className={css["actions"]}>
+          {!hasConnections && (
+            <Popover>
+              <DeckCollectionImport />
+            </Popover>
+          )}
           <Popover onOpenChange={setPopoverOpen} open={popoverOpen}>
             <PopoverTrigger asChild>
               <Button
