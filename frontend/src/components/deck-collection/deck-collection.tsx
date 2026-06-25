@@ -1,4 +1,4 @@
-import type { DeckId } from "@arkham-build/shared";
+import { type DeckId, isArkhamDBIdentity } from "@arkham-build/shared";
 import { EllipsisIcon, PlusIcon, Trash2Icon, UploadIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,6 +35,7 @@ import { selectDecksDisplayList } from "@/store/selectors/deck-collection";
 import { ARKHAMDB_WARNING_VISIBLE } from "@/utils/constants";
 import { useHotkey } from "@/utils/use-hotkey";
 import { FileInput } from "../ui/file-input";
+import { Notice } from "../ui/notice";
 import css from "./deck-collection.module.css";
 import { DeckCollectionFilters } from "./deck-collection-filters";
 import { DeckCollectionFolder } from "./deck-collection-folder";
@@ -52,6 +53,12 @@ export function DeckCollection() {
 
   const importDecksMutation = useImportFromFilesMutation();
   const deleteAllDecksMutation = useDeleteAllDecksMutation();
+
+  const hasArkhamDBConnection = useStore(
+    (state) =>
+      state.auth.status === "authenticated" &&
+      !!state.auth.session?.identities.some(isArkhamDBIdentity),
+  );
 
   const onAddFiles = useCallback(
     (evt: React.ChangeEvent<HTMLInputElement>) => {
