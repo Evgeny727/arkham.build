@@ -21,41 +21,61 @@ function Search() {
       ? cardTypeParam
       : "";
 
+  const listKey = "search";
+
   const activeListId = useStore((state) => state.activeList);
   const isInitalized = useStore(selectIsInitialized);
 
   const title = t("search.title");
 
-  const activeList = useStore((state) => state.lists[state.activeList ?? ""]);
+  const activeList = useStore((state) => state.lists[listKey]);
+  const hasActiveList = useStore((state) => !!state.lists[listKey]);
+
+  const activeListCardType = useStore((state) => {
+    const list = state.lists[listKey];
+    const filterIndex = list?.filters.indexOf("card_type") ?? -1;
+    const value = list?.filterValues[filterIndex]?.value;
+    return value === "player" || value === "encounter" ? value : "";
+  });
   const addList = useStore((state) => state.addList);
   const setActiveList = useStore((state) => state.setActiveList);
   const setSearchValue = useStore((state) => state.setSearchValue);
   const removeList = useStore((state) => state.removeList);
   const mounted = useRef(false);
 
-  const listKey = "search";
-
   useEffect(() => {
-    addList(
-      listKey,
-      {
-        card_type: cardType,
-      },
-      {
-        search: "",
-        showInvestigatorFilter: false,
-        showOwnershipFilter: false,
-      },
-    );
+    if (!hasActiveList || activeListCardType !== cardType) {
+      addList(
+        listKey,
+        {
+          card_type: cardType,
+        },
+        {
+          search: "",
+          showInvestigatorFilter: false,
+          showOwnershipFilter: false,
+        },
+      );
+    }
 
     setActiveList(listKey);
     setSearchValue(query);
+  }, [
+    activeListCardType,
+    addList,
+    cardType,
+    hasActiveList,
+    query,
+    setActiveList,
+    setSearchValue,
+  ]);
 
+  useEffect(() => {
     return () => {
       removeList(listKey);
       setActiveList(undefined);
     };
-  }, [addList, cardType, query, removeList, setActiveList, setSearchValue]);
+  }, [removeList, setActiveList]);
 
   const listCards = useStore((state) =>
     selectListCards(state, undefined, undefined),

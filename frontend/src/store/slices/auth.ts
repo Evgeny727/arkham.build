@@ -179,8 +179,6 @@ export const createAuthSlice: StateCreator<StoreState, [], [], AuthSlice> = (
           console.error(error);
         }
       }
-
-      await get().refreshSession(client);
     }
 
     setSessionInitialized(set, true);
