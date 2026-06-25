@@ -13,7 +13,8 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Scroller(props: Props) {
-  const { children, className, ref, type, viewportClassName, ...rest } = props;
+  const { children, className, padded, ref, type, viewportClassName, ...rest } =
+    props;
 
   const touchDevice = useMedia("(hover: none)");
   const scrollerType =
@@ -22,7 +23,7 @@ export function Scroller(props: Props) {
   return (
     <div
       {...rest}
-      className={cx(css["scroller"], props.padded && css["padded"], className)}
+      className={cx(css["scroller"], padded && css["padded"], className)}
     >
       <div
         ref={ref}
