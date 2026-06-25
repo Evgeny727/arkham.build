@@ -44,9 +44,11 @@ export async function resolveLocalPublicDeckHistory(
   const deck = await findDeck(c, id);
   if (!deck) return null;
 
+  const seen = new Set([String(deck.id)]);
+
   const [nextDecks, previousDecks] = await Promise.all([
-    fetchLocalSurroundingDecks(c, deck, "next_deck"),
-    fetchLocalSurroundingDecks(c, deck, "previous_deck"),
+    fetchLocalSurroundingDecks(c, deck, "next_deck", [], new Set(seen)),
+    fetchLocalSurroundingDecks(c, deck, "previous_deck", [], new Set(seen)),
   ]);
 
   return [...nextDecks.reverse(), deck, ...previousDecks];
@@ -67,16 +69,22 @@ async function fetchLocalSurroundingDecks(
   c: Context<HonoEnv>,
   deck: Deck,
   idKey: "next_deck" | "previous_deck",
-  decks: Deck[] = [],
+  decks: Deck[],
+  seen: Set<string>,
 ): Promise<Deck[]> {
   const id = deck[idKey];
   if (!id) return decks;
 
-  const relatedDeck = await findDeck(c, String(id));
+  const key = String(id);
+  if (seen.has(key)) return decks;
+
+  seen.add(key);
+
+  const relatedDeck = await findDeck(c, key);
   if (!relatedDeck) return decks;
 
   decks.push(relatedDeck);
-  return fetchLocalSurroundingDecks(c, relatedDeck, idKey, decks);
+  return fetchLocalSurroundingDecks(c, relatedDeck, idKey, decks, seen);
 }
 
 async function fetchLegacyDeck(

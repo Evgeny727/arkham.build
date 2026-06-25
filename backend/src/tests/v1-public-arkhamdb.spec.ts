@@ -25,6 +25,31 @@ describe("GET /v1/public/arkhamdb/:type/:id", () => {
     expect(data.map((deck) => deck.id)).toEqual([124, 123, 122]);
   });
 
+  test("stops resolving deck history when ArkhamDB returns a cycle", async ({
+    dependencies,
+  }) => {
+    const decks = new Map([
+      ["https://arkhamdb.com/api/public/deck/123", deck(123, 122, 124)],
+      ["https://arkhamdb.com/api/public/deck/122", deck(122, 123)],
+      ["https://arkhamdb.com/api/public/deck/124", deck(124)],
+    ]);
+
+    const fetchMock = vi.fn((input: string | URL | Request) => {
+      const data = decks.get(String(input));
+      if (!data) throw new Error(`Unexpected request: ${String(input)}`);
+      return Response.json(data);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await dependencies.app.request("/v1/public/arkhamdb/deck/123");
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { id: number }[];
+    expect(data.map((deck) => deck.id)).toEqual([124, 123, 122]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   test("wraps non-deck responses in an array", async ({ dependencies }) => {
     const fetchMock = vi.fn((input: string | URL | Request) => {
       expect(String(input)).toBe(

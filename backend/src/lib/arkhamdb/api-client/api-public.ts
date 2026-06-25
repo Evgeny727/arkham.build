@@ -38,9 +38,11 @@ export async function fetchDeckHistory(
 ): Promise<ArkhamDbRemoteDeck[]> {
   const { data: deck } = await fetchDeck(c, { id, type: "deck" });
 
+  const seen = new Set([String(deck.id)]);
+
   const [nextDecks, previousDecks] = await Promise.all([
-    fetchSurroundingDeck(c, deck, "next_deck"),
-    fetchSurroundingDeck(c, deck, "previous_deck"),
+    fetchSurroundingDeck(c, deck, "next_deck", [], new Set(seen)),
+    fetchSurroundingDeck(c, deck, "previous_deck", [], new Set(seen)),
   ]);
 
   return [...nextDecks.reverse(), deck, ...previousDecks];
@@ -74,20 +76,25 @@ async function fetchSurroundingDeck(
   c: Context<HonoEnv>,
   deck: ArkhamDbRemoteDeck,
   idKey: "next_deck" | "previous_deck",
-  decks: ArkhamDbRemoteDeck[] = [],
+  decks: ArkhamDbRemoteDeck[],
+  seen: Set<string>,
 ): Promise<ArkhamDbRemoteDeck[]> {
-  if (!deck[idKey]) {
-    return Promise.resolve(decks);
-  }
+  const id = deck[idKey];
+  if (!id) return decks;
+
+  const key = String(id);
+  if (seen.has(key)) return decks;
+
+  seen.add(key);
 
   const { data } = await fetchDeck(c, {
-    id: deck[idKey] as string | number,
+    id,
     type: "deck",
   });
 
   decks.push(data);
 
-  return fetchSurroundingDeck(c, data, idKey, decks);
+  return fetchSurroundingDeck(c, data, idKey, decks, seen);
 }
 
 async function publicRequest<T>(
