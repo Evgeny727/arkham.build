@@ -1,7 +1,15 @@
+import assert from "node:assert/strict";
 import { type Deck, DeckSchema, SlotsSchema } from "@arkham-build/shared";
-import type { ArkhamDbRemoteDeck } from "./core/dtos.ts";
+import type { Selectable } from "kysely";
+import type { ArkhamdbDecklist } from "../../../db/schema.types.ts";
+import {
+  type ArkhamDbRemoteDeck,
+  ArkhamDbRemoteDeckSchema,
+} from "./core/dtos.ts";
 
 export const ARKHAMDB_PROVIDER_TYPE = "arkhamdb";
+
+type ArkhamDbDecklistRow = Selectable<ArkhamdbDecklist>;
 
 export function mapArkhamDbDeckToDto(deck: ArkhamDbRemoteDeck): Deck {
   return DeckSchema.parse({
@@ -34,6 +42,36 @@ export function mapArkhamDbDeckToDto(deck: ArkhamDbRemoteDeck): Deck {
   });
 }
 
+export function mapArkhamDbDecklistRowToRemoteDeck(
+  decklist: ArkhamDbDecklistRow,
+): ArkhamDbRemoteDeck {
+  assert(decklist.version != null, "Expected cached decklist version.");
+
+  return ArkhamDbRemoteDeckSchema.parse({
+    date_creation: decklist.date_creation.toISOString(),
+    date_update: decklist.date_update?.toISOString(),
+    description_md: decklist.description_md,
+    exile_string: decklist.exile_string,
+    id: decklist.id,
+    ignoreDeckLimitSlots: decklist.ignore_deck_limit_slots,
+    investigator_code: decklist.investigator_code,
+    investigator_name: decklist.investigator_name,
+    meta: stringifyArkhamDbDecklistMeta(decklist.meta),
+    name: decklist.name,
+    next_deck: decklist.next_deck,
+    previous_deck: decklist.previous_deck,
+    sideSlots: decklist.side_slots,
+    slots: decklist.slots,
+    taboo_id: decklist.taboo_id,
+    tags: decklist.tags,
+    user_id: decklist.user_id,
+    version: decklist.version,
+    xp: decklist.xp,
+    xp_adjustment: decklist.xp_adjustment,
+    xp_spent: decklist.xp_spent,
+  });
+}
+
 export function isArkhamDbDeckId(id: string | number) {
   return typeof id === "number" || /^\d+$/.test(id);
 }
@@ -44,6 +82,10 @@ function parseOptionalSlots(value: Record<string, number> | null | undefined) {
   }
 
   return SlotsSchema.parse(value);
+}
+
+function stringifyArkhamDbDecklistMeta(value: ArkhamDbDecklistRow["meta"]) {
+  return typeof value === "string" ? value : JSON.stringify(value ?? {});
 }
 
 function normalizeDeckMeta(meta: string) {

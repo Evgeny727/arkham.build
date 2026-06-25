@@ -7,16 +7,22 @@ import {
   ArkhamDbRemoteDeckSchema,
 } from "./core/dtos.ts";
 import { request, type WrappedResponse } from "./core/request.ts";
+import {
+  isArkhamDbDeckId,
+  mapArkhamDbDecklistRowToRemoteDeck,
+} from "./mapping.ts";
 
 export async function fetchDeck(
   c: Context<HonoEnv>,
   query: { id: string | number; type: string },
-) {
-  const response = await publicRequest(
-    c,
-    `/${query.type}/${query.id}`,
-    ArkhamDbRemoteDeckSchema,
-  );
+): Promise<WrappedResponse<ArkhamDbRemoteDeck>> {
+  const response =
+    (await fetchCachedDecklist(c, query)) ??
+    (await publicRequest(
+      c,
+      `/${query.type}/${query.id}`,
+      ArkhamDbRemoteDeckSchema,
+    ));
 
   return {
     ...response,
@@ -38,6 +44,30 @@ export async function fetchDeckHistory(
   ]);
 
   return [...nextDecks.reverse(), deck, ...previousDecks];
+}
+
+async function fetchCachedDecklist(
+  c: Context<HonoEnv>,
+  query: { id: string | number; type: string },
+): Promise<WrappedResponse<ArkhamDbRemoteDeck> | undefined> {
+  if (query.type !== "decklist" || !isArkhamDbDeckId(query.id)) {
+    return undefined;
+  }
+
+  const decklist = await c
+    .get("db")
+    .selectFrom("arkhamdb_decklist")
+    .selectAll()
+    .where("id", "=", Number(query.id))
+    .executeTakeFirst();
+
+  if (!decklist) return undefined;
+
+  return {
+    data: mapArkhamDbDecklistRowToRemoteDeck(decklist),
+    headers: {},
+    status: 200,
+  };
 }
 
 async function fetchSurroundingDeck(

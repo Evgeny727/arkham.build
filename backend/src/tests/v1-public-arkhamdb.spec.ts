@@ -44,6 +44,20 @@ describe("GET /v1/public/arkhamdb/:type/:id", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  test("uses cached decklists", async ({ dependencies }) => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const res = await dependencies.app.request(
+      "/v1/public/arkhamdb/decklist/180",
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as Array<{ id: number }>;
+    expect(data[0]?.id).toBe(180);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test("normalizes invalid ArkhamDB deck meta", async ({ dependencies }) => {
     vi.stubGlobal(
       "fetch",
