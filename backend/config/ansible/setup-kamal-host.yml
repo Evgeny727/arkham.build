@@ -74,12 +74,13 @@
       ufw:
         state: enabled
 
-    - name: Install Docker, curl, and git
+    - name: Install Docker, curl, git, and btop
       apt:
         name:
           - docker.io
           - curl
           - git
+          - btop
         state: present
 
     - name: Add app user to docker group
