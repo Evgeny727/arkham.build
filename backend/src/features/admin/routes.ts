@@ -1,10 +1,18 @@
-import { FanMadeProjectInfoSchema } from "@arkham-build/shared";
+import {
+  type Deck,
+  DeckSchema,
+  FanMadeProjectInfoSchema,
+} from "@arkham-build/shared";
 import { type Context, Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 import { findAccountByUsername } from "../../lib/auth/accounts.ts";
 import { isExclusionViolation } from "../../lib/db-errors.ts";
+import {
+  ACCOUNT_PROVIDER_TYPE,
+  mapDeckWriteDtoToInsert,
+} from "../../lib/deck-mapping.ts";
 import type { HonoEnv } from "../../lib/hono-env.ts";
 import { zodValidator } from "../../lib/validation.ts";
 import {
@@ -39,6 +47,52 @@ routes.post(
     const body = c.req.valid("json");
 
     await upsertFanMadeProjectInfo(c.get("db"), body);
+
+    c.status(201);
+    return c.body(null);
+  },
+);
+
+const ImportAccountBackupDecksQuerySchema = z.object({
+  username: z.string().min(1).max(64),
+});
+
+const AccountBackupDecksRequestSchema = z.object({
+  version: z.number(),
+  data: z.object({
+    data: z.object({
+      decks: z.record(z.string(), DeckSchema),
+    }),
+  }),
+});
+
+routes.post(
+  "/account_backup/restore",
+  adminKeyMiddleware,
+  zodValidator("query", ImportAccountBackupDecksQuerySchema),
+  zodValidator("json", AccountBackupDecksRequestSchema),
+  async (c) => {
+    const db = c.get("db");
+    const { username } = c.req.valid("query");
+    const backup = c.req.valid("json");
+
+    const account = await findAccountByUsername(db, username);
+
+    if (!account) {
+      throw new HTTPException(404, { message: "Account not found" });
+    }
+
+    const decks = uniqueDecks(Object.values(backup.data.data.decks));
+
+    await db.transaction().execute(async (tx) => {
+      if (!decks.length) return;
+
+      await tx
+        .insertInto("deck")
+        .values(decks.map((deck) => toDeckInsert(account.id, deck)))
+        .onConflict((oc) => oc.column("id").doNothing())
+        .execute();
+    });
 
     c.status(201);
     return c.body(null);
@@ -152,5 +206,54 @@ routes.post(
     return c.json(await endAccountModerationAction(db, id, now, endReason));
   },
 );
+
+function uniqueDecks(decks: Deck[]) {
+  const ids = new Set<string>();
+  const result: Deck[] = [];
+
+  for (const deck of decks) {
+    const id = String(deck.id);
+    if (ids.has(id)) continue;
+
+    ids.add(id);
+    result.push(deck);
+  }
+
+  return result;
+}
+
+function toDeckInsert(accountId: string, deck: Deck) {
+  const {
+    date_creation,
+    date_update,
+    id,
+    source: _,
+    user_id: __,
+    version,
+    ...deckPayload
+  } = deck;
+
+  return {
+    ...mapDeckWriteDtoToInsert(deckPayload),
+    account_id: accountId,
+    created_at: parseBackupTimestamp(date_creation, id),
+    id: String(id),
+    provider_type: ACCOUNT_PROVIDER_TYPE,
+    updated_at: parseBackupTimestamp(date_update, id),
+    version,
+  };
+}
+
+function parseBackupTimestamp(value: string, deckId: Deck["id"]) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new HTTPException(400, {
+      message: `Invalid backup timestamp for deck ${String(deckId)}`,
+    });
+  }
+
+  return date;
+}
 
 export default routes;
