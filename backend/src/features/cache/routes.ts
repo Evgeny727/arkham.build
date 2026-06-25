@@ -21,6 +21,8 @@ const router = new Hono<HonoEnv>();
 
 const METADATA_VERSION = 2;
 
+const responseCaches = new WeakMap<Database, Map<string, ResponseCacheEntry>>();
+
 router.get("/cards", (c) =>
   cachedResponse(c, {
     locale: "en",
@@ -86,6 +88,11 @@ type TabooSetCard = {
   real_name: string;
 };
 
+type ResponseCacheEntry = {
+  etag: string;
+  response: unknown;
+};
+
 type CachedResponseOptions<T> = {
   locale: string;
   resource: CacheResource;
@@ -117,9 +124,17 @@ async function cachedResponse<T>(
 
   applyCacheHeaders(c, { etag, resource: options.resource });
 
-  return requestHasMatchingEtag(c, etag)
-    ? c.body(null, 304)
-    : c.json(await options.buildResponse(db, options.locale, version));
+  if (requestHasMatchingEtag(c, etag)) {
+    return c.body(null, 304);
+  }
+
+  const response = await getCachedResponse(db, {
+    cacheKey: `${options.resource}:${options.locale}`,
+    etag,
+    buildResponse: () => options.buildResponse(db, options.locale, version),
+  });
+
+  return c.json(response);
 }
 
 async function cardsResponse(db: Database, locale: string) {
@@ -251,6 +266,35 @@ function versionResponse(_db: Database, _locale: string, version: DataVersion) {
       ],
     },
   });
+}
+
+async function getCachedResponse<T>(
+  db: Database,
+  options: {
+    cacheKey: string;
+    etag: string;
+    buildResponse: () => Promise<T>;
+  },
+) {
+  const responseCache = getResponseCache(db);
+  const cached = responseCache.get(options.cacheKey);
+
+  if (cached?.etag === options.etag) {
+    return cached.response as T;
+  }
+
+  const response = await options.buildResponse();
+  responseCache.set(options.cacheKey, { etag: options.etag, response });
+  return response;
+}
+
+function getResponseCache(db: Database) {
+  const cached = responseCaches.get(db);
+  if (cached) return cached;
+
+  const responseCache = new Map<string, ResponseCacheEntry>();
+  responseCaches.set(db, responseCache);
+  return responseCache;
 }
 
 function groupCardsByTabooSetId(records: Selectable<Card>[]) {
