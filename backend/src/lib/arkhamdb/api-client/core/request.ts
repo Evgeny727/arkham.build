@@ -29,6 +29,9 @@ export async function request<T, E extends HonoEnv = HonoEnv>(
 
   try {
     const method = options.method ?? "GET";
+    const signal = options.signal
+      ? AbortSignal.any([c.req.raw.signal, options.signal])
+      : c.req.raw.signal;
 
     res = await fetchWithTimeout(`${config.ARKHAMDB_BASE_URL}${path}`, {
       ...options,
@@ -36,6 +39,7 @@ export async function request<T, E extends HonoEnv = HonoEnv>(
         ...baseHeaders(method),
         ...options.headers,
       },
+      signal,
       timeoutMs: ARKHAMDB_REQUEST_TIMEOUT_MS,
     });
   } catch (error) {
