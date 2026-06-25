@@ -4,7 +4,6 @@ import { assert } from "@/utils/assert";
 import { displayAttribute } from "@/utils/card-utils";
 import { environments } from "@/utils/environments";
 import { getDefaultDeckName } from "../lib/deck-factory";
-import { isStorageProviderAvailable } from "../lib/sync";
 import { selectMetadata, selectSettingsTabooId } from "../selectors/shared";
 import type { StoreState } from ".";
 import type { CardSet, DeckCreateSlice } from "./deck-create.types";
@@ -229,9 +228,9 @@ export const createDeckCreateSlice: StateCreator<
 
 function getAvailableDeckCreateProvider(
   state: StoreState,
-  provider: StorageProvider,
+  _provider: StorageProvider, // XXX: when arkhamdb is stable again
 ): StorageProvider {
-  return isStorageProviderAvailable(state, provider) ? provider : "local";
+  return state.auth.status === "authenticated" ? "account" : "local";
 }
 
 function isCardSet(value: string): value is CardSet {

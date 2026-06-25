@@ -121,8 +121,8 @@ export function DeckCreateEditor() {
     selectDeckCreateStorageProviderOptions,
   );
 
-  const providerChanged =
-    deckCreate.provider !== settings.defaultStorageProvider;
+  const providerChanged = false;
+  // XXX: when arkhamdb is stable again => deckCreate.provider !== settings.defaultStorageProvider;
 
   return (
     <div className={css["editor"]} style={cssVariables}>
