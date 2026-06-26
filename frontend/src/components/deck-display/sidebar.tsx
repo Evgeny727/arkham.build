@@ -560,7 +560,9 @@ function ShareInfo(props: { deck: ResolvedDeck; path: string }) {
           t={t}
           i18nKey="deck_view.sharing.description_present"
           values={{
-            provider: t(`deck_edit.config.storage_provider.${deck.source}`),
+            provider: t(
+              `deck_edit.config.storage_provider.${deck.source || "account"}`,
+            ),
           }}
           components={{
             a: (
