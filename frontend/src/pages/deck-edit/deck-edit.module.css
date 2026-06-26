@@ -21,6 +21,7 @@
 
 .tabs-list {
   flex: 0 0 auto;
+  margin-inline: 0.625rem;
 }
 
 .tab {
