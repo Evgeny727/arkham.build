@@ -7,16 +7,17 @@ import css from "./app-layout.module.css";
 type Props = {
   children: React.ReactNode;
   mainClassName?: string;
+  noFade?: boolean;
   title: string;
 } & React.HTMLProps<HTMLDivElement>;
 
 export function AppLayout(props: Props) {
-  const { children, mainClassName, title, ref, ...rest } = props;
+  const { children, mainClassName, noFade, title, ref, ...rest } = props;
 
   return (
     <div
       {...rest}
-      className={cx(css["layout"], "fade-in")}
+      className={cx(css["layout"], !noFade && "fade-in")}
       data-testid="app-layout"
       ref={ref}
     >
