@@ -519,15 +519,22 @@ export const uploadAdapter = {
           "Batch uploaded deck ids must not change.",
         );
 
-        if (deckFolders[previousDeck.id]) {
+        const idChanged = deck.id !== previousDeck.id;
+
+        if (idChanged && deckFolders[previousDeck.id]) {
           deckFolders[deck.id] = deckFolders[previousDeck.id];
           delete deckFolders[previousDeck.id];
+        }
+
+        if (idChanged && undoHistory) {
+          undoHistory[deck.id] = undoHistory[previousDeck.id];
+          delete undoHistory?.[previousDeck.id];
         }
 
         delete decks[previousDeck.id];
         decks[deck.id] = deck;
         delete deckEdits[previousDeck.id];
-        delete undoHistory?.[previousDeck.id];
+
         sync = updateDeckSyncSuccess(sync, deck.id, deck.version, now);
       }
 
