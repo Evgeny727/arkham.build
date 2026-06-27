@@ -87,16 +87,6 @@ function CardView() {
                 <GlobeIcon /> {t("card_view.actions.open_on_arkhamdb")}
               </CardArkhamDBLink>
               <CardReviewsLink card={cardWithRelations.card} size="full" />
-              {devModeEnabled && (
-                <Button
-                  data-testid="card-view-export"
-                  onClick={onExport}
-                  size="full"
-                >
-                  <DownloadIcon />
-                  {t("lists.nav.export")}
-                </Button>
-              )}
               {isBuildableInvestigator && (
                 <Link asChild href={deckCreateLink(cardWithRelations.card)}>
                   <Button
@@ -107,6 +97,16 @@ function CardView() {
                     <i className="icon-deck" /> {t("deck.actions.create")}
                   </Button>
                 </Link>
+              )}
+              {devModeEnabled && (
+                <Button
+                  data-testid="card-view-export"
+                  onClick={onExport}
+                  size="full"
+                >
+                  <DownloadIcon />
+                  {t("lists.nav.export")}
+                </Button>
               )}
             </SidebarSection>
 

@@ -135,8 +135,12 @@ export function DeckSummary(props: DeckSummaryProps) {
       <div className={css["meta"]}>
         {children}
         <DeckTagsContainer>
-          <ProviderTag deck={deck} />
-          <FolderTag deckId={deck.id} />
+          {type === "deck" && (
+            <>
+              <ProviderTag deck={deck} />
+              <FolderTag deckId={deck.id} />
+            </>
+          )}
           <LimitedCardPoolTag deck={deck} omitLegacy />
           <SealedDeckTag deck={deck} />
           <DeckTags tags={deckTags(deck, type === "decklist" ? ", " : " ")} />
