@@ -183,6 +183,9 @@
         "error": "Failed to load FAQ entries.",
         "title": "FAQ"
       },
+      "ratings": {
+        "title": "Card ratings"
+      },
       "scan": "Scan of {{code}}",
       "section_actions": "Actions",
       "section_deckbuilding": "Deckbuilding",

@@ -109,7 +109,7 @@ export function BrowsePack() {
   return (
     <BrowseWithFilter
       filterKey="pack"
-      filterValue={[pack_code]}
+      filterCode={pack_code}
       listKeyPrefix="browse-pack"
       icon={<PackIcon code={pack_code} />}
       title={displayPackName(pack)}
@@ -128,7 +128,7 @@ export function BrowseCycle() {
   return (
     <BrowseWithFilter
       filterKey="cycle"
-      filterValue={[cycle_code]}
+      filterCode={cycle_code}
       listKeyPrefix="browse-cycle"
       icon={<PackIcon code={cycle_code} />}
       title={displayPackName(cycle)}
@@ -165,7 +165,7 @@ export function BrowseEncounterSet() {
   return (
     <BrowseWithFilter
       filterKey="encounter_set"
-      filterValue={[encounter_code]}
+      filterCode={encounter_code}
       listKeyPrefix="browse-encounter-set"
       icon={<EncounterIcon code={encounter_code} />}
       title={displayPackName(encounterSet)}
