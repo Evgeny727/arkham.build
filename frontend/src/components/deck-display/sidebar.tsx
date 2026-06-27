@@ -88,7 +88,7 @@ export function Sidebar(props: Props) {
         />
         <DeckDetails deck={deck} />
         {origin === "local" && <SidebarUpgrade deck={deck} />}
-        <Sharing deck={deck} origin={origin} type={type} />
+        <Sharing deck={deck} type={type} />
       </div>
     </div>
   );
@@ -465,12 +465,8 @@ function SidebarActions(props: {
   );
 }
 
-function Sharing(props: {
-  deck: ResolvedDeck;
-  origin: DeckOrigin;
-  type: DeckDisplayType;
-}) {
-  const { deck, origin, type } = props;
+function Sharing(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
+  const { deck, type } = props;
   const { t } = useTranslation();
 
   const devModeEnabled = useStore((state) => state.settings.devModeEnabled);
@@ -479,9 +475,11 @@ function Sharing(props: {
   );
 
   const isSynced = isSyncedStorageProvider(deck.source);
+
   const availableUploadProviders = uploadProviders.filter((provider) =>
     storageProviderOptions.some((option) => option.value === provider),
   );
+
   const uploadDeckToProvider = useUploadDeckToProvider();
 
   const onUpload = useCallback(
@@ -503,7 +501,7 @@ function Sharing(props: {
             <ShareInfo deck={deck} path={`/${type}/view/${deck.id}`} />
             <nav className={css["share-actions"]}>
               {devModeEnabled && <DevModeApiLinkButton id={deck.id} />}
-              {origin === "arkhamdb" && (
+              {deck.source === "arkhamdb" && (
                 <Button
                   as="a"
                   href={`${localizeArkhamDBBaseUrl()}/${type}/view/${deck.id}`}
