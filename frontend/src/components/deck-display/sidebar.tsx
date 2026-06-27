@@ -500,7 +500,9 @@ function Sharing(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
           <div className={css["share"]}>
             <ShareInfo deck={deck} path={`/${type}/view/${deck.id}`} />
             <nav className={css["share-actions"]}>
-              {devModeEnabled && <DevModeApiLinkButton id={deck.id} />}
+              {devModeEnabled && (
+                <DevModeApiLinkButton id={deck.id} type={type} />
+              )}
               {deck.source === "arkhamdb" && (
                 <Button
                   as="a"
@@ -593,13 +595,20 @@ function ShareInfo(props: { deck: ResolvedDeck; path: string }) {
   );
 }
 
-function DevModeApiLinkButton({ id }: { id: Id }) {
+function DevModeApiLinkButton({ id, type }: { id: Id; type: DeckDisplayType }) {
   const { t } = useTranslation();
+
+  const url = new URL(`${import.meta.env.VITE_API_URL}/v1/public/share/${id}`);
+
+  if (type === "decklist") {
+    url.searchParams.set("type", "decklist");
+  }
+
   return (
     <Button
       as="a"
       data-testid="share-api-link"
-      href={`${import.meta.env.VITE_API_URL}/v1/public/share/${id}`}
+      href={url.toString()}
       rel="noreferrer"
       target="_blank"
       size="sm"

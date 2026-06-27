@@ -76,8 +76,7 @@ test.describe("settings", () => {
     await page.getByTestId("settings-back").click();
 
     await page.getByTestId("search-input").focus();
-    await page.getByTestId("search-game-text").click();
-    await fillSearch(page, "Mutated");
+    await fillSearch(page, 'text == "Mutated"');
 
     await page
       .getByTestId("listcard-02002")
