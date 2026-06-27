@@ -203,6 +203,15 @@
     }
   }
 
+  .header-titles,
+  .name-row {
+    min-width: 0;
+  }
+
+  .header-icon {
+    flex: 0 0 auto;
+  }
+
   .header-row {
     display: flex;
     align-items: center;
