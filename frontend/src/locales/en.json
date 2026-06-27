@@ -1042,7 +1042,7 @@
           "account": "arkham.build",
           "arkhamdb": "ArkhamDB",
           "local": "Device",
-          "shared": "Shared",
+          "shared": "Legacy API",
           "title": "Storage provider"
         },
         "taboo": "Taboo list",

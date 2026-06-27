@@ -38,7 +38,9 @@ export function isStorageProviderAvailable(
 export function isSyncedStorageProvider(
   provider: StorageProvider,
 ): provider is SyncedDeckProvider {
-  return provider === "account" || provider === "arkhamdb";
+  return (
+    provider === "account" || provider === "arkhamdb" || provider === "shared"
+  );
 }
 
 export function updateDeckSyncSuccess(

@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/toast.hooks";
 import { UpgradeModal } from "@/pages/deck-view/upgrade-modal";
 import { useImportSharedDeckMutation } from "@/queries/mutations/decks";
 import { useStore } from "@/store";
+import { isSyncedStorageProvider } from "@/store/lib/sync";
 import type { ResolvedDeck } from "@/store/lib/types";
 import { selectDeckCreateStorageProviderOptions } from "@/store/selectors/deck-create";
 import type { History } from "@/store/selectors/decks";
@@ -477,7 +478,7 @@ function Sharing(props: {
     selectDeckCreateStorageProviderOptions,
   );
 
-  const isSynced = deck.source !== "local";
+  const isSynced = isSyncedStorageProvider(deck.source);
   const availableUploadProviders = uploadProviders.filter((provider) =>
     storageProviderOptions.some((option) => option.value === provider),
   );

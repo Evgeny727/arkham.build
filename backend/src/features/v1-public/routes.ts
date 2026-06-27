@@ -110,7 +110,12 @@ async function fetchLegacyShareHistory(c: Context<HonoEnv>) {
   }
 
   const share = LegacyShareHistorySchema.parse(await response.json());
-  return c.json([share.data]);
+  return c.json([
+    {
+      ...share.data,
+      source: "shared",
+    },
+  ]);
 }
 
 export function parseCodeFromArkhamDbUrl(input?: string) {
