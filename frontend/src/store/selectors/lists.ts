@@ -101,6 +101,7 @@ import {
   selectLocaleSortingCollator,
   selectLookupTables,
   selectMetadata,
+  selectSearchTextCache,
   selectSettingsTabooId,
   selectTraitMapper,
 } from "./shared";
@@ -730,6 +731,7 @@ export const selectListCards = createSelector(
   selectBaseListCards,
   selectLocaleSortingCollator,
   selectBuildQlInterpreter,
+  selectSearchTextCache,
   (_: StoreState, resolvedDeck: ResolvedDeck | undefined) => resolvedDeck,
   (
     _: StoreState,
@@ -745,6 +747,7 @@ export const selectListCards = createSelector(
     baseFilterResult,
     sortingCollator,
     buildQlInterpreter,
+    searchTextCache,
     deck,
     targetDeck,
     showUnusableCards,
@@ -785,7 +788,12 @@ export const selectListCards = createSelector(
           } catch {}
         }
       } else {
-        filteredCards = applySearch(activeList.search, filteredCards, metadata);
+        filteredCards = applySearch(
+          activeList.search,
+          filteredCards,
+          metadata,
+          searchTextCache,
+        );
       }
     }
 

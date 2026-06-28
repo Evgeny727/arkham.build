@@ -1,6 +1,6 @@
 import type { Card } from "@arkham-build/shared";
 import { displayAttribute } from "@/utils/card-utils";
-import { fuzzyMatch, prepareNeedle } from "@/utils/fuzzy";
+import { fuzzyMatch, prepareNeedle, type SearchTextCache } from "@/utils/fuzzy";
 import type { Search } from "../slices/lists.types";
 import type { Metadata } from "../slices/metadata.types";
 
@@ -56,6 +56,7 @@ export function applySearch(
   search: Search,
   cards: Card[],
   metadata: Metadata,
+  searchTextCache?: SearchTextCache,
 ): Card[] {
   if (metadata.cards[search.value]) {
     return cards.filter(
@@ -78,6 +79,6 @@ export function applySearch(
       }
     }
 
-    return fuzzyMatch(content, needle);
+    return fuzzyMatch(content, needle, searchTextCache);
   });
 }

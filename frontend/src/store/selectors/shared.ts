@@ -1,6 +1,7 @@
 import type { Card, Cycle, Pack } from "@arkham-build/shared";
 import { createSelector } from "reselect";
 import { official } from "@/utils/card-utils";
+import { SearchTextCache } from "@/utils/fuzzy";
 import i18n from "@/utils/i18n";
 import { isEmpty } from "@/utils/is-empty";
 import { time, timeEnd } from "@/utils/time";
@@ -67,6 +68,11 @@ export const selectMetadata = createSelector(
 
     return meta as Metadata;
   },
+);
+
+export const selectSearchTextCache = createSelector(
+  selectMetadata,
+  () => new SearchTextCache(),
 );
 
 export const selectLookupTables = createSelector(
@@ -333,18 +339,20 @@ export const selectPrintingsForCard = createSelector(
 export const selectBuildQlInterpreter = createSelector(
   selectMetadata,
   selectLookupTables,
-  selectActiveList,
+  selectSearchTextCache,
+  (state: StoreState) => !!selectActiveList(state)?.search?.includeBacks,
   (_: StoreState, deck?: ResolvedDeck) => deck,
-  (metadata, lookupTables, list, deck) => {
+  (metadata, lookupTables, searchTextCache, matchBacks, deck) => {
     return new Interpreter({
       fields,
       fieldLookupContext: {
         deck,
         i18n,
         lookupTables,
-        matchBacks: !!list?.search?.includeBacks,
+        matchBacks,
         metadata,
       },
+      searchTextCache,
     });
   },
 );
@@ -352,17 +360,19 @@ export const selectBuildQlInterpreter = createSelector(
 export const selectStaticBuildQlInterpreter = createSelector(
   selectMetadata,
   selectLookupTables,
-  selectActiveList,
-  (metadata, lookupTables, list) => {
+  selectSearchTextCache,
+  (state: StoreState) => !!selectActiveList(state)?.search?.includeBacks,
+  (metadata, lookupTables, searchTextCache, matchBacks) => {
     return new Interpreter({
       fields,
       fieldLookupContext: {
         deck: undefined,
         i18n,
         lookupTables,
-        matchBacks: !!list?.search?.includeBacks,
+        matchBacks,
         metadata,
       },
+      searchTextCache,
     });
   },
 );

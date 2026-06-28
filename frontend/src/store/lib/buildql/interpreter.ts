@@ -542,7 +542,7 @@ export class Interpreter {
         }
 
         const matchStr = normalizedLeft;
-        return fuzzyMatch([matchStr], needle);
+        return fuzzyMatch([matchStr], needle, this.context.searchTextCache);
       }
 
       if (fieldType === "text") {

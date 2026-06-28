@@ -3,6 +3,7 @@ import type { i18n, TFunction } from "i18next";
 import { beforeAll, describe, expect, test } from "vitest";
 import { selectLookupTables, selectMetadata } from "@/store/selectors/shared";
 import { getMockStore } from "@/test/get-mock-store";
+import { SearchTextCache } from "@/utils/fuzzy";
 import { fields } from "./fields";
 import { Interpreter } from "./interpreter";
 import type { InterpreterContext } from "./interpreter.types";
@@ -45,6 +46,7 @@ describe("Interpreter", () => {
         metadata: selectMetadata(mockStore.getState()),
         lookupTables: selectLookupTables(mockStore.getState()),
       },
+      searchTextCache: new SearchTextCache(),
     };
   });
 

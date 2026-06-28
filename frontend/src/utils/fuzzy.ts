@@ -1,8 +1,36 @@
 import { isEmpty } from "./is-empty";
 import { normalizeDiacritics } from "./normalize-diacritics";
 
-export function fuzzyMatch(haystack: string[], needle: RegExp) {
-  return haystack.some((part) => needle.test(prepareSearchText(part)));
+const DEFAULT_CACHE_LIMIT = 50_000;
+
+export class SearchTextCache {
+  private cache = new Map<string, string>();
+
+  constructor(private limit = DEFAULT_CACHE_LIMIT) {}
+
+  prepare(str: string) {
+    const cached = this.cache.get(str);
+    if (cached != null) return cached;
+
+    if (this.cache.size >= this.limit) {
+      this.cache.clear();
+    }
+
+    const prepared = prepareSearchText(str);
+    this.cache.set(str, prepared);
+
+    return prepared;
+  }
+}
+
+export function fuzzyMatch(
+  haystack: string[],
+  needle: RegExp,
+  searchTextCache?: SearchTextCache,
+) {
+  return haystack.some((part) =>
+    needle.test(searchTextCache?.prepare(part) ?? prepareSearchText(part)),
+  );
 }
 
 export function prepareSearchText(str: string) {

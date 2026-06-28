@@ -27,6 +27,7 @@ import {
   selectLocaleSortingCollator,
   selectLookupTables,
   selectMetadata,
+  selectSearchTextCache,
 } from "./shared";
 
 // Arbitrarily chosen for now
@@ -321,8 +322,9 @@ export const selectTagsInLocalDecks = createSelector(
 const selectDecksFiltered = createSelector(
   selectLocalDeckSummaries,
   selectDeckSearchTerm,
+  selectSearchTextCache,
   selectFilteringFunc,
-  (decks, searchTerm, filterFunc) => {
+  (decks, searchTerm, searchTextCache, filterFunc) => {
     let decksToFilter: DeckSummary[];
 
     if (searchTerm) {
@@ -337,7 +339,7 @@ const selectDecksFiltered = createSelector(
             deck.name,
             displayAttribute(deck.investigatorFront.card, "name"),
           ];
-          return fuzzyMatch(text, needle);
+          return fuzzyMatch(text, needle, searchTextCache);
         });
       } else {
         decksToFilter = decks;
