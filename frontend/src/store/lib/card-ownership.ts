@@ -68,7 +68,11 @@ export function ownedCardCount(options: CardOwnershipOptions) {
     }
 
     const packCode = duplicate.pack_code;
-    if (packCode && collection[packCode]) quantityOwned += duplicate.quantity;
+    if (packCode && collection[packCode]) {
+      const packsOwned =
+        typeof collection[packCode] === "number" ? collection[packCode] : 1;
+      quantityOwned += packsOwned * duplicate.quantity;
+    }
   }
 
   return quantityOwned;
