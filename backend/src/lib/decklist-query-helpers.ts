@@ -118,13 +118,9 @@ export function requiredSlotsCond({
   sideSlots: Expression<unknown>;
   slots: Expression<unknown>;
 }) {
-  const eb = expressionBuilder<DB>();
+  const targetSlots = analyzeSideDecks
+    ? sql<unknown>`(${slots} || COALESCE(${sideSlots}, '{}'::jsonb))`
+    : slots;
 
-  const ors = [requiredCardsCond(slots, requiredCards, "?&")];
-
-  if (analyzeSideDecks) {
-    ors.push(requiredCardsCond(sideSlots, requiredCards, "?&"));
-  }
-
-  return eb.or(ors);
+  return requiredCardsCond(targetSlots, requiredCards, "?&");
 }
