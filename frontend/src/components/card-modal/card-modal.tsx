@@ -81,6 +81,13 @@ export function CardModal(props: Props) {
     selectCardWithRelations(state, props.code, true, ctx.resolvedDeck),
   );
 
+  const isNonLocalFanMadeCard = useStore((state) => {
+    const pack = cardWithRelations?.pack;
+    return (
+      pack?.official === false && !state.fanMadeData.projects[pack.cycle_code]
+    );
+  });
+
   const settings = useStore((state) => state.settings);
   const showFanMadeRelations = useStore(selectShowFanMadeRelations);
 
@@ -253,7 +260,8 @@ export function CardModal(props: Props) {
       <ModalInner size="60rem">
         <ModalActions>
           {cardWithRelations.card.type_code === "investigator" &&
-            !isStaticInvestigator(cardWithRelations.card) && (
+            !isStaticInvestigator(cardWithRelations.card) &&
+            !isNonLocalFanMadeCard && (
               <Link
                 asChild
                 href={deckCreateLink(cardWithRelations.card)}
