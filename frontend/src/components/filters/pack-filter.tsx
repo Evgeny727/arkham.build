@@ -66,9 +66,7 @@ export function PackFilter({ id, resolvedDeck, targetDeck }: FilterProps) {
     );
   }, [onChange, metadata]);
 
-  const showShortcut =
-    listFilterProperties.cardTypes.has("player") &&
-    listFilterProperties.levels.size > 1;
+  const showShortcut = listFilterProperties.cardTypes.has("player");
 
   return (
     <MultiselectFilter
