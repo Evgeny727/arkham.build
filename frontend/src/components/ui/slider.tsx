@@ -244,8 +244,10 @@ export function Slider(props: Props) {
         return (
           <span
             aria-disabled={disabled}
-            aria-label={props["aria-label"]}
-            aria-labelledby={props["aria-labelledby"]}
+            aria-label={getThumbLabel(props["aria-label"], thumbCount, index)}
+            aria-labelledby={
+              thumbCount === 2 ? undefined : props["aria-labelledby"]
+            }
             aria-orientation="horizontal"
             aria-valuemax={max}
             aria-valuemin={min}
@@ -274,6 +276,16 @@ export function Slider(props: Props) {
       })}
     </span>
   );
+}
+
+function getThumbLabel(
+  label: string | undefined,
+  thumbCount: number,
+  index: number,
+): string | undefined {
+  if (thumbCount !== 2) return label;
+
+  return index === 0 ? "Minimum" : "Maximum";
 }
 
 function getPointerValue(
