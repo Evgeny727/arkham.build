@@ -108,10 +108,12 @@ test.describe("deck description", () => {
       navigate: "view",
     });
     await page.getByTestId("tab-notes").click();
-    await page
+
+    const cardLink = page
       .getByTestId("description-content")
-      .getByRole("link", { name: "card" })
-      .click();
+      .getByRole("link", { name: "card" });
+
+    await cardLink.press("Enter");
 
     await expect(page.getByTestId("card-modal")).toBeVisible();
     await expect(

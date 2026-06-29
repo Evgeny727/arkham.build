@@ -16,6 +16,10 @@ export async function importDeck(page: Page) {
     );
 
   await page.getByTestId("import-submit").click();
+
+  await expect(
+    page.getByTestId("collection-deck").getByTestId("deck-summary-title"),
+  ).toContainText("Kōhaku, Fifty Shades of Blurse|FHV Intro|Deck Guide");
 }
 
 export function locateCardInSlots(locator: Page | Locator, code: string) {
@@ -54,10 +58,12 @@ export async function importDeckFromFile(
   const filePath = path.join(directory, "../../fixtures/decks", deckPath);
   const deckName = await readDeckName(filePath);
 
+  const deck = page.getByTestId(`collection-deck-${deckName}`);
+
   await fileChooser.setFiles([filePath]);
+  await expect(deck).toBeVisible();
 
   if (navigate) {
-    const deck = page.getByTestId(`collection-deck-${deckName}`);
     await deck.getByTestId("collection-deck").hover({
       force: true,
     });
