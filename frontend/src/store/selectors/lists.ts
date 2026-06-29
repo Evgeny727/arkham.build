@@ -103,6 +103,7 @@ import {
   selectMetadata,
   selectSearchTextCache,
   selectSettingsTabooId,
+  selectShowFanMadeRelations,
   selectTraitMapper,
 } from "./shared";
 
@@ -1649,9 +1650,17 @@ export const selectAvailableUpgrades = createSelector(
   selectDeckInvestigatorFilter,
   selectMetadata,
   selectLookupTables,
+  selectShowFanMadeRelations,
   (_: StoreState, deck: ResolvedDeck) => deck,
   (_: StoreState, __: ResolvedDeck, target: "slots" | "extraSlots") => target,
-  (accessFilter, metadata, lookupTables, deck, target) => {
+  (
+    accessFilter,
+    metadata,
+    lookupTables,
+    showFanMadeRelations,
+    deck,
+    target,
+  ) => {
     const availableUpgrades: AvailableUpgrades = {
       upgrades: {},
       shrewdAnalysisPresent: false,
@@ -1676,6 +1685,8 @@ export const selectAvailableUpgrades = createSelector(
 
         const isUpgrade = version?.xp && version.xp > (card.xp ?? 0);
         if (!isUpgrade) return acc;
+
+        if (!showFanMadeRelations && !official(version)) return acc;
 
         const hasAccess = accessFilter?.(version);
         if (!hasAccess) return acc;
