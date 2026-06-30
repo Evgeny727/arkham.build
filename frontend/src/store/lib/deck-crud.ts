@@ -37,7 +37,7 @@ import type { UndoEntry } from "../slices/data.types";
 import { normalizeArkhamDbDeck } from "./arkhamdb-decks";
 import { applyCardChanges } from "./card-edits";
 import { applyDeckEdits, getChangeRecord } from "./deck-edits";
-import { makeDeck } from "./deck-factory";
+import { makeDeck, makeDeckCopy } from "./deck-factory";
 import { mapValidationToProblem } from "./deck-io";
 import { decodeDeckMeta, encodeCardPool, encodeSealedDeck } from "./deck-meta";
 import { resolveDeck } from "./resolve-deck";
@@ -245,7 +245,11 @@ export const updateAdapter = {
       ? state.data.decks[deck.previous_deck]
       : undefined;
 
-    const nextDeck = applyDeckEdits(deck, edits, metadata, true, previousDeck);
+    let nextDeck = applyDeckEdits(deck, edits, metadata, true, previousDeck);
+    if (nextDeck.source !== "arkhamdb") {
+      nextDeck = clearHiddenSlots(nextDeck);
+    }
+
     const nextResolved = resolveDeck(...resolveState, nextDeck);
 
     updateFanMadeData(nextDeck, nextResolved);
@@ -464,10 +468,12 @@ export const uploadAdapter = {
       return [{ ...deck, source: provider }];
     }
 
-    return collectLocalDeckChain(state, deck).map((item) => ({
-      ...item,
-      source: provider,
-    }));
+    return collectLocalDeckChain(state, deck).map((item) =>
+      clearHiddenSlots({
+        ...item,
+        source: provider,
+      }),
+    );
   },
   async persist(client: HttpClient, state: StoreState, decks: Deck[]) {
     if (decks.length === 1) {
@@ -550,6 +556,20 @@ export const uploadAdapter = {
         sync,
       };
     });
+  },
+};
+
+export const duplicateAdapter = {
+  format(state: StoreState, deckId: DeckId, options?: { applyEdits: boolean }) {
+    const metadata = selectMetadata(state);
+    const deck = state.data.decks[deckId];
+    assert(deck, `Deck ${deckId} does not exist.`);
+
+    const sourceDeck = options?.applyEdits
+      ? applyDeckEdits(deck, state.deckEdits[deckId], metadata, true)
+      : deck;
+
+    return clearHiddenSlots(makeDeckCopy(sourceDeck));
   },
 };
 
@@ -720,6 +740,18 @@ export const upgradeAdapter = {
 
 function normalizeArkhamDbResponse(state: StoreState, deck: Deck) {
   return deck.source === "arkhamdb" ? normalizeArkhamDbDeck(deck, state) : deck;
+}
+
+function clearHiddenSlots(deck: Deck) {
+  const meta = decodeDeckMeta(deck);
+  if (!("hidden_slots" in meta)) return deck;
+
+  delete meta.hidden_slots;
+
+  return {
+    ...deck,
+    meta: JSON.stringify(meta),
+  };
 }
 
 function collectLocalDeckChain(state: StoreState, deck: Deck) {

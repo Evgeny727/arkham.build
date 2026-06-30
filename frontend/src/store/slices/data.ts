@@ -3,11 +3,9 @@ import type { StateCreator } from "zustand";
 import { assert } from "@/utils/assert";
 import { ARCHIVE_FOLDER_ID } from "@/utils/constants";
 import i18n from "@/utils/i18n";
-import { applyDeckEdits } from "../lib/deck-edits";
-import { makeDeckCopy } from "../lib/deck-factory";
+import { duplicateAdapter } from "../lib/deck-crud";
 import { formatDeckImport } from "../lib/deck-io";
 import { dehydrate } from "../persist";
-import { selectMetadata } from "../selectors/shared";
 import type { HttpClient } from "../services/http-client";
 import { importDeck } from "../services/requests/public-decks";
 import type { StoreState } from ".";
@@ -88,17 +86,7 @@ export const createDataSlice: StateCreator<StoreState, [], [], DataSlice> = (
   },
 
   async duplicateDeck(id, options) {
-    const state = get();
-    const metadata = selectMetadata(state);
-
-    const deck = state.data.decks[id];
-    assert(deck, `Deck ${id} does not exist.`);
-
-    const newDeck = options?.applyEdits
-      ? makeDeckCopy(applyDeckEdits(deck, state.deckEdits[id], metadata, true))
-      : makeDeckCopy(deck);
-
-    newDeck.source = null;
+    const newDeck = duplicateAdapter.format(get(), id, options);
 
     set((prev) => ({
       data: {
@@ -118,6 +106,7 @@ export const createDataSlice: StateCreator<StoreState, [], [], DataSlice> = (
 
     return newDeck.id;
   },
+
   async setDeckFolder(client, deckId, folderId) {
     set((state) => {
       if (folderId != null && folderId !== ARCHIVE_FOLDER_ID) {
