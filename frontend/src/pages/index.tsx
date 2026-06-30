@@ -12,6 +12,7 @@ import { ListLayoutContextProvider } from "@/layouts/list-layout-context-provide
 import { useStore } from "@/store";
 import { selectIsInitialized } from "@/store/selectors/shared";
 import { cx } from "@/utils/cx";
+import { RandomCardButton } from "./index/random-card-button";
 import css from "./index.module.css";
 
 function Index() {
@@ -33,6 +34,7 @@ function Index() {
       <ListLayoutContextProvider>
         <ListLayout
           filters={<Filters targetDeck={undefined} />}
+          mastheadNav={<RandomCardButton />}
           sidebar={<DeckCollection />}
           sidebarWidthMax="var(--sidebar-width-one-col)"
         >

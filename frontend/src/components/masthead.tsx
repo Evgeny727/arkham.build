@@ -33,6 +33,7 @@ type Props = {
   className?: string;
   children?: React.ReactNode;
   slotRight?: React.ReactNode;
+  navSlot?: React.ReactNode;
   hideLocaleSwitch?: boolean;
   invert?: boolean;
 };
@@ -40,7 +41,8 @@ type Props = {
 type MastheadSection = "browse" | "decklists" | "rules" | "settings";
 
 export function Masthead(props: Props) {
-  const { children, className, hideLocaleSwitch, invert, slotRight } = props;
+  const { children, className, hideLocaleSwitch, invert, navSlot, slotRight } =
+    props;
 
   const { t } = useTranslation();
 
@@ -61,7 +63,9 @@ export function Masthead(props: Props) {
           <Logo />
           <span className="sr-only">{import.meta.env.VITE_PAGE_NAME}</span>
         </Link>
-        {!collapseNav && !isAuthPage && <MastheadNav location={location} />}
+        {!collapseNav && !isAuthPage && (
+          <MastheadNav location={location} navSlot={navSlot} />
+        )}
         {children}
       </div>
       <nav className={css["right"]}>
@@ -98,8 +102,8 @@ export function Masthead(props: Props) {
   );
 }
 
-function MastheadNav(props: { location: string }) {
-  const { location } = props;
+function MastheadNav(props: { location: string; navSlot?: React.ReactNode }) {
+  const { location, navSlot } = props;
   const { t } = useTranslation();
 
   return (
@@ -134,6 +138,7 @@ function MastheadNav(props: { location: string }) {
         <BookOpenTextIcon />
         {t("masthead.rules")}
       </NavLink>
+      {navSlot}
     </nav>
   );
 }
