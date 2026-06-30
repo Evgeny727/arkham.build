@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   type Deck,
   DeckSchema,
@@ -21,6 +22,7 @@ import {
   findAccountModerationActionById,
   findAppDataVersions,
   listAccountModerationActionsByAccountId,
+  setAccountSettingsFlag,
   upsertFanMadeProjectInfo,
 } from "./queries.ts";
 
@@ -96,6 +98,41 @@ routes.post(
 
     c.status(201);
     return c.body(null);
+  },
+);
+
+const SetAccountSettingsFlagRequestSchema = z.object({
+  username: z.string().min(1).max(64),
+  flag: z.string().min(1).max(128),
+  value: z.boolean(),
+});
+
+routes.post(
+  "/account_settings/flags",
+  adminKeyMiddleware,
+  zodValidator("json", SetAccountSettingsFlagRequestSchema),
+  async (c) => {
+    const db = c.get("db");
+    const { flag, username, value } = c.req.valid("json");
+    const account = await findAccountByUsername(db, username);
+
+    if (!account) {
+      throw new HTTPException(404, { message: "Account not found" });
+    }
+
+    const accountSettings = await setAccountSettingsFlag(
+      db,
+      account.id,
+      flag,
+      value,
+      randomUUID(),
+    );
+
+    if (!accountSettings) {
+      throw new HTTPException(404, { message: "Account settings not found" });
+    }
+
+    return c.json(accountSettings);
   },
 );
 

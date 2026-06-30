@@ -136,6 +136,204 @@ describe("Admin routes", () => {
     });
   });
 
+  describe("POST /admin/account_settings/flags", () => {
+    test("requires admin api key", async ({ dependencies }) => {
+      const { app } = dependencies;
+
+      const res = await app.request("/admin/account_settings/flags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: TEST_ACCOUNT.name,
+          flag: "adminFlag",
+          value: true,
+        }),
+      });
+
+      expect(res.status).toBe(401);
+    });
+
+    test("returns 404 when account does not exist", async ({
+      dependencies,
+    }) => {
+      const { app, config } = dependencies;
+
+      const res = await app.request("/admin/account_settings/flags", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.ADMIN_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: "missing-account",
+          flag: "adminFlag",
+          value: true,
+        }),
+      });
+
+      expect(res.status).toBe(404);
+      expect(await res.text()).toContain("Account not found");
+    });
+
+    test("returns 404 when account has no settings", async ({
+      dependencies,
+    }) => {
+      const { app, config } = dependencies;
+
+      const res = await app.request("/admin/account_settings/flags", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.ADMIN_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: TEST_ACCOUNT.name,
+          flag: "adminFlag",
+          value: true,
+        }),
+      });
+
+      expect(res.status).toBe(404);
+      expect(await res.text()).toContain("Account settings not found");
+    });
+
+    test("sets a settings flag", async ({ dependencies }) => {
+      const { app, config, db } = dependencies;
+      const account = await db
+        .selectFrom("account")
+        .select("id")
+        .where("name", "=", TEST_ACCOUNT.name)
+        .executeTakeFirstOrThrow();
+
+      const before = await db
+        .insertInto("account_settings")
+        .values({
+          account_id: account.id,
+          collection: { core: 1 },
+          settings: {
+            flags: { existingFlag: false },
+            locale: "en",
+            showAllCards: true,
+          },
+        })
+        .returning("revision")
+        .executeTakeFirstOrThrow();
+
+      const res = await app.request("/admin/account_settings/flags", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.ADMIN_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: TEST_ACCOUNT.name,
+          flag: "adminFlag",
+          value: true,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+
+      const row = await db
+        .selectFrom("account_settings")
+        .select(["revision", "settings"])
+        .where("account_id", "=", account.id)
+        .executeTakeFirstOrThrow();
+
+      expect(row.revision).not.toBe(before.revision);
+      expect(row.settings).toMatchObject({
+        flags: { adminFlag: true, existingFlag: false },
+        locale: "en",
+        showAllCards: true,
+      });
+    });
+
+    test("creates settings flags when missing", async ({ dependencies }) => {
+      const { app, config, db } = dependencies;
+      const account = await db
+        .selectFrom("account")
+        .select("id")
+        .where("name", "=", TEST_ACCOUNT.name)
+        .executeTakeFirstOrThrow();
+
+      await db
+        .insertInto("account_settings")
+        .values({
+          account_id: account.id,
+          collection: { core: 1 },
+          settings: { locale: "en" },
+        })
+        .execute();
+
+      const res = await app.request("/admin/account_settings/flags", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.ADMIN_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: TEST_ACCOUNT.name,
+          flag: "adminFlag",
+          value: true,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+
+      const row = await db
+        .selectFrom("account_settings")
+        .select("settings")
+        .where("account_id", "=", account.id)
+        .executeTakeFirstOrThrow();
+
+      expect(row.settings).toMatchObject({
+        flags: { adminFlag: true },
+        locale: "en",
+      });
+    });
+
+    test("updates an existing settings flag", async ({ dependencies }) => {
+      const { app, config, db } = dependencies;
+      const account = await db
+        .selectFrom("account")
+        .select("id")
+        .where("name", "=", TEST_ACCOUNT.name)
+        .executeTakeFirstOrThrow();
+
+      await db
+        .insertInto("account_settings")
+        .values({
+          account_id: account.id,
+          collection: { core: 1 },
+          settings: { flags: { adminFlag: false } },
+        })
+        .execute();
+
+      const res = await app.request("/admin/account_settings/flags", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.ADMIN_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: TEST_ACCOUNT.name,
+          flag: "adminFlag",
+          value: true,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+
+      const row = await db
+        .selectFrom("account_settings")
+        .select("settings")
+        .where("account_id", "=", account.id)
+        .executeTakeFirstOrThrow();
+
+      expect(row.settings).toMatchObject({ flags: { adminFlag: true } });
+    });
+  });
+
   describe("GET /admin/account_moderation_actions", () => {
     test("lists moderation actions by username", async ({ dependencies }) => {
       const { app, config } = dependencies;

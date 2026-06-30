@@ -1,6 +1,10 @@
 import type { FanMadeProjectInfo } from "@arkham-build/shared";
+import { sql } from "kysely";
 import type { Database } from "../../db/db.ts";
-import type { ModerationActionType } from "../../db/schema.types.ts";
+import type {
+  AccountSettings,
+  ModerationActionType,
+} from "../../db/schema.types.ts";
 
 export async function findAppDataVersions(db: Database) {
   const [rankingCache, dataVersion] = await Promise.all([
@@ -87,6 +91,30 @@ export async function endAccountModerationAction(
     .where("id", "=", id)
     .returning(["id", "ends_at", "end_reason"])
     .executeTakeFirstOrThrow();
+}
+
+export async function setAccountSettingsFlag(
+  db: Database,
+  accountId: string,
+  flag: string,
+  value: boolean,
+  revision: string,
+) {
+  return await db
+    .updateTable("account_settings")
+    .set({
+      revision,
+      settings: sql<AccountSettings["settings"]>`jsonb_set(
+        settings,
+        '{flags}',
+        coalesce(settings->'flags', '{}'::jsonb) || jsonb_build_object(${flag}::text, ${value}::boolean),
+        true
+      )`,
+    })
+    .where("account_id", "=", accountId)
+    .where("settings", "is not", null)
+    .returning(["revision", "settings"])
+    .executeTakeFirst();
 }
 
 export function upsertFanMadeProjectInfo(
