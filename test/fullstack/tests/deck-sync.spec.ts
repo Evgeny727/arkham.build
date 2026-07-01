@@ -9,7 +9,11 @@ import {
   reloadAndSyncAccount,
   waitForAccountSync,
 } from "../lib/account-sync.ts";
-import { authorizeArkhamDbOAuth, createArkhamDbUser } from "../lib/arkhamdb.ts";
+import {
+  authorizeArkhamDbOAuth,
+  createArkhamDbUser,
+  enableArkhamDbDeckSharing,
+} from "../lib/arkhamdb.ts";
 import { login } from "../lib/auth.ts";
 import {
   createAuthenticatedAccount,
@@ -19,6 +23,8 @@ import { apiUrl } from "../lib/env.ts";
 
 const accountProvider = "account" satisfies StorageProvider;
 const arkhamDbProvider = "arkhamdb" satisfies StorageProvider;
+
+type TestAccount = Awaited<ReturnType<typeof createAuthenticatedAccount>>;
 
 test.describe("account deck sync", () => {
   test("create, edit, upgrade, delete upgrade, and upgrade again", async ({
@@ -81,7 +87,9 @@ test.describe("ArkhamDB deck sync", () => {
   }) => {
     test.setTimeout(120_000);
 
-    const account = await createConnectedAccount(page);
+    const account = await createConnectedAccount(page, {
+      enablePublicDeckSharing: true,
+    });
     await exerciseSyncedDeckLifecycle(
       page,
       browser,
@@ -124,6 +132,8 @@ test.describe("deck sync edge cases", () => {
   test("account and ArkhamDB decks survive reload when both providers are active", async ({
     page,
   }) => {
+    test.setTimeout(120_000);
+
     await createConnectedAccount(page);
     await createSyncedDeck(
       page,
@@ -272,7 +282,7 @@ async function exerciseSyncedDeckLifecycle(
   page: Page,
   browser: Browser,
   baseURL: string | undefined,
-  account: Awaited<ReturnType<typeof createAuthenticatedAccount>>,
+  account: TestAccount,
   provider: Extract<StorageProvider, "account" | "arkhamdb">,
   title: string,
 ) {
@@ -295,6 +305,7 @@ async function exerciseSyncedDeckLifecycle(
   await upgradeCurrentDeck(page, 3);
   await reloadAndSyncAccount(page);
   await expectDeckInNewSession(browser, baseURL, account, title, {
+    anonymous: true,
     latestUpgrade: "0 of 3 XP spent",
   });
 }
@@ -474,9 +485,9 @@ async function expectDeckInvestigator(page: Page, name: string) {
 async function expectDeckInNewSession(
   browser: Browser,
   baseURL: string | undefined,
-  account: Awaited<ReturnType<typeof createAuthenticatedAccount>>,
+  account: TestAccount,
   deckName: string,
-  opts: { latestUpgrade?: string } = {},
+  opts: { anonymous?: boolean; latestUpgrade?: string } = {},
 ) {
   const { context, page2 } = await openDeckInNewSession(
     browser,
@@ -484,6 +495,7 @@ async function expectDeckInNewSession(
     account,
     deckName,
   );
+  const deckId = getCurrentDeckId(page2);
 
   if (opts.latestUpgrade) {
     await expect(page2.getByTestId("latest-upgrade-summary")).toContainText(
@@ -492,12 +504,39 @@ async function expectDeckInNewSession(
   }
 
   await context.close();
+
+  if (opts.anonymous) {
+    await expectDeckInAnonymousSession(browser, baseURL, deckId, deckName);
+  }
+}
+
+async function expectDeckInAnonymousSession(
+  browser: Browser,
+  baseURL: string | undefined,
+  deckId: string,
+  deckName: string,
+) {
+  const context = await browser.newContext({ baseURL });
+  const page = await context.newPage();
+
+  try {
+    await page.goto(`/share/${encodeURIComponent(deckId)}`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByTestId("view-title")).toContainText(deckName, {
+      timeout: 60_000,
+    });
+    await expect(page.getByTestId("share-import")).toBeVisible();
+    await expect(page.getByTestId("view-edit")).toBeHidden();
+  } finally {
+    await context.close();
+  }
 }
 
 async function openDeckInNewSession(
   browser: Browser,
   baseURL: string | undefined,
-  account: Awaited<ReturnType<typeof createAuthenticatedAccount>>,
+  account: TestAccount,
   deckName: string,
 ) {
   const context = await browser.newContext({ baseURL });
@@ -510,11 +549,24 @@ async function openDeckInNewSession(
   const deck = page.getByTestId(`collection-deck-${deckName}`);
   await expect(deck).toBeVisible();
   await deck.getByTestId("deck-summary-title").click({ force: true });
+  await expect(page.getByTestId("view-title")).toContainText(deckName, {
+    timeout: 60_000,
+  });
 
   return { context, page2: page };
 }
 
-async function createConnectedAccount(page: Page) {
+function getCurrentDeckId(page: Page) {
+  const path = new URL(page.url()).pathname;
+  const match = path.match(/^\/deck\/view\/([^/]+)$/);
+  if (!match?.[1]) throw new Error(`Unexpected deck view URL: ${page.url()}`);
+  return decodeURIComponent(match[1]);
+}
+
+async function createConnectedAccount(
+  page: Page,
+  options: { enablePublicDeckSharing?: boolean } = {},
+) {
   const arkhamDbUser = await createArkhamDbUser();
   const account = await createAuthenticatedAccount(page);
   await page.goto("/");
@@ -523,6 +575,9 @@ async function createConnectedAccount(page: Page) {
   await page.getByRole("link", { name: "Connect" }).click();
   await authorizeArkhamDbOAuth(page, arkhamDbUser);
   await expect(page).toHaveURL(/\/settings\?tab=account$/);
+  if (options.enablePublicDeckSharing) {
+    await enableArkhamDbDeckSharing(page, arkhamDbUser);
+  }
   await expect(page.getByTestId("connection-status")).toHaveText("Connected");
   await waitForAccountSync(page);
 
