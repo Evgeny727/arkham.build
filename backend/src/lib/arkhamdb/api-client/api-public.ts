@@ -6,6 +6,7 @@ import {
   type ArkhamDbRemoteDeck,
   ArkhamDbRemoteDeckSchema,
 } from "./core/dtos.ts";
+import { ApiError } from "./core/errors.ts";
 import { request, type WrappedResponse } from "./core/request.ts";
 import {
   isArkhamDbDeckId,
@@ -108,8 +109,14 @@ async function publicRequest<T>(
     },
   });
 
+  const data = schema.safeParse(response.data);
+
+  if (!data.success) {
+    throw new ApiError("ArkhamDB response does not match expected schema", 502);
+  }
+
   return {
     ...response,
-    data: schema.parse(response.data),
+    data: data.data,
   };
 }

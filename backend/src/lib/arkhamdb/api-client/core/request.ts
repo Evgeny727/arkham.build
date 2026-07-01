@@ -42,12 +42,18 @@ export async function request<T, E extends HonoEnv = HonoEnv>(
       signal,
       timeoutMs: ARKHAMDB_REQUEST_TIMEOUT_MS,
     });
-  } catch (error) {
-    if (error instanceof FetchTimeoutError) {
+  } catch (err) {
+    if (err instanceof FetchTimeoutError) {
       throw new ApiError("ArkhamDB request timed out", 504);
     }
 
-    throw error;
+    const cause = err instanceof Error ? err.cause : undefined;
+
+    if (cause instanceof Error && "code" in cause) {
+      throw new ApiError("Failed to connect to ArkhamDB", 502);
+    }
+
+    throw err;
   }
 
   await assertSuccessful(res);
@@ -62,12 +68,22 @@ export async function request<T, E extends HonoEnv = HonoEnv>(
 }
 
 async function assertSuccessful(res: Response) {
+  // Not found decklists return an empty html page
+  if (res.headers.get("content-type")?.includes("html")) {
+    throw new ApiError("Decklist not found", 404);
+  }
+
   if (res.status >= 300) {
+    // Not found decks redirect to login
+    if (res.status === 302) {
+      throw new ApiError("Deck not found", 404);
+    }
+
     let body: unknown;
     try {
       body = await res.json();
     } catch {
-      throw new ApiError("Failed to parse body", res.status);
+      throw new ApiError("Unknown API error", res.status);
     }
 
     if (isArkhamDBApiError(body)) {

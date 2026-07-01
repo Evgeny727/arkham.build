@@ -1,10 +1,21 @@
 import { STATUS_CODES } from "node:http";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { ZodError } from "zod";
+import { ApiError } from "./arkhamdb/api-client/core/errors.ts";
 import type { HonoEnv } from "./hono-env.ts";
 
 export function errorHandler(err: unknown, c: Context<HonoEnv>) {
+  if (err instanceof ApiError) {
+    return c.json(
+      {
+        message: err.message,
+      },
+      err.status as ContentfulStatusCode,
+    );
+  }
+
   if (err instanceof HTTPException) {
     const body = formatError(err);
     if (err.status === 400) logBadRequest(c, body);
