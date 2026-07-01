@@ -120,6 +120,42 @@ describe("GET /v1/public/additional_metadata/:id", () => {
     expect(storedDeck.investigator_code).toBe("89001");
   });
 
+  test("drops stale blank hidden slots without creating an amk", async ({
+    dependencies,
+  }) => {
+    const deck = await mergeAdditionalMeta(
+      dependencies.db,
+      makeRemoteDeck({
+        investigator_code: "01001",
+        investigator_name: "Roland Banks",
+        meta: JSON.stringify({
+          hidden_slots: {
+            slots: {},
+            sideSlots: null,
+            ignoreDeckLimitSlots: null,
+            investigator_code: "01001",
+          },
+        }),
+      }),
+    );
+
+    expect(deck.investigator_code).toBe("01001");
+    expect(JSON.parse(deck.meta).hidden_slots).toBeUndefined();
+
+    const storedDeck = await storeAdditionalMetadata(
+      dependencies.db,
+      790,
+      makeDeckWritePayload({
+        investigator_code: deck.investigator_code,
+        investigator_name: deck.investigator_name,
+        meta: deck.meta,
+      }),
+    );
+
+    expect(storedDeck.investigator_code).toBe("01001");
+    expect(JSON.parse(storedDeck.meta)).toEqual({});
+  });
+
   test("loads stale amk refs from the legacy API while merging deck metadata", async ({
     dependencies,
   }) => {

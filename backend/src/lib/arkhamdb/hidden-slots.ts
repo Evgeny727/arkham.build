@@ -87,10 +87,7 @@ export function applyHiddenSlots(deck: ArkhamDbRemoteDeck) {
       null;
   }
 
-  if (
-    hiddenSlots.investigator_code &&
-    (hasHiddenInvestigator || !hasHiddenSlotEntries(hiddenSlots))
-  ) {
+  if (hiddenSlots.investigator_code && hasHiddenInvestigator) {
     meta.hidden_slots = {
       slots: {},
       sideSlots: null,
@@ -102,12 +99,6 @@ export function applyHiddenSlots(deck: ArkhamDbRemoteDeck) {
   }
 
   deck.meta = JSON.stringify(meta);
-}
-
-function hasHiddenSlotEntries(hiddenSlots: DeckFanMadeContentSlots) {
-  return (["slots", "sideSlots", "ignoreDeckLimitSlots"] as const).some(
-    (key) => Object.keys(hiddenSlots[key] ?? {}).length > 0,
-  );
 }
 
 function decodeDeckMeta(meta: string | null | undefined): DeckMeta {
