@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { HonoEnv } from "./hono-env.ts";
 
-const DEFAULT_MAX_SIZE = 500 * 1024;
+const DEFAULT_MAX_SIZE = 1 * 1024 * 1024;
 const LARGE_UPLOAD_MAX_SIZE = 10 * 1024 * 1024;
 
 const BODY_LIMIT_RULES = [
