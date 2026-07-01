@@ -44,7 +44,6 @@ export function appFactory(
   const app = new Hono<HonoEnv>();
 
   app.use(secureHeaders());
-  app.use(bodyLimitMiddleware());
 
   app.use(requestId());
   app.use(logger());
@@ -59,15 +58,18 @@ export function appFactory(
 
   const publicCors = publicCorsMiddleware(config);
   const authenticatedCors = authenticatedCorsMiddleware(config);
+  const bodyLimit = bodyLimitMiddleware();
 
   const v1 = new Hono<HonoEnv>();
   v1.use("*", publicCors);
+  v1.use("*", bodyLimit);
   v1.route("/cache", cacheRouter);
   v1.route("/public", v1PublicRouter);
   app.route("/v1", v1);
 
   const v2Public = new Hono<HonoEnv>();
   v2Public.use("*", publicCors);
+  v2Public.use("*", bodyLimit);
   v2Public.route("/additional_metadata", additionalMetadataRouter);
   v2Public.route("/arkhamdb-decklists", arkhamDbDecklistsRouter);
   v2Public.route("/customization-sheet", customizationSheetRouter);
@@ -82,6 +84,7 @@ export function appFactory(
 
   const v2Account = new Hono<HonoEnv>();
   v2Account.use("*", authenticatedCors);
+  v2Account.use("*", bodyLimit);
   v2Account.route("/auth", authRouter);
   v2Account.route("/decks", decksRouter);
   v2Account.route("/folders", foldersRouter);
