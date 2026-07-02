@@ -33,6 +33,14 @@ const SortingTypeSchema = z.enum([
   "type",
 ]);
 
+const TabooSetIdSchema = z.preprocess(
+  (value) =>
+    value == null || (typeof value === "number" && Number.isNaN(value))
+      ? undefined
+      : value,
+  z.union([z.number(), z.literal("latest")]).optional(),
+);
+
 export const ListConfigSchema = z.object({
   group: z.array(GroupingTypeSchema),
   sort: z.array(SortingTypeSchema),
@@ -98,7 +106,7 @@ export const SettingsSchema = z.object({
   showMoveToSideDeck: z.boolean(),
   showPreviews: z.boolean(),
   sortIgnorePunctuation: z.boolean(),
-  tabooSetId: z.union([z.number(), z.literal("latest")]).optional(),
+  tabooSetId: TabooSetIdSchema,
   useLimitedPoolForWeaknessDraw: z.boolean(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
