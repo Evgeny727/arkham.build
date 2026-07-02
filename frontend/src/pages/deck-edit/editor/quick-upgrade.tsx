@@ -52,6 +52,7 @@ export function QuickUpgrade(props: Props) {
     referenceProps,
     isMounted,
     floatingStyles,
+    closeTooltip,
     setTooltipOpen,
     transitionStyles,
   } = useRestingTooltip();
@@ -70,6 +71,8 @@ export function QuickUpgrade(props: Props) {
   );
 
   const onUpgradeCard = useCallback(() => {
+    closeTooltip();
+
     const upgrades = availableUpgrades.upgrades[card.code];
     assert(upgrades.length, "No upgrades available for card");
 
@@ -89,7 +92,7 @@ export function QuickUpgrade(props: Props) {
     } else {
       setDialogOpen(true);
     }
-  }, [availableUpgrades, card, slots, deck, upgradeCard]);
+  }, [availableUpgrades, card, slots, deck, closeTooltip, upgradeCard]);
 
   return (
     <>
@@ -126,15 +129,13 @@ export function QuickUpgrade(props: Props) {
           </div>
         </FloatingPortal>
       )}
-      {dialogOpen && (
-        <QuickUpgradeDialog
-          {...props}
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          resolvedUpgrades={resolvedUpgrades}
-          slots={slots}
-        />
-      )}
+      <QuickUpgradeDialog
+        {...props}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        resolvedUpgrades={resolvedUpgrades}
+        slots={slots}
+      />
     </>
   );
 }

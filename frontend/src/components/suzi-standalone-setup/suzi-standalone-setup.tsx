@@ -11,7 +11,6 @@ import { getAccentColorsForFaction } from "@/utils/use-accent-color";
 import { CardScanControlled } from "../card-scan";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import { useDialogContextChecked } from "../ui/dialog.hooks";
 import { Field, FieldLabel } from "../ui/field";
 import {
@@ -25,34 +24,14 @@ import { SuziStandaloneSetupBackdrop } from "./suzi-standalone-backdrop";
 import css from "./suzi-standalone-setup.module.css";
 
 type Props = {
-  children: React.ReactNode;
   deck: ResolvedDeck;
 };
 
-export function SuziStandaloneSetupDialog(props: Props) {
-  const { children, deck } = props;
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <SuziStandaloneSetup deck={deck} />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function SuziStandaloneSetup(props: Pick<Props, "deck">) {
-  const dialogContext = useDialogContextChecked();
-
-  if (!dialogContext.open) {
-    return null;
-  }
-
+export function SuziStandaloneSetup(props: Props) {
   return <SuziStandaloneSetupInner {...props} />;
 }
 
-function SuziStandaloneSetupInner(props: Pick<Props, "deck">) {
+function SuziStandaloneSetupInner(props: Props) {
   const { deck } = props;
 
   const [, navigate] = useLocation();

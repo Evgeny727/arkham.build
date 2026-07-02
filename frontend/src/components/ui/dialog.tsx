@@ -10,6 +10,7 @@ import { FLOATING_PORTAL_ID } from "@/utils/constants";
 import type { DialogOptions } from "./dialog.hooks";
 import {
   DialogContext,
+  DialogTransitionStylesContext,
   useDialog,
   useDialogContextChecked,
 } from "./dialog.hooks";
@@ -70,13 +71,28 @@ export function DialogTrigger({
 
 export function DialogContent(props: React.HTMLProps<HTMLElement>) {
   const { context: floatingContext, ...context } = useDialogContextChecked();
-  const { isMounted, styles } = useTransitionStyles(floatingContext);
+
+  const { isMounted, styles } = useTransitionStyles(floatingContext, {
+    duration: 250,
+    common: {
+      transitionProperty: "opacity, backdrop-filter",
+    },
+    initial: {
+      opacity: 0,
+      backdropFilter: "blur(0px)",
+    },
+    open: {
+      opacity: 1,
+      backdropFilter: "blur(1.25px)",
+    },
+  });
+
   const ref = useMergeRefs([
     context.refs.setFloating,
     props.ref,
   ] as React.Ref<HTMLDivElement>[]);
 
-  if (!isMounted || !floatingContext.open) return null;
+  if (!isMounted) return null;
 
   return (
     <FloatingPortal id={FLOATING_PORTAL_ID}>
@@ -87,7 +103,9 @@ export function DialogContent(props: React.HTMLProps<HTMLElement>) {
             aria-describedby={context.descriptionId}
             ref={ref}
           >
-            <div style={styles}>{props.children}</div>
+            <DialogTransitionStylesContext value={styles}>
+              {props.children}
+            </DialogTransitionStylesContext>
           </div>
         </FloatingFocusManager>
       </FloatingOverlay>

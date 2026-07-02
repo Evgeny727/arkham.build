@@ -100,7 +100,9 @@ export function useRestingTooltip(
   },
 ) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [skipCloseTransition, setSkipCloseTransition] = useState(false);
   const restTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const suppressUntilLeaveRef = useRef(false);
 
   useEffect(
     () => () => {
@@ -125,14 +127,23 @@ export function useRestingTooltip(
     },
   });
 
+  const closeTooltip = useCallback(() => {
+    suppressUntilLeaveRef.current = true;
+    clearTimeout(restTimeoutRef.current);
+    setSkipCloseTransition(true);
+    setTooltipOpen(false);
+  }, []);
+
   const onPointerLeave = useCallback(() => {
+    suppressUntilLeaveRef.current = false;
     clearTimeout(restTimeoutRef.current);
     setTooltipOpen(false);
   }, []);
 
   const onPointerMove = useCallback(() => {
-    if (tooltipOpen) return;
+    if (suppressUntilLeaveRef.current || tooltipOpen) return;
 
+    setSkipCloseTransition(false);
     clearTimeout(restTimeoutRef.current);
 
     restTimeoutRef.current = setTimeout(() => {
@@ -142,23 +153,33 @@ export function useRestingTooltip(
 
   const referenceProps = useMemo(
     () => ({
+      onPointerDown: closeTooltip,
       onPointerLeave,
       onPointerMove,
       onMouseLeave: onPointerLeave,
     }),
-    [onPointerLeave, onPointerMove],
+    [closeTooltip, onPointerLeave, onPointerMove],
   );
 
   const value = useMemo(
     () => ({
-      isMounted,
+      isMounted: isMounted && !skipCloseTransition,
       referenceProps,
       refs,
       floatingStyles,
       transitionStyles: styles,
+      closeTooltip,
       setTooltipOpen,
     }),
-    [referenceProps, refs, styles, floatingStyles, isMounted],
+    [
+      referenceProps,
+      refs,
+      styles,
+      floatingStyles,
+      isMounted,
+      skipCloseTransition,
+      closeTooltip,
+    ],
   );
 
   return value;

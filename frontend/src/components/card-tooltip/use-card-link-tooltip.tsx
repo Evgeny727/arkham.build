@@ -14,6 +14,7 @@ import { CardTooltip } from "./card-tooltip";
 export function useCardLinkTooltip() {
   const [cardTooltip, setCardTooltip] = useState<string>("");
   const restTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const suppressUntilLeaveRef = useRef(false);
 
   useEffect(
     () => () => {
@@ -38,8 +39,20 @@ export function useCardLinkTooltip() {
     setCardTooltip("");
   }, []);
 
+  const onPointerDown = useCallback(() => {
+    suppressUntilLeaveRef.current = true;
+    closeTooltip();
+  }, [closeTooltip]);
+
+  const onPointerLeave = useCallback(() => {
+    suppressUntilLeaveRef.current = false;
+    closeTooltip();
+  }, [closeTooltip]);
+
   const onPointerMove = useCallback(
     (evt: React.PointerEvent) => {
+      if (suppressUntilLeaveRef.current) return;
+
       const anchor = (evt.target as HTMLElement)?.closest("a");
 
       if (anchor instanceof HTMLAnchorElement) {
@@ -67,10 +80,11 @@ export function useCardLinkTooltip() {
 
   const referenceProps = useMemo(
     () => ({
+      onPointerDown,
       onPointerMove,
-      onPointerLeave: closeTooltip,
+      onPointerLeave,
     }),
-    [onPointerMove, closeTooltip],
+    [onPointerDown, onPointerMove, onPointerLeave],
   );
 
   const cardLinkTooltip = isMounted && cardTooltip && (

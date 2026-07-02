@@ -40,7 +40,7 @@ import { cx } from "@/utils/cx";
 import { useHotkey } from "@/utils/use-hotkey";
 import { DeckDetail, DeckDetails } from "../deck-details";
 import { DeckInvestigatorModal } from "../deck-investigator/deck-investigator-modal";
-import { SuziStandaloneSetupDialog } from "../suzi-standalone-setup/suzi-standalone-setup";
+import { SuziStandaloneSetup } from "../suzi-standalone-setup/suzi-standalone-setup";
 import { CopyToClipboard } from "../ui/copy-to-clipboard";
 import { HotkeyTooltip } from "../ui/hotkey";
 import type { DeckDisplayType } from "./deck-display";
@@ -340,126 +340,137 @@ function SidebarActions(props: {
             </Button>
           </HotkeyTooltip>
         )}
-        <Popover
-          modal
-          placement="bottom-start"
-          open={actionsOpen}
-          onOpenChange={setActionsOpen}
-        >
-          <PopoverTrigger asChild>
-            <Button
-              variant="bare"
-              data-testid="view-more-actions"
-              aria-label={t("common.more_actions")}
-            >
-              <EllipsisIcon />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <DropdownMenu>
-              {deck.investigatorBack.card.code === SPECIAL_CARD_CODES.SUZI && (
-                <>
-                  <SuziStandaloneSetupDialog deck={deck}>
-                    <DropdownButton data-testid="view-suzi-chaos-mode">
-                      <DicesIcon />
-                      {t("suzi_standalone_setup.title_short")}
-                    </DropdownButton>
-                  </SuziStandaloneSetupDialog>
-
-                  <hr />
-                </>
-              )}
-              {origin === "local" && (
-                <>
-                  <DropdownButton
-                    hotkey="cmd+d"
-                    data-testid="view-duplicate"
-                    onClick={onDuplicate}
-                  >
-                    <CopyIcon />
-                    {t("deck.actions.duplicate_short")}
-                  </DropdownButton>
-                  {isLocalOnly &&
-                    availableUploadProviders.map((provider) => (
+        <Dialog>
+          <Popover
+            modal
+            placement="bottom-start"
+            open={actionsOpen}
+            onOpenChange={setActionsOpen}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                variant="bare"
+                data-testid="view-more-actions"
+                aria-label={t("common.more_actions")}
+              >
+                <EllipsisIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <DropdownMenu>
+                {deck.investigatorBack.card.code ===
+                  SPECIAL_CARD_CODES.SUZI && (
+                  <>
+                    <DialogTrigger asChild>
                       <DropdownButton
-                        key={provider}
-                        data-testid={`view-upload-${provider}`}
-                        onClick={() => onUpload(provider)}
+                        data-testid="view-suzi-chaos-mode"
+                        onClick={() => setActionsOpen(false)}
                       >
-                        <UploadIcon />
-                        {provider === "account"
-                          ? t("deck_view.actions.upload_account")
-                          : t("deck_view.actions.upload", {
-                              provider: t(
-                                `deck_edit.config.storage_provider.${provider}`,
-                              ),
-                            })}
+                        <DicesIcon />
+                        {t("suzi_standalone_setup.title_short")}
                       </DropdownButton>
-                    ))}
-                  <DropdownButton
-                    data-testid="view-archive"
-                    hotkey="cmd+a"
-                    onClick={toggleArchived}
-                  >
-                    {isArchived ? (
-                      <>
-                        <ArchiveRestoreIcon />
-                        {t("deck.actions.unarchive")}
-                      </>
-                    ) : (
-                      <>
-                        <ArchiveIcon />
-                        {t("deck.actions.archive")}
-                      </>
-                    )}
-                  </DropdownButton>
-                  <hr />
-                </>
-              )}
-              <DropdownButton
-                data-testid="view-export-json"
-                onClick={onExportJson}
-              >
-                {t("deck.actions.export_json")}
-              </DropdownButton>
-              <DropdownButton
-                data-testid="view-export-text"
-                onClick={onExportText}
-              >
-                {t("deck.actions.export_text")}
-              </DropdownButton>
-              {origin === "local" && (
-                <>
-                  <hr />
-                  {!!deck.previous_deck && (
+                    </DialogTrigger>
+
+                    <hr />
+                  </>
+                )}
+                {origin === "local" && (
+                  <>
                     <DropdownButton
-                      data-testid="view-delete-upgrade"
-                      disabled={hasSyncConflict || isReadOnly}
-                      hotkey="cmd+shift+backspace"
-                      onClick={onDeleteUpgrade}
-                      tooltip={
-                        hasSyncConflict
-                          ? t("deck_sync.conflict.edit_locked")
-                          : undefined
-                      }
+                      hotkey="cmd+d"
+                      data-testid="view-duplicate"
+                      onClick={onDuplicate}
                     >
-                      <i className="icon-xp-bold" />{" "}
-                      {t("deck.actions.delete_upgrade")}
+                      <CopyIcon />
+                      {t("deck.actions.duplicate_short")}
                     </DropdownButton>
-                  )}
-                  <DropdownButton
-                    data-testid="view-delete"
-                    disabled={isReadOnly}
-                    hotkey="cmd+backspace"
-                    onClick={onDelete}
-                  >
-                    <Trash2Icon /> {t("deck.actions.delete")}
-                  </DropdownButton>
-                </>
-              )}
-            </DropdownMenu>
-          </PopoverContent>
-        </Popover>
+                    {isLocalOnly &&
+                      availableUploadProviders.map((provider) => (
+                        <DropdownButton
+                          key={provider}
+                          data-testid={`view-upload-${provider}`}
+                          onClick={() => onUpload(provider)}
+                        >
+                          <UploadIcon />
+                          {provider === "account"
+                            ? t("deck_view.actions.upload_account")
+                            : t("deck_view.actions.upload", {
+                                provider: t(
+                                  `deck_edit.config.storage_provider.${provider}`,
+                                ),
+                              })}
+                        </DropdownButton>
+                      ))}
+                    <DropdownButton
+                      data-testid="view-archive"
+                      hotkey="cmd+a"
+                      onClick={toggleArchived}
+                    >
+                      {isArchived ? (
+                        <>
+                          <ArchiveRestoreIcon />
+                          {t("deck.actions.unarchive")}
+                        </>
+                      ) : (
+                        <>
+                          <ArchiveIcon />
+                          {t("deck.actions.archive")}
+                        </>
+                      )}
+                    </DropdownButton>
+                    <hr />
+                  </>
+                )}
+                <DropdownButton
+                  data-testid="view-export-json"
+                  onClick={onExportJson}
+                >
+                  {t("deck.actions.export_json")}
+                </DropdownButton>
+                <DropdownButton
+                  data-testid="view-export-text"
+                  onClick={onExportText}
+                >
+                  {t("deck.actions.export_text")}
+                </DropdownButton>
+                {origin === "local" && (
+                  <>
+                    <hr />
+                    {!!deck.previous_deck && (
+                      <DropdownButton
+                        data-testid="view-delete-upgrade"
+                        disabled={hasSyncConflict || isReadOnly}
+                        hotkey="cmd+shift+backspace"
+                        onClick={onDeleteUpgrade}
+                        tooltip={
+                          hasSyncConflict
+                            ? t("deck_sync.conflict.edit_locked")
+                            : undefined
+                        }
+                      >
+                        <i className="icon-xp-bold" />{" "}
+                        {t("deck.actions.delete_upgrade")}
+                      </DropdownButton>
+                    )}
+                    <DropdownButton
+                      data-testid="view-delete"
+                      disabled={isReadOnly}
+                      hotkey="cmd+backspace"
+                      onClick={onDelete}
+                    >
+                      <Trash2Icon /> {t("deck.actions.delete")}
+                    </DropdownButton>
+                  </>
+                )}
+              </DropdownMenu>
+            </PopoverContent>
+          </Popover>
+          {deck.investigatorBack.card.code === SPECIAL_CARD_CODES.SUZI && (
+            <DialogContent>
+              <SuziStandaloneSetup deck={deck} />
+            </DialogContent>
+          )}
+        </Dialog>
       </div>
     </>
   );

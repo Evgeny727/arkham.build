@@ -257,21 +257,8 @@ export function CardModal(props: Props) {
   return (
     <Modal key={cardWithRelations.card.code} data-testid="card-modal">
       <ModalBackdrop />
-      <ModalInner size="60rem">
+      <ModalInner size="64rem">
         <ModalActions>
-          {cardWithRelations.card.type_code === "investigator" &&
-            !isStaticInvestigator(cardWithRelations.card) &&
-            !isNonLocalFanMadeCard && (
-              <Link
-                asChild
-                href={deckCreateLink(cardWithRelations.card)}
-                onClick={onCloseModal}
-              >
-                <Button as="a" data-testid="card-modal-create-deck">
-                  <i className="icon-deck" /> {t("deck.actions.create")}
-                </Button>
-              </Link>
-            )}
           <CardPageLink card={cardWithRelations.card} />
           <CardReviewsLink card={cardWithRelations.card} />
           {canEdit &&
@@ -298,6 +285,21 @@ export function CardModal(props: Props) {
                   listOrder={listOrder}
                 />
               )}
+              {cardWithRelations.card.type_code === "investigator" &&
+                !isStaticInvestigator(cardWithRelations.card) &&
+                !isNonLocalFanMadeCard && (
+                  <div className={css["sidebar-actions"]}>
+                    <Link
+                      asChild
+                      href={deckCreateLink(cardWithRelations.card)}
+                      onClick={onCloseModal}
+                    >
+                      <Button as="a" data-testid="card-modal-create-deck">
+                        <i className="icon-deck" /> {t("deck.actions.create")}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               {showQuantities && (
                 <CardModalQuantities
                   canEdit={canEdit}

@@ -29,6 +29,13 @@ type ContextType =
   | undefined;
 
 export const DialogContext = createContext<ContextType>(undefined);
+export const DialogTransitionStylesContext = createContext<
+  React.CSSProperties | undefined
+>(undefined);
+
+export const useDialogTransitionStyles = () => {
+  return useContext(DialogTransitionStylesContext);
+};
 
 export const useDialogContextChecked = () => {
   const context = useContext(DialogContext);
