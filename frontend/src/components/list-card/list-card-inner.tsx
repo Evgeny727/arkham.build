@@ -228,31 +228,33 @@ export function ListCardInner(props: Props) {
                         cardShowCollectionNumber || !!card.reprint_of
                       }
                       cardShowUniqueIcon={cardShowUniqueIcon}
+                      slotAfter={
+                        ownedCount != null &&
+                        card.code !==
+                          SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS &&
+                        (!ownedCount ||
+                          (quantity != null && ownedCount < quantity)) && (
+                          <DefaultTooltip
+                            tooltip={
+                              quantity &&
+                              t("deck.stats.unowned", {
+                                count: quantity - ownedCount,
+                                total: quantity,
+                              })
+                            }
+                          >
+                            <span
+                              className={css["ownership"]}
+                              data-testid="ownership"
+                            >
+                              <FileWarningIcon />
+                            </span>
+                          </DefaultTooltip>
+                        )
+                      }
                     />
                   </ListCardLink>
                 </h4>
-
-                {ownedCount != null &&
-                  card.code !== SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS &&
-                  (!ownedCount ||
-                    (quantity != null && ownedCount < quantity)) && (
-                    <DefaultTooltip
-                      tooltip={
-                        quantity &&
-                        t("deck.stats.unowned", {
-                          count: quantity - ownedCount,
-                          total: quantity,
-                        })
-                      }
-                    >
-                      <span
-                        className={css["ownership"]}
-                        data-testid="ownership"
-                      >
-                        <FileWarningIcon />
-                      </span>
-                    </DefaultTooltip>
-                  )}
                 {ignoredCount > 0 && (
                   <DefaultTooltip
                     tooltip={t("deck.stats.ignored", { count: ignoredCount })}

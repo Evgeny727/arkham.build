@@ -19,6 +19,7 @@ interface Props {
   cardShowUniqueIcon?: boolean;
   className?: string;
   invert?: boolean;
+  slotAfter?: React.ReactNode;
 }
 
 export function CardName(props: Props) {
@@ -30,6 +31,7 @@ export function CardName(props: Props) {
     children,
     className,
     invert,
+    slotAfter,
   } = props;
   const level = cardLevel(card);
 
@@ -55,6 +57,7 @@ export function CardName(props: Props) {
         card.code !== SPECIAL_CARD_CODES.RANDOM_BASIC_WEAKNESS && (
           <CardPackDetail card={card} invert={invert} />
         )}
+      {slotAfter}
     </div>
   );
 }

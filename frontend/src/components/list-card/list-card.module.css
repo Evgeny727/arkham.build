@@ -212,6 +212,12 @@
   .ownership {
     color: var(--text);
     font-weight: 700;
+    vertical-align: center;
+
+    & svg {
+      display: inline-block;
+      width: 0.75em;
+    }
   }
 
   .ignored svg {
