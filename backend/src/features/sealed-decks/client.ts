@@ -38,7 +38,7 @@ export async function fetchSealedDeck(id: string) {
     );
   } catch (error) {
     if (error instanceof FetchTimeoutError) {
-      throw new HTTPException(504, {
+      throw new HTTPException(500, {
         message: "Sealed deck request timed out.",
       });
     }

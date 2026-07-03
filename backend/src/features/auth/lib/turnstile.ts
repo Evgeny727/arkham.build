@@ -53,7 +53,7 @@ export async function assertTurnstileToken(
     });
   } catch (error) {
     if (error instanceof FetchTimeoutError) {
-      throw new HTTPException(504, {
+      throw new HTTPException(500, {
         message: "Captcha verification timed out",
       });
     }
@@ -62,7 +62,7 @@ export async function assertTurnstileToken(
   }
 
   if (!response.ok) {
-    throw new HTTPException(502, {
+    throw new HTTPException(500, {
       message: "Captcha verification failed",
       cause: { status: response.status },
     });

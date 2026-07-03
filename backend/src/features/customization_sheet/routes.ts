@@ -20,7 +20,7 @@ routes.get("/:path{.+\\.webp}", async (ctx) => {
     sheet = await fetchWithTimeout(`${BASE_PATH}/${path}`);
   } catch (error) {
     if (error instanceof FetchTimeoutError) {
-      throw new HTTPException(504, {
+      throw new HTTPException(500, {
         message: "Customization sheet request timed out.",
       });
     }

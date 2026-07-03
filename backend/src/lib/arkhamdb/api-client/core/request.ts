@@ -44,13 +44,13 @@ export async function request<T, E extends HonoEnv = HonoEnv>(
     });
   } catch (err) {
     if (err instanceof FetchTimeoutError) {
-      throw new ApiError("ArkhamDB request timed out", 504);
+      throw new ApiError("ArkhamDB request timed out", 500);
     }
 
     const cause = err instanceof Error ? err.cause : undefined;
 
     if (cause instanceof Error && "code" in cause) {
-      throw new ApiError("Failed to connect to ArkhamDB", 502);
+      throw new ApiError("Failed to connect to ArkhamDB", 500);
     }
 
     throw err;

@@ -112,7 +112,7 @@ async function publicRequest<T>(
   const data = schema.safeParse(response.data);
 
   if (!data.success) {
-    throw new ApiError("ArkhamDB response does not match expected schema", 502);
+    throw new ApiError("ArkhamDB response does not match expected schema", 500);
   }
 
   return {

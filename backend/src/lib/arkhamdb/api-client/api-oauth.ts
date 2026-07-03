@@ -31,7 +31,7 @@ export async function exchangeAuthCodeForToken<E extends HonoEnv = HonoEnv>(
   const token = response.data;
 
   if (!isOAuthAccessToken(token)) {
-    throw new ApiError("unknown_error", 502);
+    throw new ApiError("unknown_error", 500);
   }
 
   return token;
@@ -61,7 +61,7 @@ export async function refreshAccessToken<E extends HonoEnv = HonoEnv>(
   const token = response.data;
 
   if (!isOAuthAccessToken(token)) {
-    throw new ApiError("unknown_error", 502);
+    throw new ApiError("unknown_error", 500);
   }
 
   return token;
