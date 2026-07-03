@@ -152,7 +152,9 @@ test.describe("limited card pool", () => {
 
     // assert the card is now in the card pool
     await page.getByTestId("search-input").fill("strong-armed");
-    await expect(page.getByTestId("listcard-10031")).toBeVisible();
+    await expect(
+      page.getByTestId("virtuoso-item-list").getByTestId("listcard-10031"),
+    ).toBeVisible();
 
     combobox = page
       .getByTestId("meta-limited-card-pool")
