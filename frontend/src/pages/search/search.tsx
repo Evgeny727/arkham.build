@@ -31,20 +31,15 @@ function Search() {
   const activeList = useStore((state) => state.lists[listKey]);
   const hasActiveList = useStore((state) => !!state.lists[listKey]);
 
-  const activeListCardType = useStore((state) => {
-    const list = state.lists[listKey];
-    const filterIndex = list?.filters.indexOf("card_type") ?? -1;
-    const value = list?.filterValues[filterIndex]?.value;
-    return value === "player" || value === "encounter" ? value : "";
-  });
   const addList = useStore((state) => state.addList);
   const setActiveList = useStore((state) => state.setActiveList);
   const setSearchValue = useStore((state) => state.setSearchValue);
   const removeList = useStore((state) => state.removeList);
   const mounted = useRef(false);
+  const syncedCardType = useRef(cardType);
 
   useEffect(() => {
-    if (!hasActiveList || activeListCardType !== cardType) {
+    if (!hasActiveList || syncedCardType.current !== cardType) {
       addList(
         listKey,
         {
@@ -56,19 +51,12 @@ function Search() {
           showOwnershipFilter: false,
         },
       );
+      syncedCardType.current = cardType;
     }
 
     setActiveList(listKey);
     setSearchValue(query);
-  }, [
-    activeListCardType,
-    addList,
-    cardType,
-    hasActiveList,
-    query,
-    setActiveList,
-    setSearchValue,
-  ]);
+  }, [addList, cardType, hasActiveList, query, setActiveList, setSearchValue]);
 
   useEffect(() => {
     return () => {

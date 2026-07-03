@@ -1,18 +1,6 @@
 ## Behavior
 
-- Keep answers short and concise.
-- Don't start implementing, designing, or modifying code unless explicitly asked to.
-- Do not edit `schema.sql` directly. use dbmate's dump command to generate it.
-
-## Code style
-
-- Use newspaper style: public/primary functions at the top of the file, private/utility functions at the bottom of the file.
-
-## Typescript rules
-
-- Add imports at the top of the file. Valid exceptions: dynamic `import()`.
-- Only `export` symbols when at least one other file imports them.
-- No `any` type unless absolutely necessary. Instead, prefer `unknown` or `never` where a narrow type cannot be provided.
+- Do not edit `schema.sql` directly. use `dbmate`'s `dump` command to generate it.
 
 ## Backend rules
 
