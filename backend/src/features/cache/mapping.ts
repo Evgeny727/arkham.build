@@ -56,7 +56,7 @@ export function mapCardRowToV1Card(card: Selectable<Card>) {
 
     const value = card[key as keyof Card];
 
-    if (value != null && value !== false) {
+    if (value != null && (value !== false || key === "exceptional")) {
       output[key] = value;
     }
   }
