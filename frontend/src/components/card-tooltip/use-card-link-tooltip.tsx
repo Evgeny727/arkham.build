@@ -66,16 +66,20 @@ export function useCardLinkTooltip() {
             getBoundingClientRect: () => rect,
           });
 
-          restTimeoutRef.current = setTimeout(() => {
+          if (cardTooltip) {
             setCardTooltip(code);
-          }, 25);
+          } else {
+            restTimeoutRef.current = setTimeout(() => {
+              setCardTooltip(code);
+            }, 25);
+          }
           return;
         }
       }
 
       closeTooltip();
     },
-    [refs, closeTooltip],
+    [refs, closeTooltip, cardTooltip],
   );
 
   const referenceProps = useMemo(
@@ -91,7 +95,11 @@ export function useCardLinkTooltip() {
     <FloatingPortal id={FLOATING_PORTAL_ID}>
       <div
         ref={refs.setFloating}
-        style={{ ...floatingStyles, ...transitionStyles }}
+        style={{
+          ...floatingStyles,
+          ...transitionStyles,
+          pointerEvents: "none",
+        }}
       >
         <CardTooltip code={cardTooltip} />
       </div>

@@ -96,7 +96,10 @@ export function DialogContent(props: React.HTMLProps<HTMLElement>) {
 
   return (
     <FloatingPortal id={FLOATING_PORTAL_ID}>
-      <FloatingOverlay lockScroll>
+      <FloatingOverlay
+        lockScroll
+        style={{ pointerEvents: context.open ? undefined : "none" }}
+      >
         <FloatingFocusManager context={floatingContext}>
           <div
             {...context.getFloatingProps(props)}

@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/a11y/useKeyWithClickEvents: not relevant. */
 /** biome-ignore-all lint/a11y/noStaticElementInteractions: catches onclick bubbles up from content. */
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useCardLinkTooltip } from "@/components/card-tooltip/use-card-link-tooltip";
 import { useStore } from "@/store";
@@ -22,6 +22,20 @@ function DeckDescription(props: Props) {
   const openCardModal = useStore((state) => state.openCardModal);
 
   const { cardLinkTooltip, referenceProps } = useCardLinkTooltip();
+
+  const descriptionMarkup = useMemo(
+    () => ({
+      __html: parseMarkdown(content, {
+        noImageReferrer: true,
+        externalEmbeds: {
+          loadLabel: t("external_embed.load"),
+          notice: t("external_embed.notice"),
+          title: t("external_embed.title"),
+        },
+      }),
+    }),
+    [content, t],
+  );
 
   const onLinkClick = useCallback(
     (evt: React.MouseEvent) => {
@@ -65,16 +79,7 @@ function DeckDescription(props: Props) {
         )}
         data-testid="description-content"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: we sanitize html content.
-        dangerouslySetInnerHTML={{
-          __html: parseMarkdown(content, {
-            noImageReferrer: true,
-            externalEmbeds: {
-              loadLabel: t("external_embed.load"),
-              notice: t("external_embed.notice"),
-              title: t("external_embed.title"),
-            },
-          }),
-        }}
+        dangerouslySetInnerHTML={descriptionMarkup}
         onClick={onLinkClick}
         {...referenceProps}
       />
