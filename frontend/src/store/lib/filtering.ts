@@ -4,6 +4,7 @@ import {
   type Collection,
   cardLevel,
   type DeckOption,
+  realCardLevel,
   type SealedDeckResponse,
   SKILL_KEYS,
   type SkillKey,
@@ -395,6 +396,7 @@ function checkLevelRange(value: [number, number], card: Card, filter?: Filter) {
 }
 
 type FilterCardLevelOptions = {
+  checkEffectiveLevel?: boolean;
   customizable?: CustomizableFilterOptions;
   investigator?: Card;
   targetDeck?: "slots" | "extraSlots" | "both";
@@ -402,13 +404,21 @@ type FilterCardLevelOptions = {
 
 function filterCardLevel(
   value: [number, number] | undefined,
-  buildQlInterpeter: Interpreter | undefined,
+  buildQlInterpreter: Interpreter | undefined,
   options?: FilterCardLevelOptions,
 ) {
   return (card: Card) => {
     if (!value) return true;
 
     const level = cardLevel(card);
+
+    // Special case: show chained cards at their effective level too
+    if (options?.checkEffectiveLevel && card.taboo_xp !== 0) {
+      const realLevel = realCardLevel(card);
+      if (realLevel !== level && isLevelInRange(realLevel, value)) {
+        return true;
+      }
+    }
 
     if (
       !card.customization_options ||
@@ -423,7 +433,7 @@ function filterCardLevel(
 
     const filter = filterInvestigatorAccess(
       options.investigator,
-      buildQlInterpeter,
+      buildQlInterpreter,
       {
         customizable: {
           level: "actual",
@@ -437,13 +447,19 @@ function filterCardLevel(
   };
 }
 
+type FilterLevelOpts = {
+  checkEffectiveLevel?: boolean;
+  investigator?: Card;
+};
+
 export function filterLevel(
   filterState: LevelFilter,
-  buildQlInterpeter: Interpreter,
-  investigator?: Card,
+  buildQlInterpreter: Interpreter | undefined,
+  opts?: FilterLevelOpts,
 ) {
-  return filterCardLevel(filterState.range, buildQlInterpeter, {
-    investigator,
+  return filterCardLevel(filterState.range, buildQlInterpreter, {
+    investigator: opts?.investigator,
+    checkEffectiveLevel: opts?.checkEffectiveLevel,
     customizable: {
       level: "all",
       properties: "all",

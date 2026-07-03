@@ -61,7 +61,10 @@ export const selectAvailableUpgrades = createSelector(
 
     const filters = [
       filterDuplicates,
-      filterLevel({ range: [1, 5] }, buildQlInterpreter, suzi),
+      filterLevel({ range: [1, 5] }, buildQlInterpreter, {
+        checkEffectiveLevel: false,
+        investigator: suzi,
+      }),
       cardAccessFilter,
       (c: Card) =>
         !c.real_text?.includes("Researched") && !c.customization_options,

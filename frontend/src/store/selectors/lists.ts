@@ -217,11 +217,10 @@ function makeUserFilter(
         if (value.range) {
           if (resolvedDeck) {
             filters.push(
-              filterLevel(
-                value,
-                buildQlInterpreter,
-                resolvedDeck?.investigatorBack?.card,
-              ),
+              filterLevel(value, buildQlInterpreter, {
+                checkEffectiveLevel: true,
+                investigator: resolvedDeck?.investigatorBack?.card,
+              }),
             );
           } else {
             const filterIndex = list.filters.indexOf("investigator");
@@ -231,7 +230,12 @@ function makeUserFilter(
             const investigator = filterValue
               ? metadata.cards[filterValue as string]
               : undefined;
-            filters.push(filterLevel(value, buildQlInterpreter, investigator));
+            filters.push(
+              filterLevel(value, buildQlInterpreter, {
+                checkEffectiveLevel: true,
+                investigator,
+              }),
+            );
           }
         }
 

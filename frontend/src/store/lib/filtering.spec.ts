@@ -15,6 +15,7 @@ import type {
   LevelFilter,
   SkillIconsFilter,
 } from "../slices/lists.types";
+import { applyTaboo } from "./card-edits";
 import type { InvestigatorAccessConfig } from "./filtering";
 import {
   filterActions,
@@ -576,11 +577,9 @@ describe("filter: level", () => {
     investigator?: Card,
   ) {
     const buildQlInterpreter = selectStaticBuildQlInterpreter(state);
-    return filterLevel(
-      config,
-      buildQlInterpreter,
+    return filterLevel(config, buildQlInterpreter, {
       investigator,
-    )(state.metadata.cards[code]);
+    })(state.metadata.cards[code]);
   }
 
   it("handles case: no range", () => {
@@ -637,6 +636,24 @@ describe("filter: level", () => {
     expect(applyFilter(state, "02005", config)).toBeFalsy(); // investigator
     expect(applyFilter(state, "02014", config)).toBeFalsy(); // signature
     expect(applyFilter(state, "02015", config)).toBeFalsy(); // weakness
+  });
+
+  it("handles case: effective taboo level", () => {
+    const state = store.getState();
+    const buildQlInterpreter = selectStaticBuildQlInterpreter(state);
+    const signumCrucis = applyTaboo(
+      state.metadata.cards["07197"],
+      state.metadata,
+      10,
+    );
+    const config: LevelFilter = { range: [0, 0] };
+
+    expect(filterLevel(config, buildQlInterpreter)(signumCrucis)).toBeFalsy();
+    expect(
+      filterLevel(config, buildQlInterpreter, {
+        checkEffectiveLevel: true,
+      })(signumCrucis),
+    ).toBeTruthy();
   });
 
   it("handles case: customizable access", () => {
