@@ -273,6 +273,24 @@ describe("Interpreter", () => {
       expect(filter(createMockCard({ name: "Roland" }))).toBe(false);
     });
 
+    test("strict equals (==) on string fields preserves surrounding whitespace", () => {
+      const expr = parse('name == "Roland Banks "');
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ name: "Roland Banks" }))).toBe(false);
+      expect(filter(createMockCard({ name: "Roland Banks " }))).toBe(true);
+    });
+
+    test("strict equals (==) on text fields preserves surrounding whitespace", () => {
+      const expr = parse('text == " fight "');
+      const filter = compile(expr, ctx);
+
+      expect(filter(createMockCard({ text: "fight" }))).toBe(false);
+      expect(filter(createMockCard({ text: "a fight" }))).toBe(false);
+      expect(filter(createMockCard({ text: "fight text" }))).toBe(false);
+      expect(filter(createMockCard({ text: "a fight text" }))).toBe(true);
+    });
+
     test("loose equals (=) on text fields uses fuzzy match", () => {
       const expr = parse('text = "fight combat"');
       const filter = compile(expr, ctx);

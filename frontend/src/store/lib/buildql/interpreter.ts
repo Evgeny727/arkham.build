@@ -521,8 +521,9 @@ export class Interpreter {
     }
 
     if (typeof left === "string" && typeof right === "string") {
-      const normalizedLeft = this.normalizeString(left);
-      const normalizedRight = this.normalizeString(right);
+      const trim = mode === "loose";
+      const normalizedLeft = this.normalizeString(left, trim);
+      const normalizedRight = this.normalizeString(right, trim);
 
       if (!normalizedLeft || !normalizedRight) {
         return normalizedLeft === normalizedRight;
@@ -622,8 +623,9 @@ export class Interpreter {
     return !this.equals(left, right, mode, fieldType);
   }
 
-  private normalizeString(str: string): string {
-    return str.toLocaleLowerCase().trim();
+  private normalizeString(str: string, trim: boolean): string {
+    const normalized = str.toLocaleLowerCase();
+    return trim ? normalized.trim() : normalized;
   }
 
   private toNumber(value: FieldValue | RegExp): number | null {
