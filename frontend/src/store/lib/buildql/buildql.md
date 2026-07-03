@@ -248,6 +248,9 @@ back:subname != null & back:subname != subname
 - **in_deck** (number)
 - **is_upgrade** (boolean)
   - aliases: `iu`
+- **level** (number)
+  - aliases: `lvl`
+  - legacy alias: `p`
 - **multiclass** (boolean)
   - aliases: `mu`, `multi`
 - **myriad** (boolean)
@@ -307,5 +310,4 @@ back:subname != null & back:subname != subname
   - aliases: `wp`, `will`, `brain`
   - legacy alias: `w`
 - **xp** (number)
-  - aliases: `level`, `lvl`
-  - legacy alias: `p`
+  - actual cost after chain, unchain and exceptional factored in.

@@ -1,4 +1,4 @@
-import type { Card } from "@arkham-build/shared";
+import { type Card, countExperience } from "@arkham-build/shared";
 import {
   filterInvestigatorAccess,
   filterInvestigatorWeaknessAccess,
@@ -314,7 +314,13 @@ const fieldDefinitions: FieldDefinition[] = [
     name: "is_upgrade",
     type: "boolean",
   },
-
+  {
+    aliases: ["lvl"],
+    legacyAlias: "p",
+    lookup: backResolver((card) => card.xp ?? null),
+    name: "level",
+    type: "number",
+  },
   {
     aliases: ["mu", "multi"],
     lookup: backResolver(
@@ -514,9 +520,10 @@ const fieldDefinitions: FieldDefinition[] = [
     type: "number",
   },
   {
-    aliases: ["level", "lvl"],
-    legacyAlias: "p",
-    lookup: backResolver((card) => card.xp ?? null),
+    lookup: backResolver((card) => {
+      if (card.xp == null) return null;
+      return countExperience(card, 1);
+    }),
     name: "xp",
     type: "number",
   },
