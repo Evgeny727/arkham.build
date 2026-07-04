@@ -221,6 +221,10 @@ function createRelations(metadata: Metadata, tables: LookupTables) {
       } else {
         bonded[bondedMatch[1]].push(card.code);
       }
+      // Fan-made cards can bond by <bonded_to>
+    } else if (!card.official && card.bonded_to) {
+      bonded[card.bonded_to] ??= [];
+      bonded[card.bonded_to].push(card.code);
     }
 
     if (card.back_link_id) {
