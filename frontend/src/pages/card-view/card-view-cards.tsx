@@ -207,13 +207,17 @@ export function CardViewCards({
 }: {
   cardWithRelations: CardWithRelations;
 }) {
-  const showFanMadeRelations = useStore(selectShowFanMadeRelations);
+  const showAllFanMadeRelations = useStore(selectShowFanMadeRelations);
   const settings = useStore((state) => state.settings);
-  const related = getRelatedCards(
-    cardWithRelations,
-    showFanMadeRelations,
-    settings.showPreviews,
-  );
+  const allowSameFanMadePackRelations = official(cardWithRelations.card)
+    ? undefined
+    : (card: CardType) =>
+        !official(card) && card.pack_code === cardWithRelations.card.pack_code;
+  const related = getRelatedCards(cardWithRelations, {
+    showAllFanMadeRelations,
+    showPreviews: settings.showPreviews,
+    fanMadeCardOverride: allowSameFanMadePackRelations,
+  });
 
   return (
     <>

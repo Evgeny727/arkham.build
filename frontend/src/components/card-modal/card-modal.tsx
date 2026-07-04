@@ -89,7 +89,7 @@ export function CardModal(props: Props) {
   });
 
   const settings = useStore((state) => state.settings);
-  const showFanMadeRelations = useStore(selectShowFanMadeRelations);
+  const showAllFanMadeRelations = useStore(selectShowFanMadeRelations);
 
   const openCardModal = useStore((state) => state.openCardModal);
   const listOrder = useStore((state) => state.ui.cardModal.config?.listOrder);
@@ -117,11 +117,10 @@ export function CardModal(props: Props) {
   const showQuantities =
     !!ctx.resolvedDeck && cardWithRelations?.card.type_code !== "investigator";
   const showExtraQuantities = ctx.resolvedDeck?.hasExtraDeck;
-  const related = getRelatedCards(
-    cardWithRelations,
-    showFanMadeRelations,
-    settings.showPreviews,
-  );
+  const related = getRelatedCards(cardWithRelations, {
+    showAllFanMadeRelations,
+    showPreviews: settings.showPreviews,
+  });
 
   const attachableDefinition = ctx.resolvedDeck?.availableAttachments.find(
     (config) => config.code === cardWithRelations.card.code,
