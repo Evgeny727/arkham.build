@@ -201,7 +201,12 @@ const fieldDefinitions: FieldDefinition[] = [
 
       return Object.keys(otherLevels).some((otherCode) => {
         const otherCard = metadata.cards[otherCode];
-        if (!otherCard || (otherCard.xp ?? 0) <= (card.xp ?? 0)) return false;
+        if (!otherCard) return false;
+
+        const cardXp = countExperience(card, 1);
+        const otherCardXp = countExperience(otherCard, 1);
+
+        if (!otherCard || otherCardXp <= cardXp) return false;
         return !deck || accessFilter?.(otherCard);
       });
     }),
