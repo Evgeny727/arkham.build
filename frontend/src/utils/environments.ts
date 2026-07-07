@@ -4,6 +4,16 @@ import type { Metadata } from "@/store/slices/metadata.types";
 import { inferChapterNumber } from "./chapters";
 import { RETURN_TO_CYCLES } from "./constants";
 
+const NON_DECKBUILDING_POOL_CYCLE_CODES = new Set([
+  "parallel",
+  "promotional",
+  "side_stories",
+]);
+
+export function isDeckbuildingPoolPack(pack: Pick<Pack, "cycle_code">) {
+  return !NON_DECKBUILDING_POOL_CYCLE_CODES.has(pack.cycle_code);
+}
+
 export const environments = {
   current() {
     return ["cycle:core_ch2", "cycle:investigator_decks_ch2"];
@@ -43,11 +53,15 @@ export const environments = {
       }
 
       for (const pack of cycle.packs) {
-        if (seen.has(pack.code) || inferChapterNumber(pack) !== chapter) {
+        if (
+          seen.has(pack.code) ||
+          inferChapterNumber(pack) !== chapter ||
+          !isDeckbuildingPoolPack(pack)
+        ) {
           continue;
         }
 
-        if (pack.cycle_code !== "side_stories") packs.add(pack.code);
+        packs.add(pack.code);
       }
     }
 
