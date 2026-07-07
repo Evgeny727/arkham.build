@@ -297,6 +297,14 @@ const fieldDefinitions: FieldDefinition[] = [
     type: "number",
   },
   {
+    lookup: () => (card, ctx) => {
+      if (!ctx.deck) return null;
+      return ctx.deck.sideSlots?.[card.code] ?? null;
+    },
+    name: "in_side_deck",
+    type: "number",
+  },
+  {
     aliases: ["iu"],
     lookup: backResolver((card, { deck, lookupTables, metadata }) => {
       const otherLevels = lookupTables.relations.level[card.code];

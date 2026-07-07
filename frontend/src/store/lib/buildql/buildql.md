@@ -246,6 +246,7 @@ back:subname != null & back:subname != subname
   - aliases: `ia`
   - legacy alias: `do`
 - **in_deck** (number)
+- **in_side_deck** (number)
 - **is_upgrade** (boolean)
   - aliases: `iu`
 - **level** (number)
