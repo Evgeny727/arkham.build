@@ -1,5 +1,7 @@
 import type { Cycle, Pack } from "@arkham-build/shared";
+import type { CycleWithPacks } from "@/store/selectors/lists";
 import type { Metadata } from "@/store/slices/metadata.types";
+import { inferChapterNumber } from "./chapters";
 import { RETURN_TO_CYCLES } from "./constants";
 
 export const environments = {
@@ -18,6 +20,38 @@ export const environments = {
       "cycle:core_ch2",
       "cycle:investigator_decks_ch2",
     ];
+  },
+  chapter(cycles: CycleWithPacks[], chapter: 2 | 1) {
+    const packs = new Set<string>();
+
+    for (const cycle of cycles) {
+      const seen = new Set<string>();
+
+      for (const reprint of cycle.reprintPacks) {
+        if (
+          inferChapterNumber(reprint) !== chapter ||
+          reprint.reprint_type === "campaign"
+        ) {
+          continue;
+        }
+
+        for (const reprinted of reprint.reprint_packs ?? []) {
+          seen.add(reprinted);
+        }
+
+        packs.add(reprint.code);
+      }
+
+      for (const pack of cycle.packs) {
+        if (seen.has(pack.code) || inferChapterNumber(pack) !== chapter) {
+          continue;
+        }
+
+        if (pack.cycle_code !== "side_stories") packs.add(pack.code);
+      }
+    }
+
+    return Array.from(packs);
   },
   cpa(cycle: string, chapter: 2 | 1) {
     const packs = [];
