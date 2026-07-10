@@ -155,9 +155,9 @@ function SidebarActions(props: {
 
   const onDeleteLatest = useCallback(() => {
     if (deck.previous_deck) {
-      deleteUpgrade(deck.id);
+      void deleteUpgrade(deck.id).catch(console.error);
     } else {
-      onDelete();
+      void onDelete().catch(console.error);
     }
   }, [deleteUpgrade, onDelete, deck]);
 
@@ -176,7 +176,7 @@ function SidebarActions(props: {
 
   const onDuplicate = useCallback(() => {
     setActionsOpen(false);
-    duplicateDeck(deck.id);
+    void duplicateDeck(deck.id).catch(console.error);
   }, [deck.id, duplicateDeck]);
 
   const uploadDeckToProvider = useUploadDeckToProvider();

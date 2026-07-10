@@ -1099,7 +1099,7 @@ export const selectAssetOptions = createSelector(
 
     const skillBoosts = SKILL_KEYS.filter((x) => x !== "wild");
 
-    uses.sort();
+    uses.sort((a, b) => a.name.localeCompare(b.name));
 
     return {
       health: filterProps.health,

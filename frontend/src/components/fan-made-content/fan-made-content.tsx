@@ -452,7 +452,7 @@ function Registry({ onAddProject, listingsQuery, filterFn }: RegistryProps) {
             const projectOwned = owned[meta.code];
 
             const addProject = () => {
-              onAddFromRegistry(listing);
+              void onAddFromRegistry(listing).catch(console.error);
             };
 
             return (
@@ -778,9 +778,10 @@ function useProjectRegistry(onAddProject: (payload: unknown) => Promise<void>) {
       evt.stopPropagation();
 
       const formData = new FormData(evt.currentTarget);
+      const value = formData.get("url");
+      if (typeof value !== "string" || !value) return;
 
-      const url = formData.get("url")?.toString();
-      if (!url) return;
+      const url = value;
 
       await onAddQuery(async () => {
         const res = await fetch(url);

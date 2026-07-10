@@ -267,6 +267,7 @@ export function Slider(props: Props) {
             ref={(node) => {
               thumbRefs.current[index] = node;
             }}
+            // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- can't use input here
             role="slider"
             style={thumbStyle}
             tabIndex={disabled ? undefined : 0}

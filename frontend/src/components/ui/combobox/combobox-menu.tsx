@@ -90,6 +90,7 @@ export function ComboboxMenu<T extends Coded>(props: Props<T>) {
                   listRef.current[index] = node;
                 }
               }}
+              // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- implementation debt
               tabIndex={active ? 0 : -1}
             >
               {selectedItems.find((s) => s?.code === item.code) && (

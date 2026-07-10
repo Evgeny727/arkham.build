@@ -1,8 +1,21 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y"],
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "jsx-a11y",
+    "import",
+    "promise",
+    "vitest"
+  ],
   "categories": {
     "correctness": "error"
+  },
+  "options": {
+    "typeAware": true,
+    "maxWarnings": 10
   },
   "rules": {
     "default-param-last": "error",
@@ -10,22 +23,17 @@
     "jsx-a11y/anchor-has-content": "error",
     "jsx-a11y/click-events-have-key-events": "error",
     "jsx-a11y/control-has-associated-label": "off",
-    "jsx-a11y/interactive-supports-focus": "off",
     "jsx-a11y/no-autofocus": ["error", { "ignoreNonDOM": true }],
-    "jsx-a11y/no-noninteractive-tabindex": "off",
     "jsx-a11y/no-static-element-interactions": "error",
-    "jsx-a11y/prefer-tag-over-role": "off",
-    "jsx-a11y/role-has-required-aria-props": "off",
+    "jsx-a11y/prefer-tag-over-role": "error",
     "no-console": [
       "error",
       {
         "allow": ["warn", "error", "time", "timeEnd", "debug", "info"]
       }
     ],
-    "no-constant-binary-expression": "off",
     "no-else-return": "error",
     "no-param-reassign": "error",
-    "no-unused-expressions": "off",
     "no-unused-vars": [
       "error",
       {
@@ -36,8 +44,6 @@
         "varsIgnorePattern": "^_"
       }
     ],
-    "no-useless-escape": "off",
-    "oxc/const-comparisons": "off",
     "oxc/no-barrel-file": "error",
     "react/exhaustive-deps": "error",
     "react/no-array-index-key": "error",
@@ -48,16 +54,36 @@
     "typescript/no-explicit-any": "error",
     "typescript/no-inferrable-types": "error",
     "typescript/no-non-null-assertion": "error",
+    "typescript/unbound-method": "off",
     "typescript/no-unnecessary-template-expression": "error",
     "typescript/prefer-enum-initializers": "error",
-    "typescript/triple-slash-reference": "off",
-    "unicorn/no-empty-file": "off",
-    "unicorn/no-useless-spread": "off",
-    "unicorn/prefer-number-properties": "error"
+    "unicorn/prefer-number-properties": "error",
+    "vitest/no-conditional-expect": "off",
+    "vitest/require-mock-type-parameters": "off",
+    "vitest/no-standalone-expect": [
+      "error",
+      {
+        "additionalTestBlockFunctions": ["test", "test.for"]
+      }
+    ]
   },
   "env": {
     "builtin": true
   },
+  "overrides": [
+    {
+      "files": ["**/backend/**", "**/shared/**"],
+      "plugins": [
+        "typescript",
+        "unicorn",
+        "oxc",
+        "import",
+        "promise",
+        "vitest",
+        "node"
+      ]
+    }
+  ],
   "ignorePatterns": [
     "**/dist",
     "**/coverage",

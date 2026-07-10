@@ -63,8 +63,6 @@ export function Filters(props: Props) {
     updateFiltersEnabled(!filtersEnabled);
   }, [filtersEnabled, updateFiltersEnabled]);
 
-  useHotkey;
-
   useHotkey("alt+f", toggleFiltersEnabled, {
     allowInputFocused: true,
   });

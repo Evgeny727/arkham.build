@@ -55,7 +55,7 @@ export function DecklistValidation(props: Props) {
                 {isTooManyCardsError(error) && (
                   <>
                     {t("deck.validation.too_many_cards", {
-                      deck: `${t(`common.decks.${error.details.target}`)}`,
+                      deck: t(`common.decks.${error.details.target}`),
                     })}{" "}
                     ({error.details.count} / {error.details.countRequired})
                   </>
@@ -63,7 +63,7 @@ export function DecklistValidation(props: Props) {
                 {isTooFewCardsError(error) && (
                   <>
                     {t("deck.validation.too_few_cards", {
-                      deck: `${t(`common.decks.${error.details.target}`)}`,
+                      deck: t(`common.decks.${error.details.target}`),
                     })}{" "}
                     ({error.details.count} / {error.details.countRequired})
                   </>

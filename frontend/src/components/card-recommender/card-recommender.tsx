@@ -165,7 +165,7 @@ function DeckCount(props: { decksAnalyzed?: number }) {
   const { decksAnalyzed } = props;
   const { t } = useTranslation();
 
-  if (!decksAnalyzed == null) return null;
+  if (decksAnalyzed == null) return null;
 
   return (
     <span className={css["toggle-decks-count"]}>

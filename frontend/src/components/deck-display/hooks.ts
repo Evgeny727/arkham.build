@@ -220,9 +220,11 @@ export function useChangeArchiveStatus(deckId: Id) {
     isArchived,
     toggleArchived: () => {
       if (isArchived) {
-        removeDeckFromFolder(client, deckId);
+        void removeDeckFromFolder(client, deckId).catch(console.error);
       } else {
-        setDeckFolder(client, deckId, ARCHIVE_FOLDER_ID);
+        void setDeckFolder(client, deckId, ARCHIVE_FOLDER_ID).catch(
+          console.error,
+        );
       }
     },
   };
