@@ -5,6 +5,7 @@ import { cardLimit, displayAttribute } from "@/utils/card-utils";
 import { capitalize } from "@/utils/formatting";
 import { range } from "@/utils/range";
 import { clampAttachmentQuantity } from "../lib/attachments";
+import { parseCardTagNames, resolveCardTagCardCode } from "../lib/card-tags";
 import { randomBasicWeaknessForDeck } from "../lib/random-basic-weakness";
 import { getDeckLimitOverride } from "../lib/resolve-deck";
 import { dehydrate } from "../persist";
@@ -348,6 +349,33 @@ export const createDeckEditsSlice: StateCreator<
             annotations: {
               ...edits.annotations,
               [code]: value,
+            },
+            type: "user" as const,
+          },
+        },
+      };
+    });
+
+    dehydrate(get(), "edits").catch(console.error);
+  },
+  updateDeckCardTags(deckId, cardCode, tagNames) {
+    set((state) => {
+      const canonicalCode = resolveCardTagCardCode(
+        state.metadata,
+        selectLookupTables(state).relations.fronts,
+        cardCode,
+      );
+      const nextTagNames = parseCardTagNames(tagNames);
+      const edits = currentEdits(state, deckId);
+
+      return {
+        deckEdits: {
+          ...state.deckEdits,
+          [deckId]: {
+            ...edits,
+            deckCardTags: {
+              ...edits.deckCardTags,
+              [canonicalCode]: nextTagNames.length ? nextTagNames : null,
             },
             type: "user" as const,
           },

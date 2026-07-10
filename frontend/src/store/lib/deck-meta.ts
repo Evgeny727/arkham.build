@@ -1,13 +1,16 @@
 import {
+  CardTagSchema,
   type Deck,
   type DeckMeta,
   type SealedDeckResponse,
   type Slots,
   SPECIAL_CARD_CODES,
 } from "@arkham-build/shared";
+import { z } from "zod";
 import type { AttachmentQuantities } from "@/store/slices/deck-edits.types";
 import type { Metadata } from "@/store/slices/metadata.types";
 import { range } from "@/utils/range";
+import { parseCardTagNames } from "./card-tags";
 import type {
   Annotations,
   CardWithRelations,
@@ -16,6 +19,11 @@ import type {
   Selection,
   Selections,
 } from "./types";
+
+const DeckCardTagsSchema = z.record(
+  z.string().min(1).max(255),
+  z.array(CardTagSchema),
+);
 
 export function decodeDeckMeta(deck: Deck): DeckMeta {
   try {
@@ -290,4 +298,42 @@ export function encodeAnnotations(annotations: Annotations) {
     },
     {},
   );
+}
+
+export function decodeDeckCardTags(
+  deckMeta: DeckMeta,
+): Record<string, string[]> {
+  if (!deckMeta.deck_card_tags) return {};
+
+  try {
+    const parsed = DeckCardTagsSchema.safeParse(
+      JSON.parse(deckMeta.deck_card_tags),
+    );
+
+    return parsed.success ? normalizeDeckCardTags(parsed.data) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function encodeDeckCardTags(
+  deckCardTags: Record<string, string[]>,
+): string | null {
+  const normalized = normalizeDeckCardTags(deckCardTags);
+  return Object.keys(normalized).length ? JSON.stringify(normalized) : null;
+}
+
+function normalizeDeckCardTags(deckCardTags: Record<string, string[]>) {
+  const result: Record<string, string[]> = {};
+
+  for (const [cardCode, tagNames] of Object.entries(deckCardTags)) {
+    const parsedCardCode = z.string().min(1).max(255).parse(cardCode);
+    const parsedTagNames = parseCardTagNames(tagNames);
+
+    if (parsedTagNames.length) {
+      result[parsedCardCode] = parsedTagNames;
+    }
+  }
+
+  return result;
 }

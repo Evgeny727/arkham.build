@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StoreApi } from "zustand";
+import { selectAccountSyncStatus } from "@/store/selectors/sync";
 import * as deckRequests from "@/store/services/requests/decks";
 import {
   makeAuthenticatedAuth,
@@ -34,6 +35,7 @@ describe("sync slice", () => {
   it("removes stale remote decks when the authenticated account changes", async () => {
     const loadRemoteSettings = vi.fn().mockResolvedValue(undefined);
     const loadRemoteFolders = vi.fn().mockResolvedValue(undefined);
+    const loadRemoteCardTags = vi.fn().mockResolvedValue(undefined);
     const syncDecks = vi.fn().mockResolvedValue(undefined);
 
     store.setState({
@@ -59,6 +61,7 @@ describe("sync slice", () => {
       }),
       loadRemoteSettings,
       loadRemoteFolders,
+      loadRemoteCardTags,
       syncDecks,
     });
 
@@ -70,8 +73,10 @@ describe("sync slice", () => {
     expect(store.getState().sync.settings.accountId).toBeNull();
     expect(store.getState().sync.decks.accountId).toBeNull();
     expect(store.getState().sync.folders.accountId).toBeNull();
+    expect(store.getState().sync.cardTags.accountId).toBeNull();
     expect(loadRemoteSettings).toHaveBeenCalledOnce();
     expect(loadRemoteFolders).toHaveBeenCalledOnce();
+    expect(loadRemoteCardTags).toHaveBeenCalledOnce();
     expect(syncDecks).toHaveBeenCalledOnce();
   });
 
@@ -79,12 +84,14 @@ describe("sync slice", () => {
     const client = getMockHttpClient();
     const loadRemoteSettings = vi.fn().mockResolvedValue(undefined);
     const loadRemoteFolders = vi.fn().mockResolvedValue(undefined);
+    const loadRemoteCardTags = vi.fn().mockResolvedValue(undefined);
     const syncDecks = vi.fn().mockResolvedValue(undefined);
 
     store.setState({
       auth: makeAuthenticatedAuth(),
       loadRemoteSettings,
       loadRemoteFolders,
+      loadRemoteCardTags,
       syncDecks,
     });
 
@@ -95,6 +102,18 @@ describe("sync slice", () => {
     expect(syncDecks).toHaveBeenCalledWith(client, {
       forceArkhamdbSync: true,
     });
+  });
+
+  it("includes card tag status in account sync status", () => {
+    store.setState({
+      sync: makeSyncState({
+        cardTags: { status: "saving" },
+        deckStatus: "synced",
+        folders: { status: "synced" },
+      }),
+    });
+
+    expect(selectAccountSyncStatus(store.getState())).toBe("saving");
   });
 
   it("refreshes the session after syncing decks", async () => {

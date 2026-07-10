@@ -165,6 +165,24 @@
       "title": "Scenarios using <em>{{name}}</em>",
       "tooltip": "{{name}} <em>({{campaignName}})</em>"
     },
+    "card_tags": {
+      "account_title": "Global tags",
+      "create_named": "Create \"{{name}}\"",
+      "deck_placeholder": "Add deck tag...",
+      "deck_title": "Deck tags",
+      "favorite": "Favorite",
+      "manage": {
+        "action": "Manage tags",
+        "delete": "Delete",
+        "error": "Failed to update card tags: {{error}}",
+        "name": "Tag name",
+        "save": "Update tag",
+        "title": "Manage tags",
+        "unknown_error": "Unknown error"
+      },
+      "placeholder": "Add global tag...",
+      "title": "Tags"
+    },
     "card_view": {
       "actions": {
         "open_on_arkhamdb": "Open on ArkhamDB",
@@ -308,6 +326,7 @@
       "more_actions": "More actions",
       "myriad": "Myriad",
       "no_entries": "No entries",
+      "no_results": "No results",
       "non_collection_cards": "{{count}} non-collection cards",
       "none": "None",
       "ok": "OK",
@@ -1341,6 +1360,11 @@
       "asset": {
         "title": "Asset"
       },
+      "card_tags": {
+        "favorites": "Favorites",
+        "placeholder": "Select tags...",
+        "title": "Card tags"
+      },
       "cost": {
         "even": "Even",
         "nocost": "No cost",
@@ -1668,7 +1692,9 @@
         "card_level_icon_only": "In card icon only",
         "card_show_collection_number": "Show collection number",
         "card_show_details": "Show card details",
+        "card_show_favorite_highlights": "Highlight favorites",
         "card_show_icon": "Show card icon",
+        "card_show_tags": "Show card tags",
         "card_show_thumbnail": "Show card thumbnail",
         "card_show_unique_icon": "Show unique icon",
         "card_size": "Size",

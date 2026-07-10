@@ -1,6 +1,10 @@
 /* oxlint-disable typescript/no-explicit-any -- test code */
 
-import type { Card, Collection } from "@arkham-build/shared";
+import {
+  CARD_TAG_FAVORITE_ID,
+  type Card,
+  type Collection,
+} from "@arkham-build/shared";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { StoreApi } from "zustand";
 import { getMockStore } from "@/test/get-mock-store";
@@ -16,10 +20,12 @@ import type {
   SkillIconsFilter,
 } from "../slices/lists.types";
 import { applyTaboo } from "./card-edits";
+import { getCardTagFilterCode } from "./card-tags";
 import type { InvestigatorAccessConfig } from "./filtering";
 import {
   filterActions,
   filterAssets,
+  filterCardTags,
   filterCost,
   filterFactions,
   filterInvestigatorAccess,
@@ -30,6 +36,7 @@ import {
   filterTagFallback,
   makeOptionFilter,
 } from "./filtering";
+import type { ResolvedDeck } from "./types";
 
 describe("filter: investigator access", () => {
   let store: StoreApi<StoreState>;
@@ -997,6 +1004,95 @@ describe("filter: skills", () => {
     expect(applyFilter(store.getState(), "50001", config)).toBeTruthy();
     expect(applyFilter(store.getState(), "08070", config)).toBeFalsy();
     expect(applyFilter(store.getState(), "01089", config)).toBeFalsy();
+  });
+});
+
+describe("filter: card tags", () => {
+  let store: StoreApi<StoreState>;
+
+  beforeAll(async () => {
+    store = await getMockStore();
+    store.setState({
+      cardTags: {
+        tags: ["Favorites", "Upgrade"],
+        cardTags: {
+          "01016": ["Upgrade"],
+          "07211a": ["Favorites"],
+        },
+        favorites: {
+          "01001": true,
+        },
+      },
+    });
+  });
+
+  function applyFilter(
+    state: StoreState,
+    code: string,
+    value: string[],
+    deck?: Pick<ResolvedDeck, "deckCardTags">,
+  ) {
+    return filterCardTags(
+      value,
+      state.cardTags,
+      state.metadata,
+      selectLookupTables(state).relations.fronts,
+      deck,
+    )?.(state.metadata.cards[code]);
+  }
+
+  it("returns no filter when no tags are selected", () => {
+    const state = store.getState();
+    expect(
+      filterCardTags(
+        [],
+        state.cardTags,
+        state.metadata,
+        selectLookupTables(state).relations.fronts,
+      ),
+    ).toBeUndefined();
+  });
+
+  it("matches cards assigned to a selected tag", () => {
+    const state = store.getState();
+    const upgrade = getCardTagFilterCode("Upgrade");
+    expect(applyFilter(state, "01016", [upgrade])).toBeTruthy();
+    expect(applyFilter(state, "01017", [upgrade])).toBeFalsy();
+  });
+
+  it("matches favorite assignments", () => {
+    const state = store.getState();
+    expect(applyFilter(state, "01001", [CARD_TAG_FAVORITE_ID])).toBeTruthy();
+    expect(applyFilter(state, "01002", [CARD_TAG_FAVORITE_ID])).toBeFalsy();
+  });
+
+  it("matches duplicate and back cards by canonical card identity", () => {
+    const state = store.getState();
+    expect(
+      applyFilter(state, "01516", [getCardTagFilterCode("Upgrade")]),
+    ).toBeTruthy();
+    expect(
+      applyFilter(state, "07211b", [getCardTagFilterCode("Favorites")]),
+    ).toBeTruthy();
+  });
+
+  it("does not match alternate cards as the same card identity", () => {
+    const state = store.getState();
+    expect(applyFilter(state, "90024", [CARD_TAG_FAVORITE_ID])).toBeFalsy();
+  });
+
+  it("matches deck-local tags only with deck context", () => {
+    const state = store.getState();
+    const filterCode = getCardTagFilterCode("Scenario");
+    const deck = {
+      deckCardTags: {
+        "01017": ["Scenario"],
+      },
+    } satisfies Pick<ResolvedDeck, "deckCardTags">;
+
+    expect(applyFilter(state, "01017", [filterCode])).toBeFalsy();
+    expect(applyFilter(state, "01017", [filterCode], deck)).toBeTruthy();
+    expect(applyFilter(state, "01018", [filterCode], deck)).toBeFalsy();
   });
 });
 

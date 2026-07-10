@@ -4,6 +4,7 @@ import { CompleteProfileResponseSchema, type Deck } from "@arkham-build/shared";
 import type { Hono } from "hono";
 import { describe, expect, vi } from "vitest";
 import { appFactory } from "../app.ts";
+import type { Database } from "../db/db.ts";
 import { createSession } from "../lib/auth/sessions.ts";
 import type { HonoEnv } from "../lib/hono-env.ts";
 import { TEST_ACCOUNT, test } from "./test-utils.ts";
@@ -796,6 +797,11 @@ describe("Auth routes", () => {
         body: JSON.stringify({
           username: "complete-user-uploads",
           uploads: {
+            cardTags: {
+              cardTags: { "01020": ["Tag"] },
+              favorites: { "01020": true },
+              tags: ["Tag"],
+            },
             decks: [
               makeOnboardingDeck({
                 date_creation: "2025-01-02T03:04:05.000Z",
@@ -826,6 +832,14 @@ describe("Auth routes", () => {
         CompleteProfileResponseSchema.parse(await res.json()),
       ).toMatchObject({
         uploads: {
+          cardTags: {
+            revision: expect.any(String),
+            state: {
+              cardTags: { "01020": ["Tag"] },
+              favorites: { "01020": true },
+              tags: ["Tag"],
+            },
+          },
           deckIdMap: {
             "local-root": "local-root",
             "local-upgrade": "local-upgrade",
@@ -857,6 +871,18 @@ describe("Auth routes", () => {
             settings: { locale: "en", showAllCards: false },
           },
         },
+      });
+
+      const cardTags = await db
+        .selectFrom("account_card_tag")
+        .select(["state"])
+        .where("account_id", "=", account.id)
+        .executeTakeFirstOrThrow();
+
+      expect(cardTags.state).toEqual({
+        cardTags: { "01020": ["Tag"] },
+        favorites: { "01020": true },
+        tags: ["Tag"],
       });
 
       const decks = await db
@@ -961,7 +987,7 @@ describe("Auth routes", () => {
       expect(deck.updated_at.getTime()).toBeLessThanOrEqual(afterUpload);
     });
 
-    test("reuses existing onboarding folder and settings state", async ({
+    test("reuses existing onboarding folder, settings, and card tag state", async ({
       dependencies,
     }) => {
       const { app, config, db } = dependencies;
@@ -997,6 +1023,18 @@ describe("Auth routes", () => {
         })
         .executeTakeFirstOrThrow();
 
+      await db
+        .insertInto("account_card_tag")
+        .values({
+          account_id: account.id,
+          state: {
+            cardTags: { "01020": ["Existing"] },
+            favorites: {},
+            tags: ["Existing"],
+          },
+        })
+        .executeTakeFirstOrThrow();
+
       const session = await createSession(db, account.id, 1);
       const cookie = `${config.SESSION_COOKIE_NAME}=${session.token}`;
 
@@ -1006,6 +1044,11 @@ describe("Auth routes", () => {
         body: JSON.stringify({
           username: "complete-user-existing-upload",
           uploads: {
+            cardTags: {
+              cardTags: { "01021": ["New"] },
+              favorites: {},
+              tags: ["New"],
+            },
             folders: {
               deckFolders: {},
               folders: {},
@@ -1023,6 +1066,14 @@ describe("Auth routes", () => {
         CompleteProfileResponseSchema.parse(await res.json()),
       ).toMatchObject({
         uploads: {
+          cardTags: {
+            revision: expect.any(String),
+            state: {
+              cardTags: { "01020": ["Existing"] },
+              favorites: {},
+              tags: ["Existing"],
+            },
+          },
           folders: {
             revision: expect.any(String),
             state: {
@@ -3000,7 +3051,7 @@ function extractToken(
 }
 
 async function createModerationAction(
-  db: HonoEnv["Variables"]["db"],
+  db: Database,
   accountId: string,
   type: "ban" | "warning",
 ) {
@@ -3016,7 +3067,7 @@ async function createModerationAction(
 }
 
 async function countVerificationTokens(
-  db: HonoEnv["Variables"]["db"],
+  db: Database,
   email: string,
   tokenType: "email_verification" | "password_reset",
 ) {

@@ -9,15 +9,29 @@ import { cx } from "@/utils/cx";
 import { Scroller } from "../scroller";
 import css from "./combobox.module.css";
 
+export type ComboboxMenuItem<T extends Coded> =
+  | {
+      code: string;
+      item: T;
+      type: "item";
+    }
+  | {
+      code: string;
+      label: React.ReactNode;
+      type: "create";
+      value: string;
+    };
+
 type Props<T extends Coded> = {
   activeIndex: number | undefined;
-  items: T[];
-  listRef: React.MutableRefObject<HTMLElement[]>;
+  items: ComboboxMenuItem<T>[];
+  listRef: React.RefObject<HTMLElement[]>;
+  noResultsLabel: React.ReactNode;
   omitItemPadding?: boolean;
   renderItem: (t: T) => React.ReactNode;
   selectedItems: (T | undefined)[];
   setActiveIndex: (i: number) => void;
-  setSelectedItem: (t: T) => void;
+  setSelectedItem: (t: ComboboxMenuItem<T>) => void;
 };
 
 export function ComboboxMenu<T extends Coded>(props: Props<T>) {
@@ -25,6 +39,7 @@ export function ComboboxMenu<T extends Coded>(props: Props<T>) {
     activeIndex,
     items,
     listRef,
+    noResultsLabel,
     omitItemPadding,
     renderItem,
     selectedItems,
@@ -56,6 +71,10 @@ export function ComboboxMenu<T extends Coded>(props: Props<T>) {
     }),
     [items],
   );
+
+  if (items.length === 0) {
+    return <div className={css["menu-empty"]}>{noResultsLabel}</div>;
+  }
 
   return (
     <Scroller
@@ -93,10 +112,11 @@ export function ComboboxMenu<T extends Coded>(props: Props<T>) {
               // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- implementation debt
               tabIndex={active ? 0 : -1}
             >
-              {selectedItems.find((s) => s?.code === item.code) && (
-                <CheckIcon className={css["menu-item-check"]} />
-              )}
-              {renderItem(item)}
+              {item.type === "item" &&
+                selectedItems.find((s) => s?.code === item.item.code) && (
+                  <CheckIcon className={css["menu-item-check"]} />
+                )}
+              {item.type === "item" ? renderItem(item.item) : item.label}
             </div>
           );
         }}

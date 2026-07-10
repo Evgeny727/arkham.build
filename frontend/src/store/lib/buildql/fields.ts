@@ -1,5 +1,9 @@
 import { type Card, countExperience } from "@arkham-build/shared";
 import {
+  mergeCardTagNames,
+  resolveCardTagCardCode,
+} from "@/store/lib/card-tags";
+import {
   filterInvestigatorAccess,
   filterInvestigatorWeaknessAccess,
   filterTag,
@@ -305,6 +309,22 @@ const fieldDefinitions: FieldDefinition[] = [
     type: "number",
   },
   {
+    aliases: ["fav"],
+    lookup:
+      () =>
+      (card, { cardTags, lookupTables, metadata }) => {
+        const canonicalCode = resolveCardTagCardCode(
+          metadata,
+          lookupTables.relations.fronts,
+          card.code,
+        );
+
+        return cardTags.favorites[canonicalCode] ?? false;
+      },
+    name: "is_favorite",
+    type: "boolean",
+  },
+  {
     aliases: ["iu"],
     lookup: backResolver((card, { deck, lookupTables, metadata }) => {
       const otherLevels = lookupTables.relations.level[card.code];
@@ -448,6 +468,26 @@ const fieldDefinitions: FieldDefinition[] = [
       return [card.subtype_code, i18n.t(`common.subtype.${card.subtype_code}`)];
     }),
     name: "subtype",
+    type: "string",
+  },
+  {
+    lookup:
+      () =>
+      (card, { cardTags, deckCardTags, lookupTables, metadata }) => {
+        const canonicalCode = resolveCardTagCardCode(
+          metadata,
+          lookupTables.relations.fronts,
+          card.code,
+        );
+
+        const tagNames = mergeCardTagNames(
+          deckCardTags?.[canonicalCode],
+          cardTags.cardTags[canonicalCode],
+        );
+
+        return tagNames.length ? tagNames : null;
+      },
+    name: "tag",
     type: "string",
   },
   {

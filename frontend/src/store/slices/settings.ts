@@ -102,6 +102,8 @@ export function getInitialSettings(): Settings {
     devModeEnabled: false,
     cardShowIcon: true,
     cardShowDetails: true,
+    cardShowTags: true,
+    cardShowFavoriteHighlights: true,
     cardSize: "standard",
     cardShowThumbnail: true,
     collection: {},

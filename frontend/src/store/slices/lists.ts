@@ -208,6 +208,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       switch (filterValues[id].type) {
         case "illustrator":
         case "action":
+        case "card_tags":
         case "cycle":
         case "encounter_set":
         case "trait":
@@ -435,27 +436,25 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
       list = state.lists[activeList];
       assert(list, `list ${activeList} not defined.`);
 
-      const { filter: buildQlSearch, error: buildQlError } = evaluateBuildQl(
-        state,
-        list.search.value,
-        deck,
-      );
+      const buildQlResult = list.search.value
+        ? evaluateBuildQl(state, list.search.value, deck)
+        : undefined;
 
-      if (buildQlSearch) {
-        set((state) => ({
-          lists: {
-            ...state.lists,
-            [activeList]: {
-              ...list,
-              search: {
-                ...list.search,
-                buildQlSearch,
-                buildQlError,
-              },
+      set((state) => ({
+        lists: {
+          ...state.lists,
+          [activeList]: {
+            ...list,
+            search: {
+              ...list.search,
+              buildQlError: buildQlResult?.error,
+              buildQlSearchValue: buildQlResult?.filter
+                ? list.search.value
+                : list.search.buildQlSearchValue,
             },
           },
-        }));
-      }
+        },
+      }));
     }
   },
 
@@ -474,8 +473,13 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
 
       const inBuildQlMode = clearMode ? false : list.search.mode === "buildql";
 
-      const isBuildQl = value && (inBuildQlMode || !!buildQlSearch);
+      const isBuildQl = Boolean(value && (inBuildQlMode || buildQlSearch));
       const mode = isBuildQl ? "buildql" : "simple";
+      const buildQlSearchValue = buildQlSearch
+        ? value
+        : isBuildQl
+          ? list.search.buildQlSearchValue
+          : undefined;
 
       return {
         lists: {
@@ -486,10 +490,7 @@ export const createListsSlice: StateCreator<StoreState, [], [], ListsSlice> = (
               ...list.search,
               mode,
               buildQlError: isBuildQl ? buildQlError : undefined,
-              buildQlSearch:
-                isBuildQl && !buildQlSearch
-                  ? list.search.buildQlSearch
-                  : buildQlSearch,
+              buildQlSearchValue,
               value,
             },
           },
@@ -839,6 +840,7 @@ function makeFilterValue(
     case "illustrator":
     case "investigator_card_access":
     case "action":
+    case "card_tags":
     case "cycle":
     case "encounter_set":
     case "pack":
@@ -1010,6 +1012,7 @@ function investigatorFilters({
   }
 
   filters.push(
+    "card_tags",
     "fan_made_content",
     "pack",
     "investigator_card_access",
@@ -1040,7 +1043,7 @@ function cardsFilters({
     filters.push("ownership");
   }
 
-  filters.push("fan_made_content");
+  filters.push("card_tags", "fan_made_content");
 
   if (showInvestigatorsFilter) {
     filters.push("investigator");

@@ -73,6 +73,8 @@ export const SettingsSchema = z.object({
   cardShowUniqueIcon: z.boolean().optional(),
   cardShowIcon: z.boolean(),
   cardShowDetails: z.boolean(),
+  cardShowTags: z.boolean().default(true),
+  cardShowFavoriteHighlights: z.boolean().default(true),
   cardShowThumbnail: z.boolean(),
   cardSize: z.enum(["sm", "standard"]),
   cardSkillIconsDisplay: z.enum(["simple", "as_printed"]),

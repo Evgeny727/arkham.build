@@ -48,6 +48,11 @@ describe("Interpreter", () => {
     ctx = {
       fields,
       fieldLookupContext: {
+        cardTags: {
+          tags: [],
+          cardTags: {},
+          favorites: {},
+        },
         deck: undefined,
         matchBacks: false,
         i18n: {
@@ -273,6 +278,56 @@ describe("Interpreter", () => {
 
       expect(filter(createMockCard({ health: 5, sanity: 3 }))).toBe(true);
       expect(filter(createMockCard({ health: 3, sanity: 5 }))).toBe(false);
+    });
+
+    test("tag matches account and deck-local card tags case-insensitively", () => {
+      const expr = parse('tag ? ["upgrade", "deck plan"]');
+      const filter = compile(expr, {
+        ...ctx,
+        fieldLookupContext: {
+          ...ctx.fieldLookupContext,
+          cardTags: {
+            tags: ["Upgrade"],
+            cardTags: {
+              "01016": ["Upgrade"],
+            },
+            favorites: {},
+          },
+          deckCardTags: {
+            "01017": ["Deck Plan"],
+          },
+        },
+      });
+
+      expect(filter(createMockCard({ code: "01016" }))).toBe(true);
+      expect(filter(createMockCard({ code: "01516" }))).toBe(true);
+      expect(filter(createMockCard({ code: "01017" }))).toBe(true);
+      expect(filter(createMockCard({ code: "01018" }))).toBe(false);
+    });
+
+    test("is_favorite matches favorited cards", () => {
+      const expr = parse("is_favorite = true");
+      const aliasExpr = parse("fav = true");
+      const favoriteCtx: InterpreterContext = {
+        ...ctx,
+        fieldLookupContext: {
+          ...ctx.fieldLookupContext,
+          cardTags: {
+            tags: [],
+            cardTags: {},
+            favorites: {
+              "01016": true,
+            },
+          },
+        },
+      };
+      const filter = compile(expr, favoriteCtx);
+      const aliasFilter = compile(aliasExpr, favoriteCtx);
+
+      expect(filter(createMockCard({ code: "01016" }))).toBe(true);
+      expect(filter(createMockCard({ code: "01516" }))).toBe(true);
+      expect(filter(createMockCard({ code: "01018" }))).toBe(false);
+      expect(aliasFilter(createMockCard({ code: "01016" }))).toBe(true);
     });
   });
 

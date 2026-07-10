@@ -1,9 +1,12 @@
 import {
   type AttributeFilter,
+  CARD_TAG_FAVORITE_ID,
   type Card,
+  type CardTagsState,
   type Collection,
   cardLevel,
   type DeckOption,
+  normalizeCardTagName,
   realCardLevel,
   type SealedDeckResponse,
   SKILL_KEYS,
@@ -42,6 +45,10 @@ import type { Metadata } from "../slices/metadata.types";
 import type { Interpreter } from "./buildql/interpreter";
 import { parse } from "./buildql/parser";
 import { type CardOwnershipOptions, ownedCardCount } from "./card-ownership";
+import {
+  getCardTagNameFromFilterCode,
+  resolveCardTagCardCode,
+} from "./card-tags";
 import type { LookupTables } from "./lookup-tables.types";
 import type { ResolvedDeck, Selections } from "./types";
 import { isOptionSelect } from "./types";
@@ -200,6 +207,45 @@ export function filterAttribute(attributeFilter: AttributeFilter) {
       default:
         return false;
     }
+  };
+}
+
+/**
+ * Card Tags
+ */
+
+export function filterCardTags(
+  value: MultiselectFilter,
+  cardTags: CardTagsState,
+  metadata: Metadata,
+  fronts: LookupTables["relations"]["fronts"],
+  deck?: Pick<ResolvedDeck, "deckCardTags">,
+) {
+  if (!value.length) return undefined;
+
+  const tagNames = new Set<string>();
+  const includeFavorites = value.includes(CARD_TAG_FAVORITE_ID);
+
+  for (const code of value) {
+    const tagName = getCardTagNameFromFilterCode(code);
+    if (tagName) tagNames.add(normalizeCardTagName(tagName));
+  }
+
+  return (card: Card) => {
+    const canonicalCode = resolveCardTagCardCode(metadata, fronts, card.code);
+
+    if (includeFavorites && cardTags.favorites[canonicalCode]) {
+      return true;
+    }
+
+    const assignedTagNames = [
+      ...(cardTags.cardTags[canonicalCode] ?? []),
+      ...(deck?.deckCardTags[canonicalCode] ?? []),
+    ];
+
+    return assignedTagNames.some((tagName) =>
+      tagNames.has(normalizeCardTagName(tagName)),
+    );
   };
 }
 

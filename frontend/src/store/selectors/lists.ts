@@ -1,8 +1,10 @@
-import type { Card, Cycle, Pack } from "@arkham-build/shared";
+import type { Card, CardTagsState, Cycle, Pack } from "@arkham-build/shared";
 import {
   ASSET_SLOT_ORDER,
+  CARD_TAG_FAVORITE_ID,
   FACTION_ORDER,
   type FactionName,
+  normalizeCardTagName,
   SKILL_KEYS,
   type SkillKey,
   SPECIAL_CARD_CODES,
@@ -33,7 +35,14 @@ import i18n from "@/utils/i18n";
 import { isEmpty } from "@/utils/is-empty";
 import { time, timeEnd } from "@/utils/time";
 import type { Interpreter } from "../lib/buildql/interpreter";
+import { parse as parseBuildQl } from "../lib/buildql/parser";
 import { applyCardChanges } from "../lib/card-edits";
+import {
+  getCardTagFilterCode,
+  getCardTagNameFromFilterCode,
+  mergeCardTagNames,
+  resolveCardTagCardCode,
+} from "../lib/card-tags";
 import { getAdditionalDeckOptions } from "../lib/deck-validation";
 import {
   containsCard,
@@ -41,6 +50,7 @@ import {
   filterAssets,
   filterBacksides,
   filterCardPool,
+  filterCardTags,
   filterCost,
   filterCycleCode,
   filterDuplicates,
@@ -125,9 +135,44 @@ export type ListState = {
 
 export type TargetDeck = "slots" | "extraSlots" | "both";
 
+const EMPTY_CARD_TAG_STATE: CardTagsState = {
+  tags: [],
+  cardTags: {},
+  favorites: {},
+};
+
+const selectActiveCardTagState = createSelector(
+  selectActiveList,
+  (state: StoreState) => state.cardTags,
+  (activeList, cardTags) =>
+    listUsesCardTagFilter(activeList) ? cardTags : EMPTY_CARD_TAG_STATE,
+);
+
+function listUsesCardTagFilter(list: List | undefined) {
+  if (!list?.filtersEnabled) return false;
+
+  for (const [id] of list.filters.entries()) {
+    const filter = list.filterValues[id];
+    if (filter?.type !== "card_tags") continue;
+
+    return (filter.value as MultiselectFilter).length > 0;
+  }
+
+  return false;
+}
+
+function evaluateBuildQlSearch(value: string, buildQlInterpreter: Interpreter) {
+  try {
+    return buildQlInterpreter.evaluate(parseBuildQl(value));
+  } catch {
+    return undefined;
+  }
+}
+
 function makeUserFilter(
   metadata: Metadata,
   lookupTables: LookupTables,
+  cardTags: CardTagsState,
   list: List,
   resolvedDeck: ResolvedDeck | undefined,
   targetDeck: TargetDeck | undefined,
@@ -153,6 +198,19 @@ function makeUserFilter(
       case "asset": {
         const value = filterValue.value as AssetFilter;
         const filter = filterAssets(value, lookupTables);
+        if (filter) filters.push(filter);
+        break;
+      }
+
+      case "card_tags": {
+        const value = filterValue.value as MultiselectFilter;
+        const filter = filterCardTags(
+          value,
+          cardTags,
+          metadata,
+          lookupTables.relations.fronts,
+          resolvedDeck,
+        );
         if (filter) filters.push(filter);
         break;
       }
@@ -740,6 +798,7 @@ export const selectListCards = createSelector(
   selectLocaleSortingCollator,
   selectBuildQlInterpreter,
   selectSearchTextCache,
+  selectActiveCardTagState,
   (_: StoreState, resolvedDeck: ResolvedDeck | undefined) => resolvedDeck,
   (
     _: StoreState,
@@ -756,6 +815,7 @@ export const selectListCards = createSelector(
     sortingCollator,
     buildQlInterpreter,
     searchTextCache,
+    cardTags,
     deck,
     targetDeck,
     showUnusableCards,
@@ -790,9 +850,15 @@ export const selectListCards = createSelector(
 
     if (search.value) {
       if (search.mode === "buildql") {
-        if (search.buildQlSearch) {
+        const buildQlSearchValue = search.buildQlSearchValue ?? search.value;
+        const buildQlSearch = evaluateBuildQlSearch(
+          buildQlSearchValue,
+          buildQlInterpreter,
+        );
+
+        if (buildQlSearch) {
           try {
-            filteredCards = filteredCards.filter(search.buildQlSearch);
+            filteredCards = filteredCards.filter(buildQlSearch);
           } catch {}
         }
       } else {
@@ -809,6 +875,7 @@ export const selectListCards = createSelector(
     const userFilter = makeUserFilter(
       metadata,
       lookupTables,
+      cardTags,
       activeList,
       deck,
       targetDeck,
@@ -1051,6 +1118,89 @@ export const selectActionOptions = createSelector(
     return Array.from(actions)
       .map(mapper)
       .sort((a, b) => collator.compare(a.name, b.name));
+  },
+);
+
+/**
+ * Card Tags
+ */
+
+type CardTagFilterOption = {
+  code: string;
+  name: string;
+};
+
+export const selectCardTagMapper = createSelector(
+  selectLocaleSortingCollator,
+  (_) => {
+    return (code: string): CardTagFilterOption => {
+      if (code === CARD_TAG_FAVORITE_ID) {
+        return { code, name: i18n.t("card_tags.favorite") };
+      }
+
+      return {
+        code,
+        name: getCardTagNameFromFilterCode(code) ?? code,
+      };
+    };
+  },
+);
+
+export const selectCardTagOptions = createSelector(
+  selectMetadata,
+  selectLookupTables,
+  selectBaseListCards,
+  (state: StoreState) => state.cardTags,
+  (_: StoreState, resolvedDeck: ResolvedDeck | undefined) => resolvedDeck,
+  selectLocaleSortingCollator,
+  selectCardTagMapper,
+  (
+    metadata,
+    lookupTables,
+    baseFilterResult,
+    cardTags,
+    resolvedDeck,
+    collator,
+    mapper,
+  ) => {
+    const tagNames = new Map<string, string>();
+    let hasFavorite = false;
+
+    for (const card of baseFilterResult?.filteredCards ?? []) {
+      const canonicalCode = resolveCardTagCardCode(
+        metadata,
+        lookupTables.relations.fronts,
+        card.code,
+      );
+
+      if (cardTags.favorites[canonicalCode]) {
+        hasFavorite = true;
+      }
+
+      const assignedTagNames = mergeCardTagNames(
+        resolvedDeck?.deckCardTags[canonicalCode],
+        cardTags.cardTags[canonicalCode],
+      );
+
+      for (const tagName of assignedTagNames) {
+        const normalizedName = normalizeCardTagName(tagName);
+
+        if (!tagNames.has(normalizedName)) {
+          tagNames.set(normalizedName, tagName);
+        }
+      }
+    }
+
+    const options = Array.from(tagNames.values())
+      .map((tagName) => getCardTagFilterCode(tagName))
+      .map(mapper)
+      .sort((a, b) => collator.compare(a.name, b.name));
+
+    if (hasFavorite) {
+      options.unshift(mapper(CARD_TAG_FAVORITE_ID));
+    }
+
+    return options;
   },
 );
 
@@ -1799,6 +1949,17 @@ const selectActionChanges = (value: MultiselectFilter) => {
   return value.map((code) => i18n.t(`common.actions.${code}`)).join(", ");
 };
 
+const selectCardTagChanges = createSelector(
+  selectCardTagMapper,
+  (_: StoreState, value: MultiselectFilter) => value,
+  (mapper, value) => {
+    if (!value.length) return "";
+    return value
+      .map((code) => mapper(code).name)
+      .join(` ${i18n.t("common.or")} `);
+  },
+);
+
 function selectCostChanges(value: CostFilter) {
   if (!value.range) return "";
 
@@ -1989,6 +2150,10 @@ export function selectFilterChanges<T extends keyof FilterMapping>(
 
     case "asset": {
       return selectAssetChanges(value as AssetFilter);
+    }
+
+    case "card_tags": {
+      return selectCardTagChanges(state, value as MultiselectFilter);
     }
 
     case "cost": {

@@ -29,6 +29,7 @@ import { CardGridItem } from "../card-list/card-grid";
 import { GroupLabel } from "../card-list/grouphead";
 import type { FilteredListCardPropsGetter } from "../card-list/types";
 import { CardScan } from "../card-scan";
+import { useCardTagsListCard } from "../card-tags/use-card-tags-list-card";
 import { CustomizableSheet } from "../customizable-sheet";
 import { ListCard } from "../list-card/list-card";
 import css from "./decklist-groups.module.css";
@@ -39,10 +40,17 @@ type DecklistGroupsProps = {
   getListCardProps?: FilteredListCardPropsGetter;
   viewMode?: ViewMode;
   showXP?: boolean;
+  showCardTags?: boolean;
 };
 
 export function DecklistGroup(props: DecklistGroupsProps) {
-  const { deck, grouping, getListCardProps, viewMode } = props;
+  const {
+    deck,
+    grouping,
+    getListCardProps,
+    showCardTags = true,
+    viewMode,
+  } = props;
 
   const metadata = useStore(selectMetadata);
   const lookupTables = useStore(selectLookupTables);
@@ -121,9 +129,16 @@ export function DecklistGroup(props: DecklistGroupsProps) {
               group.cards.map((card: Card) => {
                 const listCardProps = getListCardProps?.(card);
                 return (
-                  <ListCard
-                    {...listCardProps}
-                    annotation={deck.annotations?.[card.code]}
+                  <DecklistCard
+                    card={card}
+                    deck={deck}
+                    isCardNotInLimitedPool={
+                      cardsNotInLimitedPool.find(
+                        (x) =>
+                          x.code === card.code ||
+                          x.code === card.duplicate_of_code,
+                      ) != null
+                    }
                     isForbidden={
                       forbiddenCards.find(
                         (x) =>
@@ -132,23 +147,15 @@ export function DecklistGroup(props: DecklistGroupsProps) {
                           x.target === grouping.id,
                       ) != null
                     }
-                    isCardNotInLimitedPool={
-                      cardsNotInLimitedPool.find(
-                        (x) =>
-                          x.code === card.code ||
-                          x.code === card.duplicate_of_code,
-                      ) != null
-                    }
-                    card={card}
-                    isRemoved={grouping.quantities?.[card.code] === 0}
                     isIgnored={deck.ignoreDeckLimitSlots?.[card.code]}
+                    isRemoved={grouping.quantities?.[card.code] === 0}
+                    key={card.code}
                     limitOverride={getDeckLimitOverride(
                       lookupTables,
                       deck,
                       card,
                     )}
-                    key={card.code}
-                    omitBorders
+                    listCardProps={listCardProps}
                     onChangeCardQuantity={
                       grouping.static
                         ? undefined
@@ -158,6 +165,7 @@ export function DecklistGroup(props: DecklistGroupsProps) {
                       canCheckOwnership ? cardOwnedCount(card) : undefined
                     }
                     quantity={grouping.quantities?.[card.code] ?? 0}
+                    showCardTags={showCardTags}
                   />
                 );
               })
@@ -166,6 +174,61 @@ export function DecklistGroup(props: DecklistGroupsProps) {
         );
       })}
     </>
+  );
+}
+
+function DecklistCard({
+  card,
+  deck,
+  isCardNotInLimitedPool,
+  isForbidden,
+  isIgnored,
+  isRemoved,
+  limitOverride,
+  listCardProps,
+  onChangeCardQuantity,
+  ownedCount,
+  quantity,
+  showCardTags,
+}: {
+  card: Card;
+  deck: ResolvedDeck;
+  isCardNotInLimitedPool: boolean;
+  isForbidden: boolean;
+  isIgnored?: number;
+  isRemoved: boolean;
+  limitOverride?: number;
+  listCardProps?: ReturnType<FilteredListCardPropsGetter>;
+  onChangeCardQuantity?: ReturnType<FilteredListCardPropsGetter>["onChangeCardQuantity"];
+  ownedCount?: number;
+  quantity: number;
+  showCardTags: boolean;
+}) {
+  const { renderCardTags: renderCardTagsProp, ...restListCardProps } =
+    listCardProps ?? {};
+
+  const { renderCardTags } = useCardTagsListCard(card, deck, {
+    respectCardTagSetting: false,
+  });
+
+  return (
+    <ListCard
+      {...restListCardProps}
+      annotation={deck.annotations?.[card.code]}
+      card={card}
+      isCardNotInLimitedPool={isCardNotInLimitedPool}
+      isForbidden={isForbidden}
+      isIgnored={isIgnored}
+      isRemoved={isRemoved}
+      limitOverride={limitOverride}
+      omitBorders
+      onChangeCardQuantity={onChangeCardQuantity}
+      ownedCount={ownedCount}
+      quantity={quantity}
+      renderCardTags={
+        showCardTags ? (renderCardTags ?? renderCardTagsProp) : undefined
+      }
+    />
   );
 }
 

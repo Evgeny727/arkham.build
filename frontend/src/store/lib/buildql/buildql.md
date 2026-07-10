@@ -247,6 +247,9 @@ back:subname != null & back:subname != subname
   - legacy alias: `do`
 - **in_deck** (number)
 - **in_side_deck** (number)
+- **is_favorite** (boolean)
+  - aliases: `fav`
+  - matches cards marked as favorites
 - **is_upgrade** (boolean)
   - aliases: `iu`
 - **level** (number)
@@ -287,6 +290,8 @@ back:subname != null & back:subname != subname
   - legacy alias: `b`
 - **taboo_set** (string)
   - aliases: `ts`
+- **tag** (string)
+  - matches combined account and deck-local tags when available
 - **text** (text)
   - aliases: `txt`
   - legacy alias: `x`
