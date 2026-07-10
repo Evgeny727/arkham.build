@@ -31,7 +31,7 @@ export function Button<T extends "a" | "button" | "summary" | "label">(
     variant = "secondary",
     ...rest
   } = props;
-  // biome-ignore lint/suspicious/noExplicitAny: safe.
+  // oxlint-disable-next-line typescript/no-explicit-any -- safe.
   const Element: any = disabled ? "button" : (as ?? "button");
 
   return (

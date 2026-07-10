@@ -10,11 +10,10 @@ type SliderStyle = React.CSSProperties & {
   "--slider-thumb-offset"?: string;
 };
 
-export interface Props
-  extends Omit<
-    React.ComponentPropsWithoutRef<"span">,
-    "defaultValue" | "dir" | "onChange" | "onLostPointerCapture" | "value"
-  > {
+export interface Props extends Omit<
+  React.ComponentPropsWithoutRef<"span">,
+  "defaultValue" | "dir" | "onChange" | "onLostPointerCapture" | "value"
+> {
   className?: string;
   disabled?: boolean;
   id?: string;

@@ -50,7 +50,7 @@ export function DecklistValidation(props: Props) {
         <Scroller className={css["scroller"]}>
           <ul className={css["decklist-validation-results"]}>
             {validation.errors.map((error, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: no unique key available.
+              // oxlint-disable-next-line react/no-array-index-key -- no unique key available.
               <li className={css["decklist-validation-result"]} key={i}>
                 {isTooManyCardsError(error) && (
                   <>

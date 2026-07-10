@@ -181,7 +181,7 @@ export function filterAttribute(attributeFilter: AttributeFilter) {
 
   return (card: Card) => {
     const attr =
-      // biome-ignore lint/suspicious/noExplicitAny: need to access dynamic properties.
+      // oxlint-disable-next-line typescript/no-explicit-any -- need to access dynamic properties.
       (card as any)[`real_${attribute}`] ?? (card as any)[attribute];
 
     switch (op) {

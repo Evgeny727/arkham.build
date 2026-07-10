@@ -164,7 +164,7 @@ function useAddFanMadeProject() {
         });
 
         console.error(err);
-        // biome-ignore lint/suspicious/noExplicitAny: debug
+        // oxlint-disable-next-line typescript/no-explicit-any -- debug
         console.info("error details:", (err as any)?.issues);
       }
     },
@@ -609,7 +609,7 @@ function ProjectCard(props: {
       <div className={cx(css["content"], "longform")}>
         {meta.description && (
           <div
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: escaped in markdown parser
+            // oxlint-disable-next-line react/no-danger -- escaped in markdown parser
             dangerouslySetInnerHTML={{
               __html: parseMarkdown(meta.description),
             }}

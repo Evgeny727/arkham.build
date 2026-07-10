@@ -149,7 +149,7 @@ export function useDuplicateDeck() {
         });
       }
     },
-    [duplicateDeckMutation, navigate, toast.show, t],
+    [duplicateDeckMutation, navigate, toast, t],
   );
 }
 
@@ -176,7 +176,7 @@ export function useExportJson() {
         });
       }
     },
-    [toast.show, t],
+    [toast, t],
   );
 }
 
@@ -203,7 +203,7 @@ export function useExportText() {
         });
       }
     },
-    [toast.show, state, t],
+    [toast, state, t],
   );
 }
 

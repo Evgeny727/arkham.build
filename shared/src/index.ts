@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/performance/noBarrelFile: TECH DEBT: look into `exports` */
 export {
   type ArkhamDBIdentity,
   ArkhamDBIdentitySchema,
@@ -36,10 +35,7 @@ export {
   type VerifyEmailRequest,
   VerifyEmailRequestSchema,
 } from "./dtos/auth.schema.ts";
-export {
-  type DateRange,
-  DateRangeSchema,
-} from "./dtos/date-range.schema.ts";
+export { type DateRange, DateRangeSchema } from "./dtos/date-range.schema.ts";
 export {
   DECK_BATCH_TARGET_LIMIT,
   type DeckBatchRequest,
@@ -155,10 +151,7 @@ export {
   OAUTH_FLOW_ERROR_CODES,
   type OAuthFlowErrorCode,
 } from "./lib/oauth-flow-errors.ts";
-export {
-  decodeSearch,
-  encodeSearch,
-} from "./lib/search-params.ts";
+export { decodeSearch, encodeSearch } from "./lib/search-params.ts";
 export {
   type JsonDataFaction,
   JsonDataFactionSchema,
@@ -288,10 +281,7 @@ export {
   type StorageProvider,
   StorageProviderSchema,
 } from "./schemas/settings.schema.ts";
-export {
-  type Taboo,
-  TabooSchema,
-} from "./schemas/taboo.schema.ts";
+export { type Taboo, TabooSchema } from "./schemas/taboo.schema.ts";
 export {
   type JsonDataTabooSet,
   JsonDataTabooSetSchema,

@@ -222,7 +222,7 @@ function SidebarActions(props: {
         variant: "error",
       });
     }
-  }, [deck, importSharedDeckMutation, toast.show, navigate, t, type]);
+  }, [deck, importSharedDeckMutation, toast, navigate, t, type]);
 
   const isReadOnly = !!deck.next_deck;
   const isLocal = origin === "local";
@@ -578,7 +578,7 @@ function ShareInfo(props: { deck: ResolvedDeck; path: string }) {
           }}
           components={{
             a: (
-              // biome-ignore lint/a11y/useAnchorContent: interpolation.
+              // oxlint-disable-next-line jsx-a11y/anchor-has-content -- interpolation.
               <a
                 data-testid="share-link"
                 href={path}

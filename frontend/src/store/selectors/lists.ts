@@ -420,7 +420,7 @@ const deckAccessEqual = (
     );
   }
 
-  // biome-ignore lint/suspicious/noDoubleEquals: we want a shallow equality check in this context.
+  // oxlint-disable-next-line eqeqeq -- we want a shallow equality check in this context.
   return a == b;
 };
 
@@ -557,7 +557,7 @@ const customizationsEqual = (
 ) => {
   return isResolvedDeck(a) && isResolvedDeck(b)
     ? JSON.stringify(a.customizations) === JSON.stringify(b.customizations)
-    : // biome-ignore lint/suspicious/noDoubleEquals: we want a shallow equality check in this context.
+    : // oxlint-disable-next-line eqeqeq -- we want a shallow equality check in this context.
       a == b;
 };
 
@@ -582,7 +582,7 @@ const fanMadeDataEqual = (
 ) => {
   return isResolvedDeck(a) && isResolvedDeck(b)
     ? JSON.stringify(a.fanMadeData) === JSON.stringify(b.fanMadeData)
-    : // biome-ignore lint/suspicious/noDoubleEquals: we want a shallow equality check in this context.
+    : // oxlint-disable-next-line eqeqeq -- we want a shallow equality check in this context.
       a == b;
 };
 
@@ -656,8 +656,8 @@ const selectBaseListCards = createSelector(
 
       return Boolean(
         fanMadeData?.cards?.[card.code] ||
-          fanMadeProjects?.[pack.cycle_code] ||
-          fanMadeCycleCodes?.includes(pack.cycle_code),
+        fanMadeProjects?.[pack.cycle_code] ||
+        fanMadeCycleCodes?.includes(pack.cycle_code),
       );
     });
 

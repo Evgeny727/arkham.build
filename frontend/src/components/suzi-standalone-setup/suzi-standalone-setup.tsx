@@ -145,7 +145,7 @@ function SuziStandaloneSetupInner(props: Props) {
             <Field full>
               <FieldLabel>{t("suzi_standalone_setup.xp")}</FieldLabel>
               <input
-                // biome-ignore lint/a11y/noAutofocus: expected here.
+                // oxlint-disable-next-line jsx-a11y/no-autofocus -- expected here.
                 autoFocus
                 type="number"
                 min={1}

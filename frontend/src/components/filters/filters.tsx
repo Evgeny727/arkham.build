@@ -124,7 +124,7 @@ export function Filters(props: Props) {
             };
 
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: index is unique key.
+              // oxlint-disable-next-line react/no-array-index-key -- index is unique key.
               <Fragment key={id}>
                 {filter === "action" && <ActionFilter {...params} />}
                 {filter === "asset" && <AssetFilter {...params} />}
