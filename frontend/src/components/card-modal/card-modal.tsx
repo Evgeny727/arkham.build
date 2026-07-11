@@ -1,6 +1,6 @@
 import type { Card as CardT } from "@arkham-build/shared";
 import { ArrowDownIcon, ArrowUpIcon, CheckCircleIcon } from "lucide-react";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
 import { useStore } from "@/store";
@@ -65,11 +65,9 @@ export function CardModal(props: Props) {
     modalContext?.setOpen(false);
   }, [modalContext]);
 
-  const quantitiesRef = useRef<HTMLDivElement>(null);
-
   const onPointerDownBackdrop = useCallback(
     (evt: React.PointerEvent) => {
-      if (evt.target === quantitiesRef.current) {
+      if (evt.target === evt.currentTarget) {
         onCloseModal();
       }
     },
@@ -277,7 +275,11 @@ export function CardModal(props: Props) {
             )}
         </ModalActions>
         <div className={css["container"]}>
-          <div className={css["card"]}>
+          <div
+            className={css["card"]}
+            data-testid="card-modal-card-column"
+            onPointerDown={onPointerDownBackdrop}
+          >
             {cardNode}
             {relationsNode}
           </div>
@@ -285,7 +287,6 @@ export function CardModal(props: Props) {
             className={css["quantities"]}
             data-testid="card-modal-sidebar"
             onPointerDown={onPointerDownBackdrop}
-            ref={quantitiesRef}
           >
             {listOrder && (
               <CardModalArrowNavigation
