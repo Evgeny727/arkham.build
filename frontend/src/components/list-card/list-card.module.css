@@ -16,6 +16,9 @@
     grid-template-rows: auto;
     grid-template-areas: "action card";
     list-style: none;
+  }
+
+  .listcard-wrapper.has-tags {
     container-type: inline-size;
   }
 

@@ -4,7 +4,7 @@ import {
   reloadAndSyncAccount,
   waitForAccountSync,
 } from "../lib/account-sync.ts";
-import { login } from "../lib/auth.ts";
+import { login, logout } from "../lib/auth.ts";
 import { createAuthenticatedAccount } from "../lib/db.ts";
 import { apiUrl } from "../lib/env.ts";
 
@@ -16,7 +16,7 @@ test.describe("account folders", () => {
     await toggleArchiveStatus(page);
     await waitForAccountSync(page);
 
-    await logout(page, account.name);
+    await logout(page);
     await login(page, account.email, account.password);
     await expect(page).toHaveURL(/\/$/);
     await waitForAccountSync(page);
@@ -131,17 +131,6 @@ async function uploadAccountDeck(page: Page) {
   await page.getByTestId("view-more-actions").click();
   await page.getByTestId("view-upload-account").click();
   await response;
-}
-
-async function logout(page: Page, accountName: string) {
-  await page
-    .getByRole("button", {
-      exact: true,
-      name: accountName.charAt(0).toUpperCase(),
-    })
-    .click();
-  await page.getByRole("button", { name: "Logout" }).click();
-  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
 }
 
 async function openDeck(page: Page, deckName: string) {

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import { authorizeArkhamDbOAuth, createArkhamDbUser } from "../lib/arkhamdb.ts";
+import { logout } from "../lib/auth.ts";
 import { createAuthenticatedAccount } from "../lib/db.ts";
 
 const completeProfileName = () => `e2e-oauth-${randomUUID()}`;
@@ -33,7 +34,7 @@ test.describe("ArkhamDB OAuth", () => {
     await page.getByRole("button", { name: "Complete your profile" }).click();
     await expect(page).toHaveURL(/\/$/);
 
-    await page.context().clearCookies();
+    await logout(page);
     await page.goto("/auth/login");
     await page.getByRole("link", { name: "Log in with ArkhamDB" }).click();
     await authorizeArkhamDbOAuth(page, arkhamDbUser);
@@ -66,7 +67,7 @@ test.describe("ArkhamDB OAuth", () => {
     await expect(page.getByTestId("connection-status")).toHaveText("Connected");
     await page.getByRole("button", { name: "Disconnect" }).click();
 
-    await page.context().clearCookies();
+    await logout(page);
     await page.goto("/auth/login");
 
     await page.getByRole("link", { name: "Log in with ArkhamDB" }).click();

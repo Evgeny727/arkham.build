@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { type Page, request } from "@playwright/test";
+import { expect, type Page, request } from "@playwright/test";
 import { apiUrl, arkhamDbBaseUrl, arkhamDbTestApiKey, runId } from "./env.ts";
 import { waitForCondition } from "./wait.ts";
 
@@ -86,10 +86,18 @@ export function createArkhamDbUser(
 }
 
 export async function authorizeArkhamDbOAuth(page: Page, user: ArkhamDbUser) {
-  await page.locator("#username").fill(user.username);
-  await page.locator("#password").fill(user.password);
-  await page.locator("#_submit").click();
-  await page.locator('input[name="accepted"]').click();
+  const usernameInput = page.locator("#username");
+  const acceptButton = page.locator('input[name="accepted"]');
+
+  await expect(usernameInput.or(acceptButton)).toBeVisible();
+
+  if (await usernameInput.isVisible()) {
+    await usernameInput.fill(user.username);
+    await page.locator("#password").fill(user.password);
+    await page.locator("#_submit").click();
+  }
+
+  await acceptButton.click();
 }
 
 export async function enableArkhamDbDeckSharing(

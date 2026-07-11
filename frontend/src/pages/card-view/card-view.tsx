@@ -8,7 +8,7 @@ import {
 } from "@/components/card-modal/card-arkhamdb-links";
 import { CardModalProvider } from "@/components/card-modal/card-modal-provider";
 import { CardFavorite } from "@/components/card-tags/card-favorite";
-import { CardTags } from "@/components/card-tags/card-tags";
+import { CardTagManager, CardTags } from "@/components/card-tags/card-tags";
 import { Footer } from "@/components/footer";
 import { Masthead } from "@/components/masthead";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,14 @@ function CardView() {
             <SidebarSection title={t("card_view.section_printings")}>
               <Printings code={cardWithRelations.card.code} />
             </SidebarSection>
-            <SidebarSection title={t("card_tags.title")}>
+            <SidebarSection
+              title={
+                <>
+                  {t("card_tags.title")}
+                  <CardTagManager cardCode={cardWithRelations.card.code} />
+                </>
+              }
+            >
               <CardTags cardCode={cardWithRelations.card.code} />
             </SidebarSection>
             <SidebarSection title={t("card_view.section_actions")}>
@@ -157,7 +164,10 @@ function CardView() {
   );
 }
 
-function SidebarSection(props: { title: string; children: React.ReactNode }) {
+function SidebarSection(props: {
+  title: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className={css["sidebar-section"]}>
       <header className={css["sidebar-section-header"]}>

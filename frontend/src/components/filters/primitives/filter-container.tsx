@@ -61,6 +61,7 @@ export function FilterContainer(props: Props) {
             iconOnly
             tooltip={t("filters.reset_filter")}
             variant="bare"
+            size="sm"
           >
             <XIcon />
           </Button>

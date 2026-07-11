@@ -227,7 +227,7 @@ function CollapsibleToggleButton({
         : t("ui.collapsible.expand");
 
   return (
-    <Button iconOnly variant="bare" tooltip={tooltip}>
+    <Button iconOnly variant="bare" tooltip={tooltip} size="sm">
       {isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
     </Button>
   );

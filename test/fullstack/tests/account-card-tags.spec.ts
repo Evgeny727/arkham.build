@@ -75,27 +75,30 @@ function cardTags(page: Page) {
 }
 
 async function createTag(page: Page, tagName: string) {
-  const response = page.waitForResponse(isCardTagsSaveResponse);
   await cardTags(page).getByTestId("combobox-input").click();
   await cardTags(page).getByTestId("combobox-input").fill(tagName);
-  await page.getByTestId(`combobox-menu-item-create:${tagName}`).click();
-  await response;
+  await Promise.all([
+    page.waitForResponse(isCardTagsSaveResponse),
+    page.getByTestId(`combobox-menu-item-create:${tagName}`).click(),
+  ]);
   await expectTagVisible(page, tagName);
 }
 
 async function deleteTag(page: Page) {
-  const response = page.waitForResponse(isCardTagsSaveResponse);
   await page.getByLabel("Manage tags").click();
-  await page.getByRole("button", { name: "Delete" }).click();
-  await response;
+  await Promise.all([
+    page.waitForResponse(isCardTagsSaveResponse),
+    page.getByRole("button", { name: "Delete" }).click(),
+  ]);
 }
 
 async function renameTag(page: Page, name: string) {
-  const response = page.waitForResponse(isCardTagsSaveResponse);
   await page.getByLabel("Manage tags").click();
   await page.getByLabel("Tag name").fill(name);
-  await page.getByRole("button", { name: "Update tag" }).click();
-  await response;
+  await Promise.all([
+    page.waitForResponse(isCardTagsSaveResponse),
+    page.getByRole("button", { name: "Update tag" }).click(),
+  ]);
   await expectTagVisible(page, name);
 }
 

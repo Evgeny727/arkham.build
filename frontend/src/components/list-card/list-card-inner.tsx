@@ -170,6 +170,7 @@ export function ListCardInner(props: Props) {
         showCardText && css["card-text"],
         css[card.faction_code],
         !!renderCardAfter && css["has-after"],
+        !!cardTags && css["has-tags"],
       )}
       data-testid={`listcard-${card.code}`}
       lang={dataLanguage()}

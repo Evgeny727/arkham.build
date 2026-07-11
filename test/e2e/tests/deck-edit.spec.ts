@@ -646,10 +646,13 @@ test.describe("deck edit", () => {
       .getByTestId("listcard-09042")
       .getByTestId("listcard-title")
       .click();
-    await page.getByTestId("combobox-input").click();
-    await page.getByTestId("combobox-input").fill("grim memoir");
+    const customizationInput = page
+      .getByTestId("customizations-editor")
+      .getByTestId("combobox-input");
+    await customizationInput.click();
+    await customizationInput.fill("grim memoir");
     await page.getByTestId("listcard-09044").click();
-    await page.getByTestId("combobox-input").press("Escape");
+    await customizationInput.press("Escape");
     await page.locator("body").press("Escape");
 
     await fillSearch(page, "honed instinct");
@@ -680,10 +683,10 @@ test.describe("deck edit", () => {
       .getByTestId("listcard-09101")
       .getByTestId("listcard-title")
       .click();
-    await page.getByTestId("combobox-input").click();
-    await page.getByTestId("combobox-input").fill("monster");
+    await customizationInput.click();
+    await customizationInput.fill("monster");
     await page.getByTestId("combobox-menu-item-Monster").click();
-    await page.getByTestId("combobox-input").press("Escape");
+    await customizationInput.press("Escape");
     await page.locator("body").press("Escape");
 
     await fillSearch(page, "friends in low places");
@@ -692,10 +695,10 @@ test.describe("deck edit", () => {
       .getByTestId("listcard-09060")
       .getByTestId("listcard-title")
       .click();
-    await page.getByTestId("combobox-input").click();
-    await page.getByTestId("combobox-input").fill("item");
+    await customizationInput.click();
+    await customizationInput.fill("item");
     await page.getByTestId("combobox-menu-item-Item").click();
-    await page.getByTestId("combobox-input").press("Escape");
+    await customizationInput.press("Escape");
     await page.locator("body").press("Escape");
 
     await fillSearch(page, "summoned servitor");
@@ -725,9 +728,9 @@ test.describe("deck edit", () => {
       .getByTestId("listcard-09079")
       .getByTestId("listcard-title")
       .click();
-    await page.getByTestId("combobox-input").click();
+    await customizationInput.click();
     await page.getByTestId("combobox-menu-item-intellect").click();
-    await page.getByTestId("combobox-input").press("Escape");
+    await customizationInput.press("Escape");
     await page.locator("body").press("Escape");
 
     await page.getByTestId("editor-save").click();
