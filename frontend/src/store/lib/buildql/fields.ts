@@ -271,6 +271,7 @@ const fieldDefinitions: FieldDefinition[] = [
 
       const investigator = ctx.metadata.cards[fieldValue];
       if (investigator?.type_code !== "investigator") return false;
+      if (card.code === investigator.code) return fieldValue;
 
       const accessFilter = filterInvestigatorAccess(investigator, undefined, {
         customizable: {

@@ -518,7 +518,14 @@ describe("Interpreter", () => {
         xp: 0,
       });
 
+      const rolandBanks = createMockCard({
+        code: "01001",
+        name: "Roland Banks",
+        type_code: "investigator",
+      });
+
       expect(filter(rolandCard)).toBe(true);
+      expect(filter(rolandBanks)).toBe(true);
     });
 
     test("investigator_access field works with investigator code on right side", () => {

@@ -246,7 +246,7 @@ function makeUserFilter(
         const value = filterValue.value as string | undefined;
 
         if (value) {
-          const filter = [];
+          const filter: Filter[] = [(card) => card.code === value];
           const accessFilter = filterInvestigatorAccess(
             metadata.cards[value],
             buildQlInterpreter,
