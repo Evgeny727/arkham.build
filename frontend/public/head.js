@@ -5,7 +5,9 @@ function init() {
   const theme = getColorThemePreference();
 
   if (theme === "system") {
-    document.documentElement.dataset.theme = prefersDarkMode ? "dark" : "light";
+    document.documentElement.dataset.theme = prefersDarkMode.matches
+      ? "dark"
+      : "light";
   } else {
     document.documentElement.dataset.theme = theme;
   }
