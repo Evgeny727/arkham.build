@@ -250,12 +250,6 @@
     font-size: var(--card-title-size);
   }
 
-  /** Workaround Safari bug where it does not correctly wrap text when svg is present (unique icon) */
-  .name-inner {
-    display: inline-flex;
-    align-items: baseline;
-  }
-
   .name .unique svg {
     display: inline;
   }
