@@ -106,6 +106,7 @@
     --color-seeker: var(--seeker);
     --color-survivor: var(--survivor);
     --color-multiclass: var(--multiclass);
+    --color-neutral: var(--neutral);
 
     --text: var(--palette-4);
     --text-mythos: var(--mythos);
@@ -148,6 +149,7 @@
     --color-seeker: var(--seeker-dark);
     --color-survivor: var(--survivor-dark);
     --color-multiclass: var(--multiclass-dark);
+    --color-neutral: var(--neutral-dark);
 
     --text: var(--nord-1);
     --text-mythos: var(--mythos-dark);
