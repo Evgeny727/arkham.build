@@ -328,10 +328,15 @@ test.describe("deck view", () => {
 
   test("open card modal", async ({ page }) => {
     await importStandardDeck(page);
-    await page
+
+    const cardTitle = page
       .getByTestId("listcard-10104")
-      .getByTestId("listcard-title")
-      .click();
+      .getByTestId("listcard-title");
+
+    await cardTitle.hover();
+    await expect(page.getByTestId("card-tooltip")).toBeVisible();
+    await cardTitle.click();
+
     await expect(page.getByTestId("card-modal")).toBeVisible();
   });
 

@@ -44,11 +44,13 @@ export type Props = {
   annotation?: string | null;
   as?: "li" | "div";
   card: Card;
+  cardLinkProps?: React.ComponentProps<"div">;
   cardLevelDisplay?: Settings["cardLevelDisplay"];
   cardShowCollectionNumber?: Settings["cardShowCollectionNumber"];
   cardSkillIconsDisplay?: Settings["cardSkillIconsDisplay"];
   cardShowUniqueIcon?: Settings["cardShowUniqueIcon"];
   className?: string;
+  closeCardTooltip?: () => void;
   disableKeyboard?: boolean;
   disableModalOpen?: boolean;
   figureRef?: (node: ReferenceType | null) => void;
@@ -66,7 +68,6 @@ export type Props = {
   onChangeCardQuantity?: (card: Card, quantity: number, limit: number) => void;
   ownedCount?: number;
   quantity?: number;
-  referenceProps?: React.ComponentProps<"div">;
   renderCardAction?: RenderCallback;
   renderCardAfter?: RenderCallback;
   renderCardBefore?: RenderCallback;
@@ -85,11 +86,13 @@ export function ListCardInner(props: Props) {
     annotation,
     as = "div",
     card,
+    cardLinkProps,
     cardLevelDisplay,
     cardShowCollectionNumber,
     cardShowUniqueIcon,
     cardSkillIconsDisplay,
     className,
+    closeCardTooltip,
     disableKeyboard,
     disableModalOpen,
     figureRef,
@@ -107,7 +110,6 @@ export function ListCardInner(props: Props) {
     onChangeCardQuantity,
     ownedCount,
     quantity,
-    referenceProps,
     renderCardAction,
     renderCardAfter,
     renderCardBefore,
@@ -141,6 +143,8 @@ export function ListCardInner(props: Props) {
   const openModal = useCallback(
     (evt: React.MouseEvent) => {
       const linkPrevented = preventLeftClick(evt);
+      closeCardTooltip?.();
+
       if (linkPrevented) {
         if (titleOpens === "dialog" && dialogContext) {
           dialogContext.setOpen(true);
@@ -149,7 +153,7 @@ export function ListCardInner(props: Props) {
         }
       }
     },
-    [openCardModal, card.code, titleOpens, dialogContext],
+    [card.code, closeCardTooltip, dialogContext, openCardModal, titleOpens],
   );
 
   const limit = cardLimit(card, limitOverride);
@@ -203,8 +207,9 @@ export function ListCardInner(props: Props) {
                 className={css["thumbnail-link"]}
                 disableModalOpen={disableModalOpen}
                 openModal={openModal}
+                referenceProps={cardLinkProps}
               >
-                <div className={css["thumbnail"]} {...referenceProps}>
+                <div className={css["thumbnail"]}>
                   <CardThumbnail card={card} />
                 </div>
               </ListCardLink>
@@ -218,12 +223,13 @@ export function ListCardInner(props: Props) {
 
             <figcaption className={css["caption"]}>
               <div className={cx(css["name-container"], colorCls)}>
-                <h4 className={css["name"]} {...referenceProps}>
+                <h4 className={css["name"]}>
                   <ListCardLink
                     card={card}
                     data-testid="listcard-title"
                     disableModalOpen={disableModalOpen}
                     openModal={openModal}
+                    referenceProps={cardLinkProps}
                   >
                     <CardName
                       card={card}
@@ -389,18 +395,24 @@ function ListCardLink({
   children,
   disableModalOpen,
   openModal,
+  referenceProps,
   ...rest
 }: {
   card: Card;
   children: React.ReactNode;
   disableModalOpen?: boolean;
   openModal?: (evt: React.MouseEvent) => void;
+  referenceProps?: React.ComponentProps<"div">;
   className?: string;
   "data-testid"?: string;
 }) {
   if (disableModalOpen) {
     return (
-      <span className={cx(css["name-static"], rest.className)} {...rest}>
+      <span
+        {...referenceProps}
+        {...rest}
+        className={cx(css["name-static"], rest.className)}
+      >
         {children}
       </span>
     );
@@ -408,6 +420,7 @@ function ListCardLink({
 
   return (
     <Link
+      {...referenceProps}
       {...rest}
       href={`~/card/${card.code}`}
       onClick={openModal}

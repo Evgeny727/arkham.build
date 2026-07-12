@@ -100,7 +100,6 @@ export function useRestingTooltip(
   },
 ) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [skipCloseTransition, setSkipCloseTransition] = useState(false);
   const restTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -132,9 +131,18 @@ export function useRestingTooltip(
   const closeTooltip = useCallback(() => {
     suppressUntilLeaveRef.current = true;
     clearTimeout(restTimeoutRef.current);
-    setSkipCloseTransition(true);
     setTooltipOpen(false);
   }, []);
+
+  const onPointerDown = useCallback(() => {
+    suppressUntilLeaveRef.current = true;
+    clearTimeout(restTimeoutRef.current);
+
+    // Safari may cancel the subsequent click if pointerdown changes the DOM or
+    // hit testing. Opacity hides the tooltip without affecting either.
+    const floatingElement = refs.floating.current;
+    if (floatingElement) floatingElement.style.opacity = "0";
+  }, [refs.floating]);
 
   const onPointerLeave = useCallback(() => {
     suppressUntilLeaveRef.current = false;
@@ -145,7 +153,6 @@ export function useRestingTooltip(
   const onPointerMove = useCallback(() => {
     if (suppressUntilLeaveRef.current || tooltipOpen) return;
 
-    setSkipCloseTransition(false);
     clearTimeout(restTimeoutRef.current);
 
     restTimeoutRef.current = setTimeout(() => {
@@ -155,17 +162,17 @@ export function useRestingTooltip(
 
   const referenceProps = useMemo(
     () => ({
-      onPointerDown: closeTooltip,
+      onPointerDown,
       onPointerLeave,
       onPointerMove,
       onMouseLeave: onPointerLeave,
     }),
-    [closeTooltip, onPointerLeave, onPointerMove],
+    [onPointerDown, onPointerLeave, onPointerMove],
   );
 
   const value = useMemo(
     () => ({
-      isMounted: isMounted && !skipCloseTransition,
+      isMounted,
       referenceProps,
       refs,
       floatingStyles,
@@ -173,15 +180,7 @@ export function useRestingTooltip(
       closeTooltip,
       setTooltipOpen,
     }),
-    [
-      referenceProps,
-      refs,
-      styles,
-      floatingStyles,
-      isMounted,
-      skipCloseTransition,
-      closeTooltip,
-    ],
+    [referenceProps, refs, styles, floatingStyles, isMounted, closeTooltip],
   );
 
   return value;

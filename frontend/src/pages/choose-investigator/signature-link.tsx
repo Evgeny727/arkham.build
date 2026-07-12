@@ -15,7 +15,14 @@ type Props = {
 export function SignatureLink(props: Props) {
   const { card } = props;
 
-  const tooltip = useRestingTooltip({
+  const {
+    closeTooltip,
+    refs,
+    referenceProps,
+    isMounted,
+    floatingStyles,
+    transitionStyles,
+  } = useRestingTooltip({
     middleware: [shift({ padding: 5 })],
     placement: "right",
   });
@@ -23,22 +30,19 @@ export function SignatureLink(props: Props) {
   const openCardModal = useStore((state) => state.openCardModal);
 
   const openModal = useCallback(() => {
+    closeTooltip();
     openCardModal(card.code);
-  }, [card.code, openCardModal]);
+  }, [card.code, closeTooltip, openCardModal]);
 
   return (
     <li className={css["signature"]} key={card.code}>
-      <button
-        ref={tooltip.refs.setReference}
-        {...tooltip.referenceProps}
-        onClick={openModal}
-      >
+      <button ref={refs.setReference} {...referenceProps} onClick={openModal}>
         {displayAttribute(card, "name")}
       </button>
-      {tooltip.isMounted && (
+      {isMounted && (
         <FloatingPortal id={FLOATING_PORTAL_ID}>
-          <div ref={tooltip.refs.setFloating} style={tooltip.floatingStyles}>
-            <div style={tooltip.transitionStyles}>
+          <div ref={refs.setFloating} style={floatingStyles}>
+            <div style={transitionStyles}>
               <CardTooltip code={card.code} />
             </div>
           </div>
