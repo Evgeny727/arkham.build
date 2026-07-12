@@ -1,10 +1,6 @@
 .rules {
-  --red: var(--nord-11);
-  --blue: var(--nord-9);
-}
-
-html[data-theme="light"] {
-  --blue: var(--nord-10);
+  --red: var(--color-error);
+  --blue: var(--color-primary);
 }
 
 .container {
@@ -116,7 +112,7 @@ html[data-theme="light"] {
 }
 
 html[data-theme="light"] .toc a {
-  color: var(--nord-10);
+  color: var(--color-link);
 }
 
 .rules-container {
@@ -133,7 +129,7 @@ html[data-theme="light"] .toc a {
 }
 
 .rules .green {
-  background: var(--color-success);
+  background: var(--nord-14);
   color: var(--nord-0);
 }
 

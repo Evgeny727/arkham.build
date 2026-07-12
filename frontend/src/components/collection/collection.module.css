@@ -144,7 +144,7 @@
 .chapter-title {
   display: inline-block;
   font-size: var(--text-lg);
-  border-bottom: 1px solid var(--palette-4);
+  border-bottom: 1px solid var(--palette-5);
 }
 
 .chapter + .chapter {

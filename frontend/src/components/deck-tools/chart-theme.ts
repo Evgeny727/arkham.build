@@ -2,8 +2,8 @@ export const chartTheme = {
   height: 360,
 
   colors: {
-    primary: "var(--nord-10)",
-    primaryHover: "var(--nord-9)",
+    primary: "var(--color-primary)",
+    primaryHover: "var(--color-primary-hover)",
     axis: "var(--palette-2)",
     grid: "var(--palette-3)",
     text: "var(--text)",
@@ -29,7 +29,7 @@ export const chartTheme = {
 
   scatter: {
     r: 2,
-    fill: "var(--nord-10)",
+    fill: "var(--color-primary)",
   },
 } as const;
 

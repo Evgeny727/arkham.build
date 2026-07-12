@@ -88,7 +88,7 @@
 }
 
 .actions-invalid svg {
-  fill: var(--nord-13);
-  stroke: var(--nord-0);
+  fill: var(--color-warning);
+  stroke: var(--color-warning-contrast);
   font-size: var(--icon-base);
 }

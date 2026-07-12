@@ -49,11 +49,11 @@
 }
 
 .toast.error {
-  border-color: var(--nord-11);
+  border-color: var(--color-error);
 }
 
 .toast.error .icon {
-  color: var(--nord-11);
+  color: var(--color-error);
 }
 
 @keyframes slideIn {

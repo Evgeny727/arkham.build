@@ -262,16 +262,12 @@
   }
 
   .ignored svg {
-    stroke: var(--nord-7);
-    fill: var(--nord-7);
+    stroke: var(--color-primary);
+    fill: var(--color-primary);
   }
 
   .skill-icons {
     flex: 0 0 auto;
-  }
-
-  :root[data-theme="light"] .skill-icons:not(.as_printed) {
-    color: var(--palette-5);
   }
 
   .skill-icons.as_printed {

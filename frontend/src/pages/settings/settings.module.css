@@ -204,7 +204,7 @@
 }
 
 .pending-email {
-  background-color: color-mix(in srgb, var(--nord-10) 10%, transparent);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .pending-email > * + * {
@@ -212,7 +212,7 @@
 }
 
 .danger-zone {
-  border: 1px solid color-mix(in srgb, var(--nord-11) 65%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-error) 65%, transparent);
   border-radius: var(--rounded);
 }
 
@@ -220,11 +220,12 @@
   cursor: pointer;
   font-weight: 700;
   padding: 0.75rem;
-  color: var(--nord-11);
+  color: var(--color-error);
 }
 
 .danger-zone[open] > summary {
-  border-bottom: 1px solid color-mix(in srgb, var(--nord-11) 35%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-error) 35%, transparent);
 }
 
 .danger-zone .account-container {

@@ -8,6 +8,7 @@
       "Noto Serif Variable", ui-serif, Georgia, Cambria, "Times New Roman",
       Times, serif;
 
+    /** Nord palette: used for dark mode */
     --white: #f3f6f6;
     --nord-0: #2e3440;
     --nord-1: #3b4252;
@@ -32,14 +33,44 @@
     --nord-14: #a3be8c;
     --nord-15: #b48ead;
 
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 2px 3px 0 rgb(0 0 0 / 0.125), 0 1px 2px -1px rgb(0 0 0 / 0.125);
-    --shadow-md:
-      0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-    --shadow-lg:
-      0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
-    --shadow-xl:
-      0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+    /** One light palette: used for light mode */
+    --one-light-canvas: #fafafa;
+    --one-light-surface-subtle: #f4f4f4;
+    --one-light-surface: #ebebec;
+    --one-light-border-subtle: #dfdfe0;
+    --one-light-border: #c9c9ca;
+    --one-light-placeholder: #7e8086;
+    --one-light-muted: #58585a;
+    --one-light-strong: #44454b;
+    --one-light-foreground: #242529;
+    --one-light-focus: #7d82e8;
+    --one-light-accent: #5c78e2;
+    --one-light-red: #b92b46;
+    --one-light-yellow: #ad6e25;
+    --one-light-blue: #3882b7;
+    --one-light-purple: #a449ab;
+    --one-light-shadow: #383a41;
+    --one-light-success: #27a657;
+
+    /** Game palette */
+    --guardian: #5cb4fd;
+    --guardian-dark: #1f6e9e;
+    --multiclass: #e4d083;
+    --multiclass-dark: #96782c;
+    --mystic: #ba81f2;
+    --mystic-dark: #5c4a9b;
+    --rogue: #48b14f;
+    --rogue-dark: #226d27;
+    --seeker: #efa345;
+    --seeker-dark: #b56a29;
+    --survivor: #ee4a53;
+    --survivor-dark: #bc2932;
+
+    --skill-willpower: #2c7fc0;
+    --skill-intellect: #7c3c85;
+    --skill-combat: #ae4236;
+    --skill-agility: #14854d;
+    --skill-wild: #8a7d5a;
 
     --text-2xs: 0.675rem;
     --text-xs: 0.75rem;
@@ -57,24 +88,6 @@
     --icon-2xl: 1.75rem;
     --icon-3xl: 2rem;
 
-    --guardian: #5cb4fd;
-    --multiclass: #e4d083;
-    --mystic: #ba81f2;
-    --mythos: var(--nord-4);
-    --neutral: var(--nord-4);
-    --rogue: #48b14f;
-    --seeker: #efa345;
-    --survivor: #ee4a53;
-
-    --guardian-dark: #1c6e9f;
-    --multiclass-dark: #997b2d;
-    --mystic-dark: #554c9e;
-    --mythos-dark: var(--nord-3);
-    --neutral-dark: var(--nord-3);
-    --rogue-dark: #1e6b24;
-    --seeker-dark: #ba6d2a;
-    --survivor-dark: #bd2330;
-
     --rounded: 0.25rem;
     --rounded-lg: 1rem;
     --rounded-xl: 1.5rem;
@@ -85,8 +98,6 @@
 
     --scrollbar-size: 10px;
     --scrollbar-padding: 10px;
-
-    --error: var(--nord-11);
   }
 
   html[data-theme="dark"] {
@@ -95,10 +106,14 @@
     --palette-1: var(--nord-1);
     --palette-2: var(--nord-2);
     --palette-3: var(--nord-3);
-    --palette-three-point-five: var(--nord-three-point-five);
-    --palette-4: var(--nord-4);
+    --palette-4: var(--nord-three-point-five);
     --palette-5: var(--nord-5);
     --palette-6: var(--nord-6);
+
+    --mythos: var(--nord-4);
+    --mythos-dark: #4e5668;
+    --neutral: var(--nord-4);
+    --neutral-dark: #4e5668;
 
     --color-guardian: var(--guardian);
     --color-mystic: var(--mystic);
@@ -108,23 +123,43 @@
     --color-multiclass: var(--multiclass);
     --color-neutral: var(--neutral);
 
-    --text: var(--palette-4);
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 2px 3px 0 rgb(0 0 0 / 0.125), 0 1px 2px -1px rgb(0 0 0 / 0.125);
+    --shadow-md:
+      0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-lg:
+      0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-xl:
+      0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+
+    --text: var(--palette-5);
     --text-mythos: var(--mythos);
     --text-neutral: var(--neutral);
 
-    --willpower: #2c7fc0;
-    --intellect: #7c3c85;
-    --combat: #ae4236;
-    --agility: #14854d;
-    --wild: #8a7d5a;
+    --willpower: var(--skill-willpower);
+    --intellect: var(--skill-intellect);
+    --combat: var(--skill-combat);
+    --agility: var(--skill-agility);
+    --wild: var(--skill-wild);
 
-    --taboo: #9869f5;
     --health: #ae4236;
     --sanity: #2c7fc0;
+    --taboo: #9869f5;
 
+    --color-error: var(--nord-11);
+    --color-warning: var(--nord-13);
+    --color-warning-contrast: var(--nord-0);
     --color-focus: var(--text);
     --color-inverted: var(--nord-6);
     --color-link: var(--nord-9);
+    --color-primary: var(--nord-9);
+    --color-primary-hover: var(--nord-8);
+    --color-primary-active: color-mix(
+      in srgb,
+      var(--nord-8) 80%,
+      var(--nord-6) 20%
+    );
+    --color-primary-contrast: var(--nord-0);
     --color-scrollbar-thumb: #969ba5;
     --color-scrollbar: rgba(0, 0, 0, 0.05);
     --color-success: var(--nord-14);
@@ -133,15 +168,41 @@
   }
 
   html[data-theme="light"] {
-    --palette-0: var(--white);
-    --palette-point-five: var(--nord-6);
-    --palette-1: var(--nord-5);
-    --palette-2: var(--nord-4);
-    --palette-3: color-mix(in srgb, var(--nord-3) 30%, var(--nord-4) 70%);
-    --palette-three-point-five: var(--nord-three-point-five);
-    --palette-4: var(--nord-3);
-    --palette-5: var(--nord-2);
-    --palette-6: var(--nord-1);
+    --white: var(--one-light-canvas);
+    --palette-0: var(--one-light-canvas);
+    --palette-point-five: var(--one-light-surface-subtle);
+    --palette-1: var(--one-light-surface);
+    --palette-2: var(--one-light-border-subtle);
+    --palette-3: var(--one-light-border);
+    --palette-4: var(--one-light-placeholder);
+    --palette-5: var(--one-light-muted);
+    --palette-6: var(--one-light-strong);
+
+    --shadow-sm: 0 1px 2px
+      color-mix(in srgb, var(--one-light-shadow) 6%, transparent);
+    --shadow:
+      0 2px 3px color-mix(in srgb, var(--one-light-shadow) 10%, transparent),
+      0 1px 2px -1px color-mix(in srgb, var(--one-light-shadow) 8%, transparent);
+    --shadow-md:
+      0 4px 10px -2px
+        color-mix(in srgb, var(--one-light-shadow) 14%, transparent),
+      0 2px 4px -2px
+        color-mix(in srgb, var(--one-light-shadow) 10%, transparent);
+    --shadow-lg:
+      0 12px 24px -6px
+        color-mix(in srgb, var(--one-light-shadow) 16%, transparent),
+      0 4px 8px -4px
+        color-mix(in srgb, var(--one-light-shadow) 12%, transparent);
+    --shadow-xl:
+      0 24px 40px -10px
+        color-mix(in srgb, var(--one-light-shadow) 20%, transparent),
+      0 8px 16px -8px
+        color-mix(in srgb, var(--one-light-shadow) 14%, transparent);
+
+    --mythos: var(--palette-5);
+    --mythos-dark: var(--palette-5);
+    --neutral: var(--palette-5);
+    --neutral-dark: var(--palette-5);
 
     --color-guardian: var(--guardian-dark);
     --color-mystic: var(--mystic-dark);
@@ -151,26 +212,81 @@
     --color-multiclass: var(--multiclass-dark);
     --color-neutral: var(--neutral-dark);
 
-    --text: var(--nord-1);
+    --text: var(--one-light-strong);
     --text-mythos: var(--mythos-dark);
     --text-neutral: var(--neutral-dark);
 
-    --color-focus: var(--text);
+    --color-error: var(--one-light-red);
+    --color-warning: color-mix(
+      in srgb,
+      var(--one-light-yellow) 80%,
+      var(--one-light-foreground) 20%
+    );
+    --color-warning-contrast: var(--one-light-canvas);
+    --color-focus: var(--one-light-focus);
     --color-inverted: var(--white);
-    --color-link: var(--nord-10);
-    --color-scrollbar-thumb: #969ba5;
-    --color-scrollbar: rgba(0, 0, 0, 0.05);
-    --color-success: color-mix(in srgb, var(--nord-14) 80%, var(--nord-2) 20%);
+    --color-link: var(--one-light-accent);
+    --color-primary: color-mix(
+      in srgb,
+      var(--one-light-accent) 85%,
+      var(--one-light-foreground) 15%
+    );
+    --color-primary-hover: color-mix(
+      in srgb,
+      var(--one-light-accent) 75%,
+      var(--one-light-foreground) 25%
+    );
+    --color-primary-active: color-mix(
+      in srgb,
+      var(--one-light-accent) 65%,
+      var(--one-light-foreground) 35%
+    );
+    --color-primary-contrast: var(--one-light-canvas);
+    --color-scrollbar-thumb: color-mix(
+      in srgb,
+      var(--one-light-shadow) 30%,
+      transparent
+    );
+    --color-scrollbar: transparent;
+    --color-success: var(--one-light-success);
 
-    --willpower: #02456d;
-    --intellect: #56224e;
-    --combat: #6d2511;
-    --agility: #00553a;
-    --wild: #74580b;
+    --willpower: color-mix(
+      in srgb,
+      var(--skill-willpower) 70%,
+      var(--one-light-foreground) 30%
+    );
+    --intellect: color-mix(
+      in srgb,
+      var(--skill-intellect) 75%,
+      var(--one-light-foreground) 25%
+    );
+    --combat: color-mix(
+      in srgb,
+      var(--skill-combat) 80%,
+      var(--one-light-foreground) 20%
+    );
+    --agility: color-mix(
+      in srgb,
+      var(--skill-agility) 80%,
+      var(--one-light-foreground) 20%
+    );
+    --wild: color-mix(
+      in srgb,
+      var(--skill-wild) 80%,
+      var(--one-light-foreground) 20%
+    );
 
-    --health: #c91d20;
-    --sanity: #16477f;
-    --taboo: #5a3f91;
+    --health: var(--one-light-red);
+    --sanity: color-mix(
+      in srgb,
+      var(--one-light-blue) 80%,
+      var(--one-light-foreground) 20%
+    );
+    --taboo: color-mix(
+      in srgb,
+      var(--one-light-purple) 70%,
+      var(--one-light-foreground) 30%
+    );
 
     --background-select: url(data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA0LjkgMTAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDQuOSAxMDsiIHhtbDpzcGFjZT0icHJlc2VydmUiPgo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgoJLnN0MHtmaWxsOiMyZTM0NDA7fQo8L3N0eWxlPgo8dGl0bGU+YXJyb3dzPC90aXRsZT4KPHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSIxLjQsNC43IDIuNSwzLjIgMy41LDQuNyAiLz4KPHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSIzLjUsNS4zIDIuNSw2LjggMS40LDUuMyAiLz4KPC9zdmc+);
   }
@@ -346,7 +462,7 @@
 
   textarea::placeholder,
   input::placeholder {
-    color: var(--palette-three-point-five);
+    color: var(--palette-4);
   }
 
   textarea {
@@ -493,7 +609,7 @@
   .background-mystic {
     background: var(--mystic-dark);
     &::after {
-      background: rgba(0, 0, 0, 0.025);
+      background: rgba(0, 0, 0, 0.035);
       mask-image: url("../assets/patterns/mystic.svg");
     }
   }
@@ -510,7 +626,7 @@
     background: var(--seeker-dark);
 
     &::after {
-      background: rgba(0, 0, 0, 0.025);
+      background: rgba(0, 0, 0, 0.0275);
       mask-image: url("../assets/patterns/seeker.svg");
     }
   }
@@ -518,7 +634,7 @@
   .background-survivor {
     background: var(--survivor-dark);
     &::after {
-      background: rgba(0, 0, 0, 0.025);
+      background: rgba(0, 0, 0, 0.0375);
       mask-image: url("../assets/patterns/survivor.svg");
     }
   }
@@ -534,7 +650,7 @@
   .background-mythos {
     background: var(--mythos-dark);
     &::after {
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.2);
       mask-image: url("../assets/patterns/mythos.svg");
     }
   }
@@ -542,7 +658,7 @@
   .background-neutral {
     background: var(--neutral-dark);
     &::after {
-      background: rgba(0, 0, 0, 0.025);
+      background: rgba(0, 0, 0, 0.03);
       mask-image: url("../assets/patterns/neutral.svg");
     }
   }

@@ -30,7 +30,7 @@
 }
 
 .entry.current {
-  border-color: var(--palette-three-point-five);
+  border-color: var(--palette-4);
 }
 
 .entry-title,

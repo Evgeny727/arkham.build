@@ -21,7 +21,7 @@
   }
 
   &.local {
-    border: 1px solid var(--palette-three-point-five);
+    border: 1px solid var(--palette-4);
   }
 }
 

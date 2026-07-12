@@ -61,7 +61,7 @@ export function OAuthConnectionCard(props: {
           label: t("settings.account.oauth.connected"),
         }
       : {
-          color: "var(--nord-11)",
+          color: "var(--color-error)",
           icon: <CloudOffIcon />,
           label: t("settings.account.oauth.disconnected"),
         };

@@ -158,7 +158,7 @@ function UpdateCredentialsForm(props: { emailIdentity: EmailIdentity }) {
           <dt>{t("settings.account.email.status")}</dt>
           <dd>
             <StatusPill
-              color="var(--nord-14)"
+              color="var(--color-success)"
               icon={<CheckCircle2Icon />}
               testId="account-email-status"
             >
@@ -252,7 +252,7 @@ function PendingEmailIdentity({
         <dt>{t("settings.account.email.status")}</dt>
         <dd>
           <StatusPill
-            color="var(--nord-13)"
+            color="var(--color-warning)"
             icon={<Clock3Icon />}
             testId="account-email-status"
           >

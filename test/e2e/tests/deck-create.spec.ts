@@ -39,7 +39,10 @@ test.describe("deck create", () => {
       "1 card",
     );
 
-    await page.getByTestId("listcard-title").click();
+    await page
+      .getByTestId("listcard-03005")
+      .getByRole("link", { name: "William Yorick", exact: true })
+      .click();
     await expect(page.getByTestId("card-modal")).toBeVisible();
     await page.getByTestId("card-modal-create-deck").click();
 
@@ -220,12 +223,13 @@ test.describe("deck create", () => {
     await page.goto("/deck/create");
     await page
       .getByTestId("listcard-01003")
-      .getByTestId("listcard-title")
+      .getByRole("link", { name: '"Skids" O\'Toole', exact: true })
       .click();
 
     await page
+      .getByTestId("card-modal")
       .getByTestId("listcard-90008")
-      .getByTestId("listcard-title")
+      .getByRole("link", { name: '"Skids" O\'Toole', exact: true })
       .click();
     await page.getByTestId("card-modal-create-deck").click();
 

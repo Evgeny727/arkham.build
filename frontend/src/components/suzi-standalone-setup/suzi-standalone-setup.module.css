@@ -18,7 +18,7 @@
 }
 
 .results {
-  --color-neutral: var(--palette-three-point-five);
+  --color-neutral: var(--palette-4);
 
   display: grid;
   gap: 1rem;

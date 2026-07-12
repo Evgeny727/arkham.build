@@ -1,17 +1,17 @@
 .error {
   display: block;
   background: rgba(255, 0, 0, 0.05);
-  border: 1px solid var(--nord-11);
+  border: 1px solid var(--color-error);
   padding: 0.5rem;
   border-radius: 0.25rem;
   font-size: var(--text-sm);
 }
 
 .error a {
-  color: var(--nord-5);
+  color: currentColor;
 
   &:hover {
     text-decoration: underline;
-    color: var(--nord-6);
+    color: var(--color-inverted);
   }
 }

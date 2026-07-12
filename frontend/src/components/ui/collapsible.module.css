@@ -53,7 +53,7 @@
 
   .sub {
     font-size: var(--text-xs);
-    color: var(--palette-three-point-five);
+    color: var(--palette-4);
   }
 
   .content > * + * {

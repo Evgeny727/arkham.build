@@ -6,7 +6,7 @@
   justify-content: center;
   width: 0.75rem;
   height: 0.75rem;
-  background: var(--health);
+  background: var(--color-error);
   color: var(--color-inverted);
   border-radius: 100%;
   padding: 1px;
@@ -18,17 +18,18 @@
 }
 
 .status-bubble.loading {
-  background: var(--nord-10);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
   animation: pulse 1.25s ease-in-out infinite;
 }
 
 .status-bubble.warning {
-  background: var(--nord-13);
-  color: var(--nord-0);
+  background: var(--color-warning);
+  color: var(--color-warning-contrast);
 }
 
 .status-bubble.error {
-  background: var(--health);
+  background: var(--color-error);
 }
 
 .status-bubble svg {

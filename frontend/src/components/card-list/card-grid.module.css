@@ -78,13 +78,13 @@
 
 @keyframes highlight-animation {
   0% {
-    box-shadow: 0 0 0 0 var(--nord-5);
+    box-shadow: 0 0 0 0 var(--palette-5);
   }
   30% {
-    box-shadow: 0 0 5px 3px var(--nord-5);
+    box-shadow: 0 0 5px 3px var(--palette-5);
   }
   100% {
-    box-shadow: 0 0 0 0 var(--nord-5);
+    box-shadow: 0 0 0 0 var(--palette-5);
   }
 }
 

@@ -41,13 +41,9 @@
   position: absolute;
   width: 0.5rem;
   height: 0.5rem;
-  fill: var(--nord-8);
+  fill: var(--color-primary);
   stroke: none;
   top: 0.25rem;
   right: 0.25rem;
   z-index: 1;
-}
-
-:root[data-theme="light"] .active {
-  fill: var(--nord-10);
 }

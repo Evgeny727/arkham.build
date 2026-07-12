@@ -15,7 +15,7 @@
 }
 
 .masthead.invert {
-  color: var(--nord-6);
+  color: var(--color-inverted);
 }
 
 .left {
@@ -88,7 +88,7 @@
   width: 100%;
   padding: 0.25rem 0.75rem;
   text-align: left;
-  color: var(--palette-three-point-five);
+  color: var(--palette-4);
   font-style: italic;
   word-break: break-all;
 }

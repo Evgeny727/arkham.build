@@ -15,7 +15,7 @@
 }
 
 .sync .status-icon {
-  color: var(--nord-10);
+  color: var(--color-primary);
 }
 
 .sync.uptodate .status-icon {

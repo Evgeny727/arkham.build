@@ -53,9 +53,5 @@
 }
 
 .card-access-toggles.active {
-  border-color: var(--nord-8);
-}
-
-:root[data-theme="light"] .card-access-toggles.active {
-  border-color: var(--nord-10);
+  border-color: var(--color-primary);
 }

@@ -35,12 +35,12 @@
   width: 0.75rem;
   height: 0.75rem;
   transform: translateY(-50%);
-  color: var(--palette-three-point-five);
+  color: var(--palette-4);
   pointer-events: none;
 }
 
 .control-row:hover .control-indicator {
-  color: var(--palette-4);
+  color: var(--palette-5);
 }
 
 .control-row:focus-within .control-indicator {
@@ -76,7 +76,7 @@
 }
 
 .menu-empty {
-  color: var(--palette-4);
+  color: var(--palette-5);
   font-size: var(--text-sm);
   padding: 0.75rem;
 }

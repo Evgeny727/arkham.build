@@ -3,9 +3,9 @@
   flex-flow: column nowrap;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--nord-12) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
   border-radius: var(--rounded);
-  background: color-mix(in srgb, var(--nord-12) 20%, var(--palette-1));
+  background: color-mix(in srgb, var(--color-warning) 20%, var(--palette-1));
 }
 
 .header {
