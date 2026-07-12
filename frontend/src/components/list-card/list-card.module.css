@@ -299,7 +299,7 @@
   }
 
   .listcard-wrapper.xs {
-    --card-spacing-y: 0.25em;
+    --card-spacing-y: 0.125em;
     --card-spacing-x: 0.25em;
     padding-inline: none;
   }
