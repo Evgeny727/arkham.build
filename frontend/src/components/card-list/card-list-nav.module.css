@@ -1,11 +1,15 @@
 .nav {
   display: flex;
   flex: 0 0 auto;
-  padding: 0.25rem var(--scrollbar-padding);
   gap: 0.25rem;
   font-family: var(--font-family-ui);
   align-items: center;
   justify-content: space-between;
+  padding-block: 0.25rem;
+
+  @media screen and (min-width: 45rem) {
+    padding: 0.25rem var(--scrollbar-padding);
+  }
 }
 
 .nav-row {

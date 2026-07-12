@@ -1,7 +1,10 @@
 .container {
-  padding: var(--scrollbar-padding);
   position: relative;
   z-index: 3;
+
+  @media screen and (min-width: 45rem) {
+    padding-inline: var(--scrollbar-padding);
+  }
 }
 
 .row {

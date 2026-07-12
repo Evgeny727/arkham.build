@@ -15,6 +15,7 @@ import css from "./card-list.module.css";
 import { CardListItemCompact, CardListItemFull } from "./card-list-items";
 import { Grouphead } from "./grouphead";
 import type { CardListImplementationProps } from "./types";
+import { useMedia } from "@/utils/use-media";
 
 export function CardList(props: CardListImplementationProps) {
   const {
@@ -34,6 +35,8 @@ export function CardList(props: CardListImplementationProps) {
 
   const [currentTop, setCurrentTop] = useState<number>(-1);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>();
+
+  const paddedScroller = useMedia("screen and (min-width: 45rem)");
 
   const virtuosoRef = useRef<GroupedVirtuosoHandle>(null);
   const activeRange = useRef<ListRange | undefined>(undefined);
@@ -184,7 +187,7 @@ export function CardList(props: CardListImplementationProps) {
     <Scroller
       className={css["scroller"]}
       data-testid="card-list-scroller"
-      padded
+      padded={paddedScroller}
       ref={setScrollParent as unknown as React.RefObject<HTMLDivElement | null>}
       type="always"
     >
