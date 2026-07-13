@@ -503,7 +503,8 @@
     margin-top: 0.375rem;
   }
 
-  :lang(ko, zh, zh-Hant, zh-Hans) :where(.sub) {
+  :lang(ko, zh, zh-Hant, zh-Hans)
+    :where(.sub, .details-traits, .flavor, .errata-header) {
     font-style: normal;
   }
 }
