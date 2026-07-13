@@ -104,7 +104,7 @@
   font-size: var(--text-xs);
 }
 
-:lang(ko, zh, zh-Hant, zh-Hans) .sub {
+:lang(ko, zh, zh-cn, zh-Hant, zh-Hans) .sub {
   font-style: normal;
 }
 

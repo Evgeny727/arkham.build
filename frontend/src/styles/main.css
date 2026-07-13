@@ -1130,7 +1130,7 @@
       BlinkMacSystemFont, ui-sans-serif, sans-serif;
   }
 
-  :lang(zh, zh-Hans) {
+  :lang(zh-Hans, zh-cn) {
     --font-family-ui:
       "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
       "WenQuanYi Micro Hei", -apple-system, BlinkMacSystemFont, ui-sans-serif,
@@ -1138,7 +1138,7 @@
     --font-family-content: var(--font-family-ui);
   }
 
-  :lang(zh-Hant) {
+  :lang(zh, zh-Hant) {
     --font-family-ui:
       "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI",
       -apple-system, BlinkMacSystemFont, Roboto, ui-sans-serif, sans-serif;
