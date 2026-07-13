@@ -216,7 +216,7 @@
     vertical-align: middle;
   }
 
-  :lang(ko, zh, zh-cn, zh-Hant, zh-Hans) .subname {
+  :is(:lang(ko), :lang(zh)) .subname {
     font-style: normal;
   }
 

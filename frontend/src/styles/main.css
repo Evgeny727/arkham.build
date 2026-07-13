@@ -1130,18 +1130,18 @@
       BlinkMacSystemFont, ui-sans-serif, sans-serif;
   }
 
-  :lang(zh-Hans, zh-cn) {
+  :lang(zh-Hant) {
+    --font-family-ui:
+      "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI",
+      -apple-system, BlinkMacSystemFont, Roboto, ui-sans-serif, sans-serif;
+    --font-family-content: var(--font-family-ui);
+  }
+
+  :lang(zh-Hans) {
     --font-family-ui:
       "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
       "WenQuanYi Micro Hei", -apple-system, BlinkMacSystemFont, ui-sans-serif,
       sans-serif;
-    --font-family-content: var(--font-family-ui);
-  }
-
-  :lang(zh, zh-Hant) {
-    --font-family-ui:
-      "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Segoe UI",
-      -apple-system, BlinkMacSystemFont, Roboto, ui-sans-serif, sans-serif;
     --font-family-content: var(--font-family-ui);
   }
 

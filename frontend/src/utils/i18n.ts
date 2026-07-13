@@ -4,6 +4,7 @@ import resourcesToBackend from "i18next-resources-to-backend";
 import { initReactI18next } from "react-i18next";
 
 import en from "@/locales/en.json";
+import { LOCALES } from "@/utils/constants";
 
 const localStorageDectector: LanguageDetectorModule = {
   type: "languageDetector",
@@ -49,7 +50,10 @@ void i18n
   .catch(console.error);
 
 i18n.on("languageChanged", (lng) => {
-  if (document) document.documentElement.lang = lng;
+  if (typeof document === "undefined") return;
+
+  const locale = LOCALES[lng.toLocaleLowerCase()];
+  document.documentElement.lang = locale?.displayValue ?? locale?.value ?? lng;
 });
 
 export function changeLanguage(lng: string) {
