@@ -62,6 +62,10 @@ const tests = [
     "invalid: off-class access with faction selection",
     "faction_select_invalid",
   ],
+  [
+    "invalid: Collector does not claim excess cards from another limited option",
+    "collector_with_other_limited_access_invalid",
+  ],
   ["valid: tag-based off-class access", "tag_based_access"],
   [
     "valid: tag-based access and versatile overlap",

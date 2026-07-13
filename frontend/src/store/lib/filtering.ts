@@ -234,7 +234,7 @@ export function filterCardTags(
   return (card: Card) => {
     const canonicalCode = resolveCardTagCardCode(metadata, fronts, card.code);
 
-    if (includeFavorites && cardTags.favorites[canonicalCode]) {
+    if (includeFavorites && cardTags.favorites?.[canonicalCode]) {
       return true;
     }
 

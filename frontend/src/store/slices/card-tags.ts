@@ -160,7 +160,7 @@ export const createCardTagsSlice: StateCreator<
     const canonicalCode = getCardTagCardCode(state, cardCode);
 
     set((state) => {
-      const favorites = { ...state.cardTags.favorites };
+      const favorites = { ...state.cardTags?.favorites };
 
       if (favorites[canonicalCode]) {
         delete favorites[canonicalCode];

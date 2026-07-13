@@ -1173,7 +1173,7 @@ export const selectCardTagOptions = createSelector(
         card.code,
       );
 
-      if (cardTags.favorites[canonicalCode]) {
+      if (cardTags.favorites?.[canonicalCode]) {
         hasFavorite = true;
       }
 

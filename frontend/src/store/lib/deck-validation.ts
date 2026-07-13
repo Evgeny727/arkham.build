@@ -169,10 +169,10 @@ export type DeckValidationError =
 
 function findIndexReversed<T>(
   array: T[],
-  predicate: (item: T) => boolean,
+  predicate: (item: T, index: number) => boolean,
 ): number {
   for (let i = array.length - 1; i >= 0; i -= 1) {
-    if (predicate(array[i])) return i;
+    if (predicate(array[i], i)) return i;
   }
 
   return -1;
@@ -1043,27 +1043,26 @@ class DeckOptionsValidator implements SlotValidator {
      *  - deck_options are sorted from "unlimited > limited".
      */
     const optionMatched = new Map<string, number>();
+    const optionFilters = options.map((option) =>
+      option.virtual
+        ? undefined
+        : makeOptionFilter(option, this.buildQlInterpreter, this.config),
+    );
 
     /**
      * Once a card matches a `not` deck option, no further options can match it.
      * This is relevant when a limit option precedes a `not` option and a later filter would match it as well.
      * This does not occur in official content, but it does occur in fan-made content.
      */
-    const exclusions = new Set<string>();
+    const exclusions = new Map<string, number>();
 
     for (let i = 0; i < options.length; i += 1) {
       const option = options[i];
       if (option.virtual) continue;
 
-      const filter = makeOptionFilter(
-        option as DeckOption,
-        this.buildQlInterpreter,
-        this.config,
-      );
-
+      const filter = optionFilters[i];
       let matchCount = 0;
-
-      const isLimitOption = !option.not && option.limit;
+      const limit = option.not ? undefined : (option.limit ?? undefined);
 
       if (filter) {
         for (const card of this.cards) {
@@ -1078,8 +1077,8 @@ class DeckOptionsValidator implements SlotValidator {
           // card access not given by deck_option.
           if (!matches) continue;
 
-          if (matches && option.not) {
-            exclusions.add(card.code);
+          if (option.not) {
+            exclusions.set(card.code, i);
             continue;
           }
 
@@ -1090,49 +1089,67 @@ class DeckOptionsValidator implements SlotValidator {
             // no more cards can be covered by this option.
             if (
               matchedQuantity === quantity ||
-              (isLimitOption && matchCount >= (option.limit as number))
+              (limit != null && matchCount >= limit)
             ) {
               break;
             }
 
-            if (matches) matchCount += 1;
-
-            if (matches && !option.not) {
-              optionMatched.set(card.code, matchedQuantity + 1);
-            }
+            matchCount += 1;
+            optionMatched.set(card.code, matchedQuantity + 1);
           }
 
           // if the current match count exceeds the limit,
           // no more cards can be covered by this option.
-          if (isLimitOption && matchCount >= (option.limit as number)) {
+          if (limit != null && matchCount >= limit) {
             break;
           }
         }
       }
     }
 
-    const unmatchedCardCount = Object.entries(this.quantities)
-      .filter(([code, quantity]) => optionMatched.get(code) !== quantity)
-      .reduce(
-        (acc, [code, quantity]) =>
-          acc + quantity - (optionMatched.get(code) ?? 0),
-        0,
-      );
+    // Additional deck options are appended after investigator options. Attribute
+    // each excess card to the last limited option that could actually include it.
+    const unmatchedByOption = new Map<number, number>();
 
-    if (unmatchedCardCount > 0) {
-      const lastLimitOptionIndex = findIndexReversed(
-        options,
-        (o) => o.limit != null && !o.virtual && !o.atleast,
-      );
-      if (lastLimitOptionIndex === -1) return errors;
+    for (const card of this.cards) {
+      const unmatchedCount =
+        this.quantities[card.code] - (optionMatched.get(card.code) ?? 0);
+      if (unmatchedCount <= 0) continue;
 
-      const option = options[lastLimitOptionIndex];
+      const exclusionIndex = exclusions.get(card.code);
+      const optionIndex = findIndexReversed(options, (option, index) => {
+        if (
+          option.limit == null ||
+          option.not ||
+          option.virtual ||
+          option.atleast ||
+          (exclusionIndex != null && index >= exclusionIndex)
+        ) {
+          return false;
+        }
+
+        return optionFilters[index]?.(card) ?? false;
+      });
+      if (optionIndex === -1) continue;
+
+      unmatchedByOption.set(
+        optionIndex,
+        (unmatchedByOption.get(optionIndex) ?? 0) + unmatchedCount,
+      );
+    }
+
+    for (let i = 0; i < options.length; i += 1) {
+      const unmatchedCount = unmatchedByOption.get(i);
+      if (!unmatchedCount) continue;
+
+      const option = options[i];
+      if (option?.limit == null) continue;
 
       errors.push({
         type: "INVALID_DECK_OPTION",
         details: {
           error: option.error ?? "Too many off-class cards.",
-          count: `(${(option.limit ?? 0) + unmatchedCardCount} / ${option.limit})`,
+          count: `(${option.limit + unmatchedCount} / ${option.limit})`,
         },
       });
     }

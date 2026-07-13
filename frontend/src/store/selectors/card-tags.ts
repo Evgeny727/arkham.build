@@ -19,7 +19,7 @@ const selectCanonicalCardTagCode = createSelector(
 export const selectCardFavoriteState = createSelector(
   (state: StoreState) => state.cardTags.favorites,
   selectCanonicalCardTagCode,
-  (favorites, canonicalCode) => favorites[canonicalCode] === true,
+  (favorites, canonicalCode) => favorites?.[canonicalCode] === true,
 );
 
 const selectAccountCardTagNamesForCard = createSelector(
