@@ -340,6 +340,33 @@ test.describe("deck view", () => {
     await expect(page.getByTestId("card-modal")).toBeVisible();
   });
 
+  test("closing card modal via backdrop does not select content", async ({
+    page,
+  }) => {
+    await importStandardDeck(page);
+
+    await page
+      .getByTestId("listcard-10104")
+      .getByTestId("listcard-title")
+      .click();
+
+    const modal = page.getByTestId("card-modal");
+    await expect(modal).toBeVisible();
+
+    const modalBounds = await modal.boundingBox();
+    if (!modalBounds) throw new Error("Card modal has no bounding box");
+
+    await page.evaluate(() => window.getSelection()?.removeAllRanges());
+    await page.mouse.move(modalBounds.x + 1, modalBounds.y + 300);
+    await page.mouse.down({ clickCount: 2 });
+    await page.mouse.up({ clickCount: 2 });
+
+    expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(
+      "",
+    );
+    await expect(modal).not.toBeVisible();
+  });
+
   test("open deck investigator modal", async ({ page }) => {
     await importStandardDeck(page);
     await page

@@ -67,9 +67,10 @@ export function CardModal(props: Props) {
 
   const onPointerDownBackdrop = useCallback(
     (evt: React.PointerEvent) => {
-      if (evt.target === evt.currentTarget) {
-        onCloseModal();
-      }
+      if (evt.target !== evt.currentTarget) return;
+
+      evt.preventDefault();
+      onCloseModal();
     },
     [onCloseModal],
   );

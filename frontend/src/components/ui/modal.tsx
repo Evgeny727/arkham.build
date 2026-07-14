@@ -30,6 +30,19 @@ export function Modal(props: Props) {
 
   const isMobile = useMedia(MQ_MOBILE);
 
+  const onPointerDownBackdrop = useCallback(
+    (evt: React.PointerEvent) => {
+      evt.preventDefault();
+
+      if (isMobile) {
+        window.history.back();
+      } else {
+        closeModal();
+      }
+    },
+    [closeModal, isMobile],
+  );
+
   const modalStyle = useMemo(
     () => ({
       ...style,
@@ -74,13 +87,7 @@ export function Modal(props: Props) {
     <div
       {...rest}
       className={cx(css["modal"], className)}
-      onPointerDown={
-        isMobile
-          ? () => {
-              window.history.back();
-            }
-          : closeModal
-      }
+      onPointerDown={onPointerDownBackdrop}
       ref={modalRef}
       style={modalStyle}
     >

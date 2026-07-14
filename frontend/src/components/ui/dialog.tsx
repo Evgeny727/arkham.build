@@ -76,6 +76,7 @@ export function DialogContent(props: React.HTMLProps<HTMLElement>) {
     duration: 250,
     common: {
       transitionProperty: "opacity, backdrop-filter",
+      willChange: "opacity, backdrop-filter",
     },
     initial: {
       opacity: 0,
