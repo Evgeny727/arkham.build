@@ -32,17 +32,18 @@
   .scan-flip-trigger,
   .scan-left-action-slot {
     position: absolute;
-    top: 0.25rem;
     z-index: 1;
   }
 
   .scan-flip-trigger {
+    top: 0.25rem;
     right: 0.25rem;
     visibility: hidden;
     opacity: 0;
   }
 
   .scan-left-action-slot {
+    bottom: 0.25rem;
     left: 0.25rem;
   }
 
