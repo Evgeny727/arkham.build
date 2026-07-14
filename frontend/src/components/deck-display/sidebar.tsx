@@ -479,6 +479,7 @@ function SidebarActions(props: {
 function Sharing(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
   const { deck, type } = props;
   const { t } = useTranslation();
+  const toast = useToast();
 
   const devModeEnabled = useStore((state) => state.settings.devModeEnabled);
   const storageProviderOptions = useStore(
@@ -500,6 +501,16 @@ function Sharing(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
     [deck.id, uploadDeckToProvider],
   );
 
+  const onAccountDeckArkhamDBUpload = useCallback(() => {
+    toast.show({
+      children: t("deck.toasts.upload_requires_duplicate"),
+      variant: "error",
+    });
+  }, [t, toast]);
+
+  const canUploadAccountDeckToArkhamDB =
+    deck.source === "account" && availableUploadProviders.includes("arkhamdb");
+
   return (
     <section className={css["details"]} data-testid="share">
       <DeckDetail
@@ -513,6 +524,18 @@ function Sharing(props: { deck: ResolvedDeck; type: DeckDisplayType }) {
             <nav className={css["share-actions"]}>
               {devModeEnabled && (
                 <DevModeApiLinkButton id={deck.id} type={type} />
+              )}
+              {canUploadAccountDeckToArkhamDB && (
+                <Button
+                  data-testid="share-upload-arkhamdb"
+                  onClick={onAccountDeckArkhamDBUpload}
+                  size="sm"
+                >
+                  <UploadIcon />
+                  {t("deck_view.actions.upload", {
+                    provider: t("deck_edit.config.storage_provider.arkhamdb"),
+                  })}
+                </Button>
               )}
               {deck.source === "arkhamdb" && (
                 <Button

@@ -915,7 +915,8 @@
         "duplicate_error": "Failed to duplicate deck: {{error}}",
         "export_error": "Failed to export deck: {{error}}",
         "upload_error": "Failed to upload deck to {{provider}}: {{error}}",
-        "upload_loading": "Uploading deck to {{provider}}..."
+        "upload_loading": "Uploading deck to {{provider}}...",
+        "upload_requires_duplicate": "You must first duplicate this deck before uploading it to ArkhamDB."
       },
       "tools": {
         "average_cost": "Average cost: {{cost}}",
