@@ -77,11 +77,13 @@ export function reversed(card: Card) {
 }
 
 export function imageUrl(code: string) {
-  return `${import.meta.env.VITE_CARD_IMAGE_URL}/optimized/${code}.avif`;
+  const extension = code.startsWith("easter_egg") ? "avif" : "webp";
+  return `${import.meta.env.VITE_CARD_IMAGE_URL}/optimized/${code}.${extension}`;
 }
 
 export function thumbnailUrl(code: string) {
-  return `${import.meta.env.VITE_CARD_IMAGE_URL}/thumbnails/${code}.avif`;
+  const extension = code.startsWith("easter_egg") ? "avif" : "webp";
+  return `${import.meta.env.VITE_CARD_IMAGE_URL}/thumbnails/${code}.${extension}`;
 }
 
 export function parseCardTextHtml(
