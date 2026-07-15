@@ -237,10 +237,10 @@ export function DeckCollection() {
                     {t("deck.actions.create")}
                   </Button>
                 </Link>
-                <Link href="/settings" asChild>
+                <Link href="/auth/login" asChild>
                   <Button variant="bare">
                     <i className="icon-elder_sign" />
-                    {t("deck_collection.connect_arkhamdb")}
+                    {t("auth.login.action")}
                   </Button>
                 </Link>
               </nav>
