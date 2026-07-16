@@ -126,6 +126,7 @@ html[data-theme="light"] .toc a {
 .rules {
   max-width: 80ch;
   margin-inline: auto;
+  font-family: var(--font-family-content);
 }
 
 .rules .green {
@@ -170,6 +171,7 @@ html[data-theme="light"] .toc a {
 .grimoire-status {
   max-width: 90ch;
   margin-inline: auto;
+  font-family: var(--font-family-content);
 }
 
 .grimoire-entry-copy > * + *,
@@ -203,6 +205,10 @@ html[data-theme="light"] .toc a {
   text-align: center;
   height: 100%;
   width: 100%;
+}
+
+.grimoire-text {
+  font-family: var(--font-family-content);
 }
 
 .grimoire-text img {

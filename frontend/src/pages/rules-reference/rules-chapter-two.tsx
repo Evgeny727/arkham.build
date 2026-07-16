@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Plane } from "@/components/ui/plane";
 import { Tag } from "@/components/ui/tag";
 import { useGrimoireQuery } from "@/queries/grimoire";
-import { parseCardTextHtml } from "@/utils/card-utils";
+import { useStore } from "@/store";
+import { selectMetadata } from "@/store/selectors/shared";
+import { displayAttribute, parseCardTextHtml } from "@/utils/card-utils";
 import { getGrimoireMarkdownHtml } from "./grimoire-markdown";
 import type {
   FilteredGrimoire,
@@ -17,16 +19,22 @@ import type {
 import { buildGrimoireMaps, filterGrimoire } from "./rules-chapter-two.helpers";
 import { RulesDocument } from "./rules-document";
 
+const CARD_ERRATA_ENTRY_ID = "10.003";
+const FAQ_ENTRY_ID = "11.000";
+
+type HtmlMarkup = { __html: string };
+
 type GrimoireHtmlMaps = {
-  entryTextById: Map<string, string>;
+  entryTextById: Map<string, HtmlMarkup>;
   entryTitleById: Map<string, string>;
-  sectionTextById: Map<string, string>;
+  sectionTextById: Map<string, HtmlMarkup>;
   sectionTitleById: Map<string, string>;
 };
 
 export function RulesChapterTwo() {
   const { t } = useTranslation();
   const grimoire = useGrimoireQuery();
+  const metadata = useStore(selectMetadata);
 
   const { cardLinkTooltip, referenceProps } = useCardLinkTooltip();
 
@@ -44,7 +52,47 @@ export function RulesChapterTwo() {
     });
   }, [grimoire.error, grimoire.isPending]);
 
-  const entries = useMemo(() => grimoire.data?.entries ?? [], [grimoire.data]);
+  const entries = useMemo(() => {
+    if (!grimoire.data) return [];
+
+    const cardErrata = grimoire.data.errata
+      .filter((item) => item.type === "card_errata")
+      .filter((item) => item.citation.startsWith("grimoire-"))
+      .map((item) => {
+        const cards = (item.card_codes ?? [])
+          .map((code) => {
+            const name = displayAttribute(metadata.cards[code], "name");
+            return `[${name || code}](/card/${encodeURIComponent(code)})`;
+          })
+          .join(", ");
+
+        return [cards && `#### ${cards}`, item.ruling]
+          .filter(Boolean)
+          .join("\n\n");
+      });
+
+    const faq = grimoire.data.faq
+      .filter((item) => item.citation.startsWith("grimoire-"))
+      .map((item) =>
+        [`_Q: ${item.question}_`, `A: ${item.ruling}`].join("\n\n"),
+      );
+
+    return grimoire.data.entries.map((entry) => {
+      const additions =
+        entry.id === CARD_ERRATA_ENTRY_ID
+          ? cardErrata
+          : entry.id === FAQ_ENTRY_ID
+            ? faq
+            : [];
+
+      if (!additions.length) return entry;
+
+      return {
+        ...entry,
+        text: [entry.text, ...additions].filter(Boolean).join("\n\n"),
+      };
+    });
+  }, [grimoire.data, metadata.cards]);
 
   const sections = useMemo(
     () => grimoire.data?.sections ?? [],
@@ -77,7 +125,7 @@ export function RulesChapterTwo() {
               <p>{t("rules.grimoire.intro_description")}</p>
               <Button
                 as="a"
-                href="https://ffgapp.com/qr/ahc100"
+                href="https://images-cdn.fantasyflightgames.com/filer_public/4e/da/4eda7782-c983-47cc-8d9f-ae372a44d87b/arkham_grimoire_v11.pdf"
                 rel="noreferrer"
                 full
                 target="_blank"
@@ -205,8 +253,7 @@ function GrimoireSectionBlock(props: {
     grimoireMaps.entriesBySectionId.get(section.id) ?? []
   ).filter((entry) => filteredGrimoire.entryIds.has(entry.id));
 
-  const sectionTextHtml =
-    grimoireHtmlMaps.sectionTextById.get(section.id) ?? "";
+  const sectionText = grimoireHtmlMaps.sectionTextById.get(section.id);
 
   return (
     <section
@@ -219,12 +266,10 @@ function GrimoireSectionBlock(props: {
       />
 
       <div className="grimoire-entry-copy">
-        {sectionTextHtml && (
+        {sectionText?.__html && (
           <div
             className="grimoire-text longform"
-            dangerouslySetInnerHTML={{
-              __html: sectionTextHtml,
-            }}
+            dangerouslySetInnerHTML={sectionText}
           />
         )}
 
@@ -265,7 +310,7 @@ function GrimoireEntryBlock(props: {
 }) {
   const { t } = useTranslation();
   const { entry, grimoireHtmlMaps } = props;
-  const entryTextHtml = grimoireHtmlMaps.entryTextById.get(entry.id) ?? "";
+  const entryText = grimoireHtmlMaps.entryTextById.get(entry.id);
 
   return (
     <Plane
@@ -281,12 +326,10 @@ function GrimoireEntryBlock(props: {
       </h3>
 
       <div className="grimoire-entry-copy">
-        {entryTextHtml && (
+        {entryText?.__html && (
           <div
             className="grimoire-text longform"
-            dangerouslySetInnerHTML={{
-              __html: entryTextHtml,
-            }}
+            dangerouslySetInnerHTML={entryText}
           />
         )}
 
@@ -332,7 +375,9 @@ function buildGrimoireHtmlMaps(
     entryTextById: new Map(
       entries.map((entry) => [
         entry.id,
-        entry.text ? getGrimoireMarkdownHtml(entry.text) : "",
+        {
+          __html: entry.text ? getGrimoireMarkdownHtml(entry.text) : "",
+        },
       ]),
     ),
     entryTitleById: new Map(
@@ -341,7 +386,9 @@ function buildGrimoireHtmlMaps(
     sectionTextById: new Map(
       sections.map((section) => [
         section.id,
-        section.text ? getGrimoireMarkdownHtml(section.text) : "",
+        {
+          __html: section.text ? getGrimoireMarkdownHtml(section.text) : "",
+        },
       ]),
     ),
     sectionTitleById: new Map(
