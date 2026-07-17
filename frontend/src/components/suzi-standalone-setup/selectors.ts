@@ -61,6 +61,7 @@ export const selectAvailableUpgrades = createSelector(
 
     const filters = [
       filterDuplicates,
+      (c: Card) => c.deck_limit !== 0,
       filterLevel({ range: [1, 5] }, buildQlInterpreter, {
         checkEffectiveLevel: false,
         investigator: suzi,

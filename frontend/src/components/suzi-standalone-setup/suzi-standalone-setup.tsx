@@ -1,4 +1,4 @@
-import { type Card, cardLevel } from "@arkham-build/shared";
+import { type Card, cardLevel, countExperience } from "@arkham-build/shared";
 import { CheckIcon, DicesIcon, EyeIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -75,7 +75,7 @@ function SuziStandaloneSetupInner(props: Props) {
       const drawn: Card[] = [];
 
       for (const card of availableUpgrades) {
-        const cost = cardLevel(card) ?? 0;
+        const cost = countExperience(card, 1);
         if (cost <= targetXp) {
           targetXp -= cost;
           drawn.push(card);
