@@ -482,10 +482,17 @@ const deckAccessEqual = (
   return a == b;
 };
 
+// These cache selectors intentionally return their input so resultEqualityCheck can
+// preserve the previous deck reference when only unrelated deck data changes.
+const deckCacheDevModeChecks = {
+  identityFunctionCheck: "never",
+} as const;
+
 const selectDeckCachedByCardAccess = createSelector(
   (_: StoreState, resolvedDeck: ResolvedDeck | undefined) => resolvedDeck,
   (resolvedDeck) => resolvedDeck,
   {
+    devModeChecks: deckCacheDevModeChecks,
     memoizeOptions: {
       resultEqualityCheck: deckAccessEqual,
     },
@@ -623,6 +630,7 @@ const selectDeckCachedByCustomizations = createSelector(
   (_: StoreState, resolvedDeck: ResolvedDeck | undefined) => resolvedDeck,
   (resolvedDeck) => resolvedDeck,
   {
+    devModeChecks: deckCacheDevModeChecks,
     memoizeOptions: {
       resultEqualityCheck: customizationsEqual,
     },
@@ -648,6 +656,7 @@ const selectDeckCachedByFanMadeData = createSelector(
   (_: StoreState, resolvedDeck: ResolvedDeck | undefined) => resolvedDeck,
   (resolvedDeck) => resolvedDeck,
   {
+    devModeChecks: deckCacheDevModeChecks,
     memoizeOptions: {
       resultEqualityCheck: fanMadeDataEqual,
     },

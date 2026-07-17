@@ -1040,7 +1040,7 @@ export function makeOptionFilter(
   optionFilter.push(...parsed.optionFilter);
   filterCount += parsed.filterCount;
 
-  if (filterCount <= 1) {
+  if (filterCount <= 1 && !option.atleast) {
     console.debug("unknown deck requirement", option);
   }
 
